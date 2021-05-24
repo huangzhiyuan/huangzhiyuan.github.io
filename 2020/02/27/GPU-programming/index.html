@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="GPU," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="The use of Graphics Processing Units for rendering is well known, but their power for general parallel computation has only recently been explored. Parallel algorithms running on GPUs can often achiev">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CS 179 GPU programming">
+<meta property="og:url" content="http://yoursite.com/2020/02/27/GPU-programming/index.html">
+<meta property="og:site_name">
+<meta property="og:description" content="The use of Graphics Processing Units for rendering is well known, but their power for general parallel computation has only recently been explored. Parallel algorithms running on GPUs can often achiev">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-02-27T13:06:21.000Z">
+<meta property="article:modified_time" content="2020-03-01T12:12:28.000Z">
+<meta property="article:author" content="Huang">
+<meta property="article:tag" content="GPU">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/02/27/GPU-programming/"/>
+
+
+
+
+
+  <title>CS 179 GPU programming | </title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title"></span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">靡不有初 鲜克有终</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/27/GPU-programming/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/photo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">CS 179 GPU programming</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-02-27T21:06:21+08:00">
+                2020-02-27
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index">
+                    <span itemprop="name">机器学习</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>The use of Graphics Processing Units for rendering is well known, but their power for general parallel computation has only recently been explored. Parallel algorithms running on GPUs can often achieve up to 100x speedup over similar CPU algorithms, with many existing applications for physics simulations, signal processing, financial modeling, neural networks, and countless other fields.</p>
+<p><a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/">This course</a> will cover programming techniques for the GPU. The course will introduce NVIDIA’s parallel computing language, CUDA. Beyond covering the CUDA programming model and syntax, the course will also discuss GPU architecture, high performance computing on GPUs, parallel algorithms, CUDA libraries, and applications of GPU computing.</p>
+<p>Problem sets will cover performance optimization and specific GPU applications such as numerical mathematics, medical imaging, finance, and other fields.</p>
+<p>This quarter we will also cover uses of the GPU in Machine Learning.</p>
+<p>Labwork will require significant programming. A working knowledge of the C programming language will be necessary. Although CS 24 is not a prerequisite, it (or equivalent systems programming experience) is strongly recommended.</p>
+<span id="more"></span>
+
+<h2 id="Week-1-Introduction"><a href="#Week-1-Introduction" class="headerlink" title="Week 1 (Introduction)"></a>Week 1 (Introduction)</h2><h3 id="Lecture-1-Mon-04-01-PPT-PDF"><a href="#Lecture-1-Mon-04-01-PPT-PDF" class="headerlink" title="Lecture 1 (Mon. 04/01): PPT PDF"></a>Lecture 1 (Mon. 04/01): <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec01.pptx">PPT</a> <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec01.pdf">PDF</a></h3><h3 id="Lecture-2-Wed-04-03-PPT-PDF"><a href="#Lecture-2-Wed-04-03-PPT-PDF" class="headerlink" title="Lecture 2 (Wed. 04/03): PPT PDF"></a>Lecture 2 (Wed. 04/03): <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec02.pptx">PPT</a> <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec02.pdf">PDF</a></h3><h3 id="Lecture-3-Fri-04-05-PPT-PDF"><a href="#Lecture-3-Fri-04-05-PPT-PDF" class="headerlink" title="Lecture 3 (Fri. 04/05): PPT PDF"></a>Lecture 3 (Fri. 04/05): <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec03.pptx">PPT</a> <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec03.pdf">PDF</a></h3><h2 id="Week-2-Shared-Memory"><a href="#Week-2-Shared-Memory" class="headerlink" title="Week 2 (Shared Memory)"></a>Week 2 (Shared Memory)</h2><h3 id="Lecture-4-Mon-04-08-PPT-PDF"><a href="#Lecture-4-Mon-04-08-PPT-PDF" class="headerlink" title="Lecture 4 (Mon. 04/08): PPT PDF"></a>Lecture 4 (Mon. 04/08): <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec04.pptx">PPT</a> <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec04.pdf">PDF</a></h3><h3 id="Lecture-5-Wed-04-10-PPT-PDF"><a href="#Lecture-5-Wed-04-10-PPT-PDF" class="headerlink" title="Lecture 5 (Wed. 04/10): PPT PDF"></a>Lecture 5 (Wed. 04/10): <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec05.pptx">PPT</a> <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec05.pdf">PDF</a></h3><h3 id="Lecture-6-Fri-04-12-PPT-PDF"><a href="#Lecture-6-Fri-04-12-PPT-PDF" class="headerlink" title="Lecture 6 (Fri. 04/12): PPT PDF"></a>Lecture 6 (Fri. 04/12): <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec06.pptx">PPT</a> <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec06.pdf">PDF</a></h3><h2 id="Week-3-Reductions-FFT"><a href="#Week-3-Reductions-FFT" class="headerlink" title="Week 3 (Reductions, FFT)"></a>Week 3 (Reductions, FFT)</h2><h3 id="Lecture-7-Mon-04-15-PPT-PDF"><a href="#Lecture-7-Mon-04-15-PPT-PDF" class="headerlink" title="Lecture 7 (Mon. 04/15): PPT PDF"></a>Lecture 7 (Mon. 04/15): <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec07.pptx">PPT</a> <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec07.pdf">PDF</a></h3><h3 id="Lecture-8-Wed-04-17-PPT-PDF"><a href="#Lecture-8-Wed-04-17-PPT-PDF" class="headerlink" title="Lecture 8 (Wed. 04/17): PPT PDF"></a>Lecture 8 (Wed. 04/17): <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec08.pptx">PPT</a> <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec08.pdf">PDF</a></h3><h3 id="Lecture-9-Fri-04-19-PPT-PDF"><a href="#Lecture-9-Fri-04-19-PPT-PDF" class="headerlink" title="Lecture 9 (Fri. 04/19): PPT PDF"></a>Lecture 9 (Fri. 04/19): <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec09.pptx">PPT</a> <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec09.pdf">PDF</a></h3><h2 id="Week-4-cuBLAS-and-Graphics"><a href="#Week-4-cuBLAS-and-Graphics" class="headerlink" title="Week 4 (cuBLAS and Graphics)"></a>Week 4 (cuBLAS and Graphics)</h2><h3 id="Lecture-10-Mon-04-22-PPT-PDF-Google-Doc-103"><a href="#Lecture-10-Mon-04-22-PPT-PDF-Google-Doc-103" class="headerlink" title="Lecture 10 (Mon. 04/22): PPT PDF [Google Doc][103]"></a>Lecture 10 (Mon. 04/22): <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec10.pptx">PPT</a> <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec10.pdf">PDF</a> [Google Doc][103]</h3><h3 id="Lecture-11-Wed-04-24-cuBLAS-example"><a href="#Lecture-11-Wed-04-24-cuBLAS-example" class="headerlink" title="Lecture 11 (Wed. 04/24): cuBLAS example"></a>Lecture 11 (Wed. 04/24): <a target="_blank" rel="noopener" href="https://docs.google.com/presentation/d/188H_cUnRzyHuny4Ea9_evFdt5JdpCkFLyXU1mHnrOhQ/edit?usp=sharing">cuBLAS example</a></h3><h3 id="Lecture-12-Fri-04-26-PPT-PDF"><a href="#Lecture-12-Fri-04-26-PPT-PDF" class="headerlink" title="Lecture 12 (Fri. 04/26): PPT PDF"></a>Lecture 12 (Fri. 04/26): <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec12.pptx">PPT</a> <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec12.pdf">PDF</a></h3><h2 id="Week-5-Machine-Learning-and-cuDNN-I"><a href="#Week-5-Machine-Learning-and-cuDNN-I" class="headerlink" title="Week 5 (Machine Learning and cuDNN I)"></a>Week 5 (Machine Learning and cuDNN I)</h2><h3 id="Lecture-13-Mon-04-29-PPT-PDF"><a href="#Lecture-13-Mon-04-29-PPT-PDF" class="headerlink" title="Lecture 13 (Mon. 04/29): PPT PDF"></a>Lecture 13 (Mon. 04/29): <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec13.pptx">PPT</a> <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec13.pdf">PDF</a></h3><h3 id="Lecture-14-Wed-05-01-PPT-PDF"><a href="#Lecture-14-Wed-05-01-PPT-PDF" class="headerlink" title="Lecture 14 (Wed. 05/01): PPT PDF"></a>Lecture 14 (Wed. 05/01): <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec14.pptx">PPT</a> <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec14.pdf">PDF</a></h3><h3 id="Lecture-15-Fri-05-03-PPT-PDF"><a href="#Lecture-15-Fri-05-03-PPT-PDF" class="headerlink" title="Lecture 15 (Fri. 05/03): PPT PDF"></a>Lecture 15 (Fri. 05/03): <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec15.pptx">PPT</a> <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec15.pdf">PDF</a></h3><h2 id="Week-6-Machine-Learning-and-cuDNN-II"><a href="#Week-6-Machine-Learning-and-cuDNN-II" class="headerlink" title="Week 6 (Machine Learning and cuDNN II)"></a>Week 6 (Machine Learning and cuDNN II)</h2><h3 id="Lecture-16-Mon-05-06-PPT-PDF"><a href="#Lecture-16-Mon-05-06-PPT-PDF" class="headerlink" title="Lecture 16 (Mon. 05/06): PPT PDF"></a>Lecture 16 (Mon. 05/06): <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec16.pptx">PPT</a> <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec16.pdf">PDF</a></h3><h3 id="Lecture-17-Wed-05-08-PPT-PDF"><a href="#Lecture-17-Wed-05-08-PPT-PDF" class="headerlink" title="Lecture 17 (Wed. 05/08): PPT PDF"></a>Lecture 17 (Wed. 05/08): <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec17.pptx">PPT</a> <a target="_blank" rel="noopener" href="http://courses.cms.caltech.edu/cs179/2019_lectures/cs179_2019_lec17.pdf">PDF</a></h3>
+      
+    </div>
+    
+    
+    
+
+    
+      <div>
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+
+      </div>
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>小手一抖，金币到手</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt=" 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/GPU/" rel="tag"><i class="fa fa-tag"></i> GPU</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/02/27/compute-memory-bound/" rel="next" title="compute bound or memory bound">
+                <i class="fa fa-chevron-left"></i> compute bound or memory bound
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/02/28/AWK-brief-usage/" rel="prev" title="AWK使用教程">
+                AWK使用教程 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/photo.jpg"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">134</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">13</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">84</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/huangzhiyuan" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:huangzy099@163.com" target="_blank" title="E-Mail">
+                    
+                      <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="http://blog.csdn.net/huangzhiyuan111" target="_blank" title="csdn">
+                    
+                      <i class="fa fa-fw fa-globe"></i>csdn</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://www.zhihu.com/people/justforfun099/activities" target="_blank" title="zhihu">
+                    
+                      <i class="fa fa-fw fa-globe"></i>zhihu</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Week-1-Introduction"><span class="nav-number">1.</span> <span class="nav-text">Week 1 (Introduction)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Lecture-1-Mon-04-01-PPT-PDF"><span class="nav-number">1.1.</span> <span class="nav-text">Lecture 1 (Mon. 04&#x2F;01): PPT PDF</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Lecture-2-Wed-04-03-PPT-PDF"><span class="nav-number">1.2.</span> <span class="nav-text">Lecture 2 (Wed. 04&#x2F;03): PPT PDF</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Lecture-3-Fri-04-05-PPT-PDF"><span class="nav-number">1.3.</span> <span class="nav-text">Lecture 3 (Fri. 04&#x2F;05): PPT PDF</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Week-2-Shared-Memory"><span class="nav-number">2.</span> <span class="nav-text">Week 2 (Shared Memory)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Lecture-4-Mon-04-08-PPT-PDF"><span class="nav-number">2.1.</span> <span class="nav-text">Lecture 4 (Mon. 04&#x2F;08): PPT PDF</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Lecture-5-Wed-04-10-PPT-PDF"><span class="nav-number">2.2.</span> <span class="nav-text">Lecture 5 (Wed. 04&#x2F;10): PPT PDF</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Lecture-6-Fri-04-12-PPT-PDF"><span class="nav-number">2.3.</span> <span class="nav-text">Lecture 6 (Fri. 04&#x2F;12): PPT PDF</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Week-3-Reductions-FFT"><span class="nav-number">3.</span> <span class="nav-text">Week 3 (Reductions, FFT)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Lecture-7-Mon-04-15-PPT-PDF"><span class="nav-number">3.1.</span> <span class="nav-text">Lecture 7 (Mon. 04&#x2F;15): PPT PDF</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Lecture-8-Wed-04-17-PPT-PDF"><span class="nav-number">3.2.</span> <span class="nav-text">Lecture 8 (Wed. 04&#x2F;17): PPT PDF</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Lecture-9-Fri-04-19-PPT-PDF"><span class="nav-number">3.3.</span> <span class="nav-text">Lecture 9 (Fri. 04&#x2F;19): PPT PDF</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Week-4-cuBLAS-and-Graphics"><span class="nav-number">4.</span> <span class="nav-text">Week 4 (cuBLAS and Graphics)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Lecture-10-Mon-04-22-PPT-PDF-Google-Doc-103"><span class="nav-number">4.1.</span> <span class="nav-text">Lecture 10 (Mon. 04&#x2F;22): PPT PDF [Google Doc][103]</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Lecture-11-Wed-04-24-cuBLAS-example"><span class="nav-number">4.2.</span> <span class="nav-text">Lecture 11 (Wed. 04&#x2F;24): cuBLAS example</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Lecture-12-Fri-04-26-PPT-PDF"><span class="nav-number">4.3.</span> <span class="nav-text">Lecture 12 (Fri. 04&#x2F;26): PPT PDF</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Week-5-Machine-Learning-and-cuDNN-I"><span class="nav-number">5.</span> <span class="nav-text">Week 5 (Machine Learning and cuDNN I)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Lecture-13-Mon-04-29-PPT-PDF"><span class="nav-number">5.1.</span> <span class="nav-text">Lecture 13 (Mon. 04&#x2F;29): PPT PDF</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Lecture-14-Wed-05-01-PPT-PDF"><span class="nav-number">5.2.</span> <span class="nav-text">Lecture 14 (Wed. 05&#x2F;01): PPT PDF</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Lecture-15-Fri-05-03-PPT-PDF"><span class="nav-number">5.3.</span> <span class="nav-text">Lecture 15 (Fri. 05&#x2F;03): PPT PDF</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Week-6-Machine-Learning-and-cuDNN-II"><span class="nav-number">6.</span> <span class="nav-text">Week 6 (Machine Learning and cuDNN II)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Lecture-16-Mon-05-06-PPT-PDF"><span class="nav-number">6.1.</span> <span class="nav-text">Lecture 16 (Mon. 05&#x2F;06): PPT PDF</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Lecture-17-Wed-05-08-PPT-PDF"><span class="nav-number">6.2.</span> <span class="nav-text">Lecture 17 (Wed. 05&#x2F;08): PPT PDF</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Huang</span>
+
+  
+</div>
+
+<div class="powered-by">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</div>
+
+<!--
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.3</div>
+
+
+
+ -->
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

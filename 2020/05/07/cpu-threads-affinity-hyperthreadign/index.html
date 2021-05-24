@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="affinity,hyperthreading,NUMA," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="This post is not a tutorial on C++11 threads, but it uses them as the main threading mechanism to demonstrate its points. It starts with a basic example but then quickly veers off into the specialized">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CPU threads affinity hyperthreading">
+<meta property="og:url" content="http://yoursite.com/2020/05/07/cpu-threads-affinity-hyperthreadign/index.html">
+<meta property="og:site_name">
+<meta property="og:description" content="This post is not a tutorial on C++11 threads, but it uses them as the main threading mechanism to demonstrate its points. It starts with a basic example but then quickly veers off into the specialized">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-05-07T06:37:52.000Z">
+<meta property="article:modified_time" content="2020-05-07T07:23:28.000Z">
+<meta property="article:author" content="Huang">
+<meta property="article:tag" content="affinity">
+<meta property="article:tag" content="hyperthreading">
+<meta property="article:tag" content="NUMA">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/05/07/cpu-threads-affinity-hyperthreadign/"/>
+
+
+
+
+
+  <title>CPU threads affinity hyperthreading | </title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title"></span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">靡不有初 鲜克有终</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/05/07/cpu-threads-affinity-hyperthreadign/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/photo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">CPU threads affinity hyperthreading</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-05-07T14:37:52+08:00">
+                2020-05-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93/" itemprop="url" rel="index">
+                    <span itemprop="name">技术总结</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>This post is not a tutorial on C++11 threads, but it uses them as the main threading mechanism to demonstrate its points. It starts with a basic example but then quickly veers off into the specialized area of thread affinities, hardware topologies and performance implications of hyperthreading. It does as much as feasible in portable C++, clearly marking the deviations into platform-specific calls for the really specialized stuff.</p>
+<span id="more"></span>
+
+<p><strong>CPU Socket</strong>: refers to a physical connector on a motherboard that accepts a single physical chip. It is commonplace for modern CPUs to provide multiple physical cores which are exposed to the operating system as logical CPUs that can perform parallel execution streams. This document refers to a socket and physical CPU synonymously. See Also: <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/CPU_socket">CPU Socket</a><br><strong>NUMA</strong>: Non-niform Memory Access, refers to the commonplace architecture in which machines with multiple CPU sockets divide the memory banks of RAM into nodes on a per-socket basis. Access to memory on a socket’s “local” memory node is faster than accessing memory on a remote node tied to a different socket. See Also: <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Non-uniform_memory_access">Numa</a><br><strong>CPU Core</strong>: Contemporary CPUs are likely to run multiple cores which are exposed to the underlying OS as a CPU. See Also: <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Non-uniform_memory_access">Multi-core processing</a><br><strong>Hyper-threading</strong>: Intel technology to make a single core appear logically as multiple cores on the same chip to improve the performance<br><strong>Logical CPU</strong>: What the operating system sees as a CPU. The number of CPUs available to the OS is <code>num sockets</code> * <code>cores per socket</code> * <code>hyper threads per core</code>.<br><strong>Processor Affinity</strong>: Refers to the act of restricting the set of logical CPUs on which a particular program thread can execute.</p>
+<p><strong>Benefits of thread affinitization</strong><br>Pinning a thread to a particular CPU ensures that the OS won’t reschedule the thread to another core and incur a context switch that would force the thread to reload its working state from main memory which results in jitter. When all critical threads in the processing pipeline are pinned to their own CPU and busy spinning, the OS scheduler is less likely to schedule another thread onto that core, keeping the threads’ processor caches hot.</p>
+<h2 id="Logical-CPUs-cores-and-threads"><a href="#Logical-CPUs-cores-and-threads" class="headerlink" title="Logical CPUs, cores and threads"></a>Logical CPUs, cores and threads</h2><p>Most modern machines are multi-CPU. Whether these CPUs are divided into sockets and hardware cores depends on the machine, of course, but the OS sees a number of “logical” CPUs that can execute tasks concurrently.</p>
+<p>The easiest way to get this information on Linux is to cat /proc/cpuinfo, which lists the system’s CPUs in order, providing some infromation about each (such as current frequency, cache size, etc). On my (8-CPU) machine:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">$ cat /proc/cpuinfo</span><br><span class="line">processor   : 0</span><br><span class="line">vendor_id   : GenuineIntel</span><br><span class="line">cpu family  : 6</span><br><span class="line">model               : 60</span><br><span class="line">model name  : Intel(R) Core(TM) i7-4771 CPU @ 3.50GHz</span><br><span class="line">[...]</span><br><span class="line">stepping    : 3</span><br><span class="line">microcode   : 0x7</span><br><span class="line">cpu MHz             : 3501.000</span><br><span class="line">cache size  : 8192 KB</span><br><span class="line">physical id : 0</span><br><span class="line">siblings    : 8</span><br><span class="line">core id             : 0</span><br><span class="line">cpu cores   : 4</span><br><span class="line">apicid              : 0</span><br><span class="line">[...]</span><br><span class="line"></span><br><span class="line">processor   : 1</span><br><span class="line">vendor_id   : GenuineIntel</span><br><span class="line">cpu family  : 6</span><br><span class="line">[...]</span><br><span class="line"></span><br><span class="line">[...]</span><br><span class="line">processor   : 7</span><br><span class="line">vendor_id   : GenuineIntel</span><br><span class="line">cpu family  : 6</span><br></pre></td></tr></table></figure>
+
+<p>A summary output can be obtained from lscpu:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">$ lscpu</span><br><span class="line">Architecture:          x86_64</span><br><span class="line">CPU op-mode(s):        32-bit, 64-bit</span><br><span class="line">Byte Order:            Little Endian</span><br><span class="line">CPU(s):                8</span><br><span class="line">On-line CPU(s) list:   0-7</span><br><span class="line">Thread(s) per core:    2</span><br><span class="line">Core(s) per socket:    4</span><br><span class="line">Socket(s):             1</span><br><span class="line">NUMA node(s):          1</span><br><span class="line">Vendor ID:             GenuineIntel</span><br><span class="line">CPU family:            6</span><br><span class="line">Model:                 60</span><br><span class="line">Stepping:              3</span><br><span class="line">CPU MHz:               3501.000</span><br><span class="line">BogoMIPS:              6984.09</span><br><span class="line">Virtualization:        VT-x</span><br><span class="line">L1d cache:             32K</span><br><span class="line">L1i cache:             32K</span><br><span class="line">L2 cache:              256K</span><br><span class="line">L3 cache:              8192K</span><br><span class="line">NUMA node0 CPU(s):     0-7</span><br></pre></td></tr></table></figure>
+<p>Here it’s also very easy to see that the machine has 4 cores, each having two HW threads (see hyperthreading). And yet the OS sees them as 8 “CPUs” numbered 0-7.</p>
+<h2 id="Launching-a-thread-per-CPU"><a href="#Launching-a-thread-per-CPU" class="headerlink" title="Launching a thread per CPU"></a>Launching a thread per CPU</h2><p>The C++11 threading library gracefully made available a utility function that we can use to find out how many CPUs the machine has, so that we could plan our parallelism strategy. The function is called hardware_concurrency, and here is a complete example that uses it to launch an appropriate number of threads. The following is just a code snippet; full code samples for this post, along with a Makefile for Linux can be found in this <a target="_blank" rel="noopener" href="https://github.com/eliben/code-for-blog/tree/master/2016/threads-affinity">repository</a>.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">int main(int argc, const char** argv) &#123;</span><br><span class="line">  unsigned num_cpus = std::thread::hardware_concurrency();</span><br><span class="line">  std::cout &lt;&lt; &quot;Launching &quot; &lt;&lt; num_cpus &lt;&lt; &quot; threads\n&quot;;</span><br><span class="line"></span><br><span class="line">  // A mutex ensures orderly access to std::cout from multiple threads.</span><br><span class="line">  std::mutex iomutex;</span><br><span class="line">  std::vector&lt;std::thread&gt; threads(num_cpus);</span><br><span class="line">  for (unsigned i = 0; i &lt; num_cpus; ++i) &#123;</span><br><span class="line">    threads[i] = std::thread([&amp;iomutex, i] &#123;</span><br><span class="line">      &#123;</span><br><span class="line">        // Use a lexical scope and lock_guard to safely lock the mutex only for</span><br><span class="line">        // the duration of std::cout usage.</span><br><span class="line">        std::lock_guard&lt;std::mutex&gt; iolock(iomutex);</span><br><span class="line">        std::cout &lt;&lt; &quot;Thread #&quot; &lt;&lt; i &lt;&lt; &quot; is running\n&quot;;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      // Simulate important work done by the tread by sleeping for a bit...</span><br><span class="line">      std::this_thread::sleep_for(std::chrono::milliseconds(200));</span><br><span class="line"></span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  for (auto&amp; t : threads) &#123;</span><br><span class="line">    t.join();</span><br><span class="line">  &#125;</span><br><span class="line">  return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>A std::thread is a thin wrapper around a platform-specific thread object; this is something we’ll use to our advantage shortly. So when we launch a std::thread, and actual OS thread is launched. This is fairly low-level thread control, but in this article I won’t detour into higher-level constructs like task-based parallelism, leaving this to some future post.</p>
+<h2 id="Thread-affinity"><a href="#Thread-affinity" class="headerlink" title="Thread affinity"></a>Thread affinity</h2><p>So we know how to query the system for the number of CPUs it has, and how to launch any number of threads. Now let’s do something a bit more advanced.</p>
+<p>All modern OSes support setting CPU affinity per thread. Affinity means that instead of being free to run the thread on any CPU it feels like, the OS scheduler is asked to only schedule a given thread to a single CPU or a pre-defined set of CPUs. By default, the affinity covers all logical CPUs in the system, so the OS can pick any of them for any thread, based on its scheduling considerations. In addition, the OS will sometimes migrate threads between CPUs if it makes sense to the scheduler (though it should try to miminize migrations because of the loss of warm caches on the core from which the thread was migrated). Let’s observe this in action with another code sample:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">int main(int argc, const char** argv) &#123;</span><br><span class="line">  constexpr unsigned num_threads = 4;</span><br><span class="line">  // A mutex ensures orderly access to std::cout from multiple threads.</span><br><span class="line">  std::mutex iomutex;</span><br><span class="line">  std::vector&lt;std::thread&gt; threads(num_threads);</span><br><span class="line">  for (unsigned i = 0; i &lt; num_threads; ++i) &#123;</span><br><span class="line">    threads[i] = std::thread([&amp;iomutex, i] &#123;</span><br><span class="line">      while (1) &#123;</span><br><span class="line">        &#123;</span><br><span class="line">          // Use a lexical scope and lock_guard to safely lock the mutex only</span><br><span class="line">          // for the duration of std::cout usage.</span><br><span class="line">          std::lock_guard&lt;std::mutex&gt; iolock(iomutex);</span><br><span class="line">          std::cout &lt;&lt; &quot;Thread #&quot; &lt;&lt; i &lt;&lt; &quot;: on CPU &quot; &lt;&lt; sched_getcpu() &lt;&lt; &quot;\n&quot;;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        // Simulate important work done by the tread by sleeping for a bit...</span><br><span class="line">        std::this_thread::sleep_for(std::chrono::milliseconds(900));</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  for (auto&amp; t : threads) &#123;</span><br><span class="line">    t.join();</span><br><span class="line">  &#125;</span><br><span class="line">  return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>This sample launches four threads that loop infinitely, sleeping and reporting which CPU they run on. The reporting is done via the <code>sched_getcpu</code> function (glibc specific - other platforms will have other APIs with similar functionality). Here’s a sample run:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">$ ./launch-threads-report-cpu</span><br><span class="line">Thread #0: on CPU 5</span><br><span class="line">Thread #1: on CPU 5</span><br><span class="line">Thread #2: on CPU 2</span><br><span class="line">Thread #3: on CPU 5</span><br><span class="line">Thread #0: on CPU 2</span><br><span class="line">Thread #1: on CPU 5</span><br><span class="line">Thread #2: on CPU 3</span><br><span class="line">Thread #3: on CPU 5</span><br><span class="line">Thread #0: on CPU 3</span><br><span class="line">Thread #2: on CPU 7</span><br><span class="line">Thread #1: on CPU 5</span><br><span class="line">Thread #3: on CPU 0</span><br><span class="line">Thread #0: on CPU 3</span><br><span class="line">Thread #2: on CPU 7</span><br><span class="line">Thread #1: on CPU 5</span><br><span class="line">Thread #3: on CPU 0</span><br><span class="line">Thread #0: on CPU 3</span><br><span class="line">Thread #2: on CPU 7</span><br><span class="line">Thread #1: on CPU 5</span><br><span class="line">Thread #3: on CPU 0</span><br><span class="line">^C</span><br></pre></td></tr></table></figure>
+<p>Some observations: the threads are sometimes scheduled onto the same CPU, and sometimes onto different CPUs. Also, there’s quite a bit of migration going on. Eventually, the scheduler managed to place each thread onto a different CPU, and keep it there. Different constraints (such as system load) could result in a different scheduling, of course.</p>
+<p>Now let’s rerun the same sample, but this time using <code>taskset</code> to restrict the affinity of the process to only two CPUs - 5 and 6:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">$ taskset -c 5,6 ./launch-threads-report-cpu</span><br><span class="line">Thread #0: on CPU 5</span><br><span class="line">Thread #2: on CPU 6</span><br><span class="line">Thread #1: on CPU 5</span><br><span class="line">Thread #3: on CPU 6</span><br><span class="line">Thread #0: on CPU 5</span><br><span class="line">Thread #2: on CPU 6</span><br><span class="line">Thread #1: on CPU 5</span><br><span class="line">Thread #3: on CPU 6</span><br><span class="line">Thread #0: on CPU 5</span><br><span class="line">Thread #1: on CPU 5</span><br><span class="line">Thread #2: on CPU 6</span><br><span class="line">Thread #3: on CPU 6</span><br><span class="line">Thread #0: on CPU 5</span><br><span class="line">Thread #1: on CPU 6</span><br><span class="line">Thread #2: on CPU 6</span><br><span class="line">Thread #3: on CPU 6</span><br><span class="line">^C</span><br></pre></td></tr></table></figure>
+<p>As expected, though there’s some migration happening here, all threads remain faithfully locked to CPUs 5 and 6, as instructed.</p>
+<h2 id="Setting-CPU-affinity-programatically"><a href="#Setting-CPU-affinity-programatically" class="headerlink" title="Setting CPU affinity programatically"></a>Setting CPU affinity programatically</h2><p>As we’ve seen earlier, command-line tools like taskset let us control the CPU affinity of a whole process. Sometimes, however, we’d like to do something more fine-grained and set the affinities of specific threads from within the program. How do we do that?</p>
+<p>On Linux, we can use the pthread-specific <a target="_blank" rel="noopener" href="http://man7.org/linux/man-pages/man3/pthread_setaffinity_np.3.html">pthread_setaffinity_np function</a>. Here’s an example that reproduces what we did before, but this time from inside the program. In fact, let’s go a bit more fancy and pin each thread to a single known CPU by setting its affinity:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">int main(int argc, const char** argv) &#123;</span><br><span class="line">  constexpr unsigned num_threads = 4;</span><br><span class="line">  // A mutex ensures orderly access to std::cout from multiple threads.</span><br><span class="line">  std::mutex iomutex;</span><br><span class="line">  std::vector&lt;std::thread&gt; threads(num_threads);</span><br><span class="line">  for (unsigned i = 0; i &lt; num_threads; ++i) &#123;</span><br><span class="line">    threads[i] = std::thread([&amp;iomutex, i] &#123;</span><br><span class="line">      std::this_thread::sleep_for(std::chrono::milliseconds(20));</span><br><span class="line">      while (1) &#123;</span><br><span class="line">        &#123;</span><br><span class="line">          // Use a lexical scope and lock_guard to safely lock the mutex only</span><br><span class="line">          // for the duration of std::cout usage.</span><br><span class="line">          std::lock_guard&lt;std::mutex&gt; iolock(iomutex);</span><br><span class="line">          std::cout &lt;&lt; &quot;Thread #&quot; &lt;&lt; i &lt;&lt; &quot;: on CPU &quot; &lt;&lt; sched_getcpu() &lt;&lt; &quot;\n&quot;;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        // Simulate important work done by the tread by sleeping for a bit...</span><br><span class="line">        std::this_thread::sleep_for(std::chrono::milliseconds(900));</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    // Create a cpu_set_t object representing a set of CPUs. Clear it and mark</span><br><span class="line">    // only CPU i as set.</span><br><span class="line">    cpu_set_t cpuset;</span><br><span class="line">    CPU_ZERO(&amp;cpuset);</span><br><span class="line">    CPU_SET(i, &amp;cpuset);</span><br><span class="line">    int rc = pthread_setaffinity_np(threads[i].native_handle(),</span><br><span class="line">                                    sizeof(cpu_set_t), &amp;cpuset);</span><br><span class="line">    if (rc != 0) &#123;</span><br><span class="line">      std::cerr &lt;&lt; &quot;Error calling pthread_setaffinity_np: &quot; &lt;&lt; rc &lt;&lt; &quot;\n&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  for (auto&amp; t : threads) &#123;</span><br><span class="line">    t.join();</span><br><span class="line">  &#125;</span><br><span class="line">  return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Note how we use the native_handle method discussed earlier in order to pass the underlying native handle to the pthread call (it takes a pthread_t ID as its first argument). The output of this program on my machine is:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">$ ./set-affinity</span><br><span class="line">Thread #0: on CPU 0</span><br><span class="line">Thread #1: on CPU 1</span><br><span class="line">Thread #2: on CPU 2</span><br><span class="line">Thread #3: on CPU 3</span><br><span class="line">Thread #0: on CPU 0</span><br><span class="line">Thread #1: on CPU 1</span><br><span class="line">Thread #2: on CPU 2</span><br><span class="line">Thread #3: on CPU 3</span><br><span class="line">Thread #0: on CPU 0</span><br><span class="line">Thread #1: on CPU 1</span><br><span class="line">Thread #2: on CPU 2</span><br><span class="line">Thread #3: on CPU 3</span><br><span class="line">^C</span><br></pre></td></tr></table></figure>
+<p>The threads get pinned to single CPUs exactly as requested.</p>
+<p>refers:<br><a target="_blank" rel="noopener" href="https://pages.tacc.utexas.edu/~eijkhout/pcse/html/omp-affinity.html#Threadbinding">https://pages.tacc.utexas.edu/~eijkhout/pcse/html/omp-affinity.html#Threadbinding</a><br><a target="_blank" rel="noopener" href="https://docs.neeveresearch.com/display/TALONDOC/Tuning+Thread+Affinitization+and+NUMA">https://docs.neeveresearch.com/display/TALONDOC/Tuning+Thread+Affinitization+and+NUMA</a><br><a target="_blank" rel="noopener" href="https://eli.thegreenplace.net/2016/c11-threads-affinity-and-hyperthreading/">https://eli.thegreenplace.net/2016/c11-threads-affinity-and-hyperthreading/</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+      <div>
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+
+      </div>
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>小手一抖，金币到手</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt=" 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/affinity/" rel="tag"><i class="fa fa-tag"></i> affinity</a>
+          
+            <a href="/tags/hyperthreading/" rel="tag"><i class="fa fa-tag"></i> hyperthreading</a>
+          
+            <a href="/tags/NUMA/" rel="tag"><i class="fa fa-tag"></i> NUMA</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/04/29/deep-learning-compiler-survery/" rel="next" title="deep learning compiler调研报告">
+                <i class="fa fa-chevron-left"></i> deep learning compiler调研报告
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/05/12/hook-in-pytorch/" rel="prev" title="PyTorch Hook用法解析">
+                PyTorch Hook用法解析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/photo.jpg"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">134</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">13</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">84</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/huangzhiyuan" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:huangzy099@163.com" target="_blank" title="E-Mail">
+                    
+                      <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="http://blog.csdn.net/huangzhiyuan111" target="_blank" title="csdn">
+                    
+                      <i class="fa fa-fw fa-globe"></i>csdn</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://www.zhihu.com/people/justforfun099/activities" target="_blank" title="zhihu">
+                    
+                      <i class="fa fa-fw fa-globe"></i>zhihu</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Logical-CPUs-cores-and-threads"><span class="nav-number">1.</span> <span class="nav-text">Logical CPUs, cores and threads</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Launching-a-thread-per-CPU"><span class="nav-number">2.</span> <span class="nav-text">Launching a thread per CPU</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Thread-affinity"><span class="nav-number">3.</span> <span class="nav-text">Thread affinity</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Setting-CPU-affinity-programatically"><span class="nav-number">4.</span> <span class="nav-text">Setting CPU affinity programatically</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Huang</span>
+
+  
+</div>
+
+<div class="powered-by">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</div>
+
+<!--
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.3</div>
+
+
+
+ -->
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

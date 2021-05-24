@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="pytorch,tensoriterator," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="This example using existing Linear Interpolation (aka lerp) operator, but same guidelines apply for other operators (new and existing ones). As all changes going to impact performance significantly, w">
+<meta property="og:type" content="article">
+<meta property="og:title" content="how to use tensoriterator">
+<meta property="og:url" content="http://yoursite.com/2020/03/23/how-to-use-tensoriterator/index.html">
+<meta property="og:site_name">
+<meta property="og:description" content="This example using existing Linear Interpolation (aka lerp) operator, but same guidelines apply for other operators (new and existing ones). As all changes going to impact performance significantly, w">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yoursite.com/img/2020/0323/change0.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0323/change1.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0323/change2.png">
+<meta property="article:published_time" content="2020-03-23T04:42:16.000Z">
+<meta property="article:modified_time" content="2020-03-23T12:44:30.000Z">
+<meta property="article:author" content="Huang">
+<meta property="article:tag" content="pytorch">
+<meta property="article:tag" content="tensoriterator">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/img/2020/0323/change0.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/03/23/how-to-use-tensoriterator/"/>
+
+
+
+
+
+  <title>how to use tensoriterator | </title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title"></span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">靡不有初 鲜克有终</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/03/23/how-to-use-tensoriterator/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/photo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">how to use tensoriterator</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-03-23T12:42:16+08:00">
+                2020-03-23
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index">
+                    <span itemprop="name">深度学习</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>This example using existing Linear Interpolation (aka lerp) operator, but same guidelines apply for other operators (new and existing ones).</p>
+<p>As all changes going to impact performance significantly, we can use the simplest benchmark to measure operator speed before updates and establish the baseline.</p>
+<span id="more"></span>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">y = torch.randn(1000000)</span><br><span class="line">x = torch.randn(1000000)</span><br><span class="line"></span><br><span class="line">timeit torch.lerp(x, y, 0.5)</span><br><span class="line">2.4 ms ± 25.2 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)</span><br></pre></td></tr></table></figure>
+
+<h2 id="Simple-implementation"><a href="#Simple-implementation" class="headerlink" title="Simple implementation"></a>Simple implementation</h2><p>As the first step, we are naively introducing TensorIterator to replace CPU_tensor_apply3 (it is considered the lousy pattern to use cpu/Loops.h anywhere but in cpu/ subfolder, but we will return to it later in this doc).</p>
+<p> <img src="/img/2020/0323/change0.png" alt="&quot;change0&quot;"></p>
+<p><strong>Update: binary_kernel recently was replaced by more universal cpu_kernel, they have exact same API.</strong></p>
+<p>code: <a target="_blank" rel="noopener" href="https://github.com/pytorch/pytorch/pull/21025/commits/c5593192e1f21dd5eb1062dbacfdf7431ab1d47f">https://github.com/pytorch/pytorch/pull/21025/commits/c5593192e1f21dd5eb1062dbacfdf7431ab1d47f</a></p>
+<p>In compare to TH_APPLY_* and CPU_tensor_apply* and solutions, TensorIterator usage is separated by two steps.</p>
+<ul>
+<li>Defining iterator configuration with the TensorIterator::Builder. Under the hood, builder calculates tensors shapes and types to find the most performant way to traverse them (<a target="_blank" rel="noopener" href="https://github.com/pytorch/pytorch/blob/dee11a92c1f1c423020b965837432924289e0417/aten/src/ATen/native/TensorIterator.h#L285">https://github.com/pytorch/pytorch/blob/dee11a92c1f1c423020b965837432924289e0417/aten/src/ATen/native/TensorIterator.h#L285</a>)</li>
+<li>Loop implementation. There are multiple different kernels in Loops.h depending on the number of inputs, they dispatch automatically by cpu_kernel, the ability to do parallel calculations, vectorized version availability (cpu_kernel_vec), type of operation (vectorized_inner_reduction). In our case, we have one output and two inputs, in this type of scenario we can use cpu_kernel. TensorIterator automatically picks the best way to traverse tensors (such as taking into account contiguous layout) as well as using parallelization for bigger tensors.</li>
+</ul>
+<p>As a result, we have a <strong>24x</strong> performance gain.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">In [*2*]: x = torch.randn(1000000)</span><br><span class="line">In [*3*]: y = torch.randn(1000000)</span><br><span class="line"></span><br><span class="line">In [*4*]: timeit torch.lerp(x,y,0.5)</span><br><span class="line">106 µs ± 3.4 µs per loop (mean ± std. dev. of 7 runs, 10000 loops each)</span><br></pre></td></tr></table></figure>
+
+<p>Most of the gain comes from the parallelization, so it is worth checking with <code>OMP_NUM_THREADS=1</code>.</p>
+<p>Here we can see <strong>2x</strong> improvement in comparison to the CPU_tensor_apply3 version of the code.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">In [*2*]: x = torch.randn(1000000)</span><br><span class="line">In [*3*]: y = torch.randn(1000000)</span><br><span class="line"></span><br><span class="line">In [*4*]: timeit torch.lerp(x,y,0.5)</span><br><span class="line">1.15 ms ± 65 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)</span><br></pre></td></tr></table></figure>
+
+<h2 id="Using-native-cpu"><a href="#Using-native-cpu" class="headerlink" title="Using native/cpu"></a>Using native/cpu</h2><p>However, as noted above, it is sub-optimal (and NOT recommended solution) as we are not using vectorization and various compile-time optimizations. We can fix it by moving code into the native/cpu folder.</p>
+<p>// Content of the aten/src/ATen/native/cpu/LerpKernel.cpp<a target="_blank" rel="noopener" href="https://github.com/pytorch/pytorch/pull/21025/commits/bcf9b1f30331fc897fcc94661e84d47e91bf7290#diff-8d5b3146a020ca873b987cb2aced7fa0">1</a></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;ATen/ATen.h&gt;</span><br><span class="line">#include &lt;ATen/Dispatch.h&gt;</span><br><span class="line">#include &lt;ATen/native/Lerp.h&gt;</span><br><span class="line">#include &lt;ATen/native/TensorIterator.h&gt;</span><br><span class="line">#include &lt;ATen/native/cpu/Loops.h&gt;</span><br><span class="line"></span><br><span class="line">namespace at &#123;</span><br><span class="line">namespace native &#123;</span><br><span class="line">namespace &#123;</span><br><span class="line"></span><br><span class="line">static void lerp_kernel(</span><br><span class="line">    Tensor&amp; ret,</span><br><span class="line">    const Tensor&amp; self,</span><br><span class="line">    const Tensor&amp; end,</span><br><span class="line">    Scalar weight) &#123;</span><br><span class="line">  auto builder = at::TensorIterator::Builder();</span><br><span class="line">  builder.add_output(ret);</span><br><span class="line">  builder.add_input(self);</span><br><span class="line">  builder.add_input(end);</span><br><span class="line">  auto iter = builder.build();</span><br><span class="line"></span><br><span class="line">   AT_DISPATCH_FLOATING_TYPES(ret.scalar_type(), &quot;lerp_kernel&quot;, [&amp;] &#123;</span><br><span class="line">    scalar_t weight_val = weight.to&lt;scalar_t&gt;();</span><br><span class="line">    at::native::binary_kernel(*iter, [=](scalar_t self_val, scalar_t end_val) &#123;</span><br><span class="line">      return (weight_val &lt; 0.5)</span><br><span class="line">          ? self_val + weight_val * (end_val - self_val)</span><br><span class="line">          : end_val - (end_val - self_val) * (1 - weight_val);</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#125; // anonymous namespace</span><br><span class="line"></span><br><span class="line">REGISTER_DISPATCH(lerp_stub, &amp;lerp_kernel);</span><br><span class="line"></span><br><span class="line">&#125; // namespace native</span><br><span class="line">&#125; // namespace at</span><br></pre></td></tr></table></figure>
+<p>code: <a target="_blank" rel="noopener" href="https://github.com/pytorch/pytorch/pull/21025/commits/bcf9b1f30331fc897fcc94661e84d47e91bf7290">https://github.com/pytorch/pytorch/pull/21025/commits/bcf9b1f30331fc897fcc94661e84d47e91bf7290</a></p>
+<p>This code using the same type dispatch pattern AT_DISPATCH_FLOATING_TYPES, but moving everything into the kernel code for better optimization.</p>
+<p> <img src="/img/2020/0323/change1.png" alt="&quot;change1&quot;"></p>
+<p>Such code organization gives us 2x performance boost in comparison to the previous naive implementation. This optimization is archived by compiling AVX2 kernel versions (only applies to native/cpu folder) and dispatching supported code based on cpuinfo.</p>
+<p><strong>Multithreaded</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">In [*2*]: x = torch.randn(1000000)</span><br><span class="line">In [*3*]: y = torch.randn(1000000)</span><br><span class="line"></span><br><span class="line">In [*4*]: timeit torch.lerp(x,y,0.5)</span><br><span class="line">51 µs ± 934 ns per loop (mean ± std. dev. of 7 runs, 10000 loops each)</span><br></pre></td></tr></table></figure>
+<p><strong>Single thread</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">In [*2*]: x = torch.randn(1000000)</span><br><span class="line">In [*3*]: y = torch.randn(1000000)</span><br><span class="line"></span><br><span class="line">In [*4*]: timeit torch.lerp(x,y,0.5)</span><br><span class="line">440 µs ± 2.13 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)</span><br></pre></td></tr></table></figure>
+
+<h2 id="Vectorization-with-the-cpu-kernel-vec"><a href="#Vectorization-with-the-cpu-kernel-vec" class="headerlink" title="Vectorization with the cpu_kernel_vec"></a>Vectorization with the cpu_kernel_vec</h2><p>In many cases, we can also benefit from the explicit vectorization (provided by Vec256 library). TensorIterator provides the easy way to do it by using _vec loops.<br> <img src="/img/2020/0323/change2.png" alt="&quot;change2&quot;"></p>
+<p>code: <a target="_blank" rel="noopener" href="https://github.com/pytorch/pytorch/pull/21025/commits/83a23e745e839e8db81cf58ee00a5755d7332a43">https://github.com/pytorch/pytorch/pull/21025/commits/83a23e745e839e8db81cf58ee00a5755d7332a43</a></p>
+<p>We are doing so by replacing the cpu_kernel with the cpu_kernel_vec. At this particular case, weight_val check was omitted (to simplify example code), and performance benchmark show no significant gain.</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/pytorch/pytorch/wiki/How-to-use-TensorIterator"><strong>Source link: How to use TensorIterator</strong></a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+      <div>
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+
+      </div>
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>小手一抖，金币到手</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt=" 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/pytorch/" rel="tag"><i class="fa fa-tag"></i> pytorch</a>
+          
+            <a href="/tags/tensoriterator/" rel="tag"><i class="fa fa-tag"></i> tensoriterator</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/03/22/jittor-by-Tsinghua/" rel="next" title="如何评价清华大学发布的自研深度学习框架-计图(Jittor)？">
+                <i class="fa fa-chevron-left"></i> 如何评价清华大学发布的自研深度学习框架-计图(Jittor)？
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/03/23/cpu-threading-and-torchscript-inference/" rel="prev" title="CPU THREADING AND TORCHSCRIPT INFERENCE">
+                CPU THREADING AND TORCHSCRIPT INFERENCE <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/photo.jpg"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">134</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">13</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">84</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/huangzhiyuan" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:huangzy099@163.com" target="_blank" title="E-Mail">
+                    
+                      <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="http://blog.csdn.net/huangzhiyuan111" target="_blank" title="csdn">
+                    
+                      <i class="fa fa-fw fa-globe"></i>csdn</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://www.zhihu.com/people/justforfun099/activities" target="_blank" title="zhihu">
+                    
+                      <i class="fa fa-fw fa-globe"></i>zhihu</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Simple-implementation"><span class="nav-number">1.</span> <span class="nav-text">Simple implementation</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Using-native-cpu"><span class="nav-number">2.</span> <span class="nav-text">Using native&#x2F;cpu</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Vectorization-with-the-cpu-kernel-vec"><span class="nav-number">3.</span> <span class="nav-text">Vectorization with the cpu_kernel_vec</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Huang</span>
+
+  
+</div>
+
+<div class="powered-by">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</div>
+
+<!--
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.3</div>
+
+
+
+ -->
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

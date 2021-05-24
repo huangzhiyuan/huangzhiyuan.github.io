@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="深度学习框架," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="2020年3月20日，清华自研的深度学习框架，正式对外开源。清华大学计算机系的图形实验室出品，取名Jittor，中文名计图。计图（Jittor）：一个完全基于动态编译（Just-in-time）,内部使用创新的元算子和统一计算图的深度学习框架， 元算子和Numpy一样易于使用，并且超越Numpy能够实现更复杂更高效的操作。而统一计算图则是融合了静态计算图和动态计算图的诸多优点，在易于使用的同时，提">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何评价清华大学发布的自研深度学习框架-计图(Jittor)？">
+<meta property="og:url" content="http://yoursite.com/2020/03/22/jittor-by-Tsinghua/index.html">
+<meta property="og:site_name">
+<meta property="og:description" content="2020年3月20日，清华自研的深度学习框架，正式对外开源。清华大学计算机系的图形实验室出品，取名Jittor，中文名计图。计图（Jittor）：一个完全基于动态编译（Just-in-time）,内部使用创新的元算子和统一计算图的深度学习框架， 元算子和Numpy一样易于使用，并且超越Numpy能够实现更复杂更高效的操作。而统一计算图则是融合了静态计算图和动态计算图的诸多优点，在易于使用的同时，提">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-03-22T12:34:22.000Z">
+<meta property="article:modified_time" content="2020-03-23T04:42:54.000Z">
+<meta property="article:author" content="Huang">
+<meta property="article:tag" content="深度学习框架">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/03/22/jittor-by-Tsinghua/"/>
+
+
+
+
+
+  <title>如何评价清华大学发布的自研深度学习框架-计图(Jittor)？ | </title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title"></span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">靡不有初 鲜克有终</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/03/22/jittor-by-Tsinghua/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/photo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">如何评价清华大学发布的自研深度学习框架-计图(Jittor)？</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-03-22T20:34:22+08:00">
+                2020-03-22
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index">
+                    <span itemprop="name">深度学习</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>2020年3月20日，清华自研的深度学习框架，正式对外开源。清华大学计算机系的图形实验室出品，取名Jittor，中文名计图。<br>计图（Jittor）：一个完全基于动态编译（Just-in-time）,内部使用创新的元算子和统一计算图的深度学习框架， 元算子和Numpy一样易于使用，并且超越Numpy能够实现更复杂更高效的操作。而统一计算图则是融合了静态计算图和动态计算图的诸多优点，在易于使用的同时，提供高性能的优化。基于元算子开发的深度学习模型，可以被计图实时的自动优化并且运行在指定的硬件上，如CPU，GPU。<br>官网链接： <a target="_blank" rel="noopener" href="https://cg.cs.tsinghua.edu.cn/jittor/">https://cg.cs.tsinghua.edu.cn/jittor/</a><br>github地址： <a target="_blank" rel="noopener" href="https://github.com/Jittor/jittor">https://github.com/Jittor/jittor</a></p>
+<span id="more"></span>
+<p>简单看了一下代码，非常有意思的一个项目。因为看得不深入，所以如果有观察错误的话，我想对作者先致以歉意。<br>总的来说：项目更加关注在如何进行计算图优化以及just in time compilation上面（所以叫jittor），并不是关注完整的端到端的框架设计（比如说建模前端等等），我觉得定位是比较清楚的，自动代码生成是现在大家都很关注的方向，在校的同学能够着手把这一套都做一次，值得点赞。<br>一些能看到的工程点：</p>
+<ul>
+<li>实现了一个比较经典的DAG graph，以及在图上来做fusion和各种pass。从op的实现上，选择了细粒度的op，例如bcast，reduce，等等，然后通过这种方式来形成meta op，比如说convolution：<a target="_blank" rel="noopener" href="https://github.com/Jittor/jittor/blob/master/notebook/meta_op.src.md">https://github.com/Jittor/jittor/blob/master/notebook/meta_op.src.md</a> 值得关注的一点是，在XLA的早期，也有过对于op粒度的探索，目前大家的一些结论是，常见的op，比如说convolution，gemm，如果用细粒度op来实现，然后这些细粒度op是在一个op graph当中来做jit的，对性能会是一个很大的挑战（除了在代码里面embed constant value，loop reordering等等）之外，很多关于计算的细节信息都丢失了，会对后面的fusion pass有很大的挑战。</li>
+<li>现在一般的自动编译框架选择的方式其实是选择两层IR，一层做计算图DAG，一层做数学表达（比如说bcast，reduce，最典型的是Halide）。可能值得看一看。编译是通过route到binary call，比如说nvcc和gcc，然后读取编译器的输出来做的（<a target="_blank" rel="noopener" href="https://github.com/Jittor/jittor/blob/85d9ccc004b83ad2d83769ffd1803fb038a17264/src/jit_compiler.cc#L20%EF%BC%89%E3%80%82%E8%BF%99%E4%B8%AA%E8%AE%A9%E6%88%91%E6%83%B3%E8%B5%B7%E5%BD%93%E5%B9%B4%E7%9A%84theano%E7%9A%84%E8%AE%BE%E8%AE%A1%EF%BC%8C%E8%83%8C%E5%90%8E%E7%9A%84%E6%80%9D%E6%83%B3%E4%B8%80%E8%84%89%E7%9B%B8%E6%89%BF%E3%80%82%E7%9B%B8%E6%AF%94%E8%BE%83%E4%BA%8E%E5%AF%B9%E6%8E%A5libllvm%E7%AD%89runtime">https://github.com/Jittor/jittor/blob/85d9ccc004b83ad2d83769ffd1803fb038a17264/src/jit_compiler.cc#L20）。这个让我想起当年的theano的设计，背后的思想一脉相承。相比较于对接libllvm等runtime</a> library，是一个比较短平快可以来实现从前端到编译的办法。</li>
+<li>一个小tip，c++其实有demangle的一些utility（<a target="_blank" rel="noopener" href="https://github.com/pytorch/pytorch/blob/master/c10/util/Type.h#L13%EF%BC%89%EF%BC%8C%E5%8F%AF%E4%BB%A5%E4%B8%8D%E9%9C%80%E8%A6%81%E6%8A%8Asymbol%E7%9A%84magic">https://github.com/pytorch/pytorch/blob/master/c10/util/Type.h#L13），可以不需要把symbol的magic</a> string放在代码里面（<a target="_blank" rel="noopener" href="https://github.com/Jittor/jittor/blob/85d9ccc004b83ad2d83769ffd1803fb038a17264/src/jit_compiler.cc#L59%EF%BC%89">https://github.com/Jittor/jittor/blob/85d9ccc004b83ad2d83769ffd1803fb038a17264/src/jit_compiler.cc#L59）</a></li>
+<li>因为编译的产出是直接的binary，不需要一个通用的framework runtime，所以编译以后的产出binary size会很小，这个也许会在端上设备、microcontroller等场景比较有意思？</li>
+</ul>
+<p>很赞的一些工程细节：</p>
+<ul>
+<li>有log和flag的设计（应该是学习了google glog和gflags？），并且代码当中做了比较多的logging，这个是个工程实现当中很重要的环节。<a target="_blank" rel="noopener" href="https://github.com/Jittor/jittor/tree/master/src/utils">https://github.com/Jittor/jittor/tree/master/src/utils</a></li>
+<li>因为compilation时间比较久，所以考虑了做cache：<a target="_blank" rel="noopener" href="https://github.com/Jittor/jittor/blob/master/src/utils/cache_compile.h">https://github.com/Jittor/jittor/blob/master/src/utils/cache_compile.h</a></li>
+</ul>
+<p>– 贾扬清<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/380993685/answer/1092398223">1</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+      <div>
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+
+      </div>
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>小手一抖，金币到手</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt=" 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E6%A1%86%E6%9E%B6/" rel="tag"><i class="fa fa-tag"></i> 深度学习框架</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/03/18/conda-and-pip/" rel="next" title="Understanding Conda and Pip">
+                <i class="fa fa-chevron-left"></i> Understanding Conda and Pip
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/03/23/how-to-use-tensoriterator/" rel="prev" title="how to use tensoriterator">
+                how to use tensoriterator <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/photo.jpg"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">134</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">13</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">84</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/huangzhiyuan" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:huangzy099@163.com" target="_blank" title="E-Mail">
+                    
+                      <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="http://blog.csdn.net/huangzhiyuan111" target="_blank" title="csdn">
+                    
+                      <i class="fa fa-fw fa-globe"></i>csdn</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://www.zhihu.com/people/justforfun099/activities" target="_blank" title="zhihu">
+                    
+                      <i class="fa fa-fw fa-globe"></i>zhihu</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Huang</span>
+
+  
+</div>
+
+<div class="powered-by">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</div>
+
+<!--
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.3</div>
+
+
+
+ -->
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

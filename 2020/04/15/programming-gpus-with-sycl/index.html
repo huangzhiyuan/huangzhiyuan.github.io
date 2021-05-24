@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="SYCL," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="Introduction to GPGPU  Why program GPUsCPU VS GPU architectureGeneral GPU programming tips   SYCL for OpenCL  OverviewFeatures   SYCL example  Vector add">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Programming GPUs with SYCL">
+<meta property="og:url" content="http://yoursite.com/2020/04/15/programming-gpus-with-sycl/index.html">
+<meta property="og:site_name">
+<meta property="og:description" content="Introduction to GPGPU  Why program GPUsCPU VS GPU architectureGeneral GPU programming tips   SYCL for OpenCL  OverviewFeatures   SYCL example  Vector add">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yoursite.com/img/2020/0415/cpugpu.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0415/cpuarch.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0415/gpuarch.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0415/commarch.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0415/lockstep.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0415/accmem.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0415/sycl.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0415/ecosystem.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0415/Regularc.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0415/opencl.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0415/sycl-shared-source.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0415/separate.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0415/dependency.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0415/highapi.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0415/add1.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0415/add2.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0415/add3.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0415/add4.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0415/add5.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0415/add6.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0415/add7.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0415/add8.png">
+<meta property="article:published_time" content="2020-04-15T06:39:39.000Z">
+<meta property="article:modified_time" content="2020-04-15T08:34:50.000Z">
+<meta property="article:author" content="Huang">
+<meta property="article:tag" content="SYCL">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/img/2020/0415/cpugpu.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/04/15/programming-gpus-with-sycl/"/>
+
+
+
+
+
+  <title>Programming GPUs with SYCL | </title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title"></span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">靡不有初 鲜克有终</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/15/programming-gpus-with-sycl/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/photo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Programming GPUs with SYCL</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-04-15T14:39:39+08:00">
+                2020-04-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/GPU/" itemprop="url" rel="index">
+                    <span itemprop="name">GPU</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <ul>
+<li><p>Introduction to GPGPU</p>
+<blockquote>
+<p>Why program GPUs<br>CPU VS GPU architecture<br>General GPU programming tips</p>
+</blockquote>
+</li>
+<li><p>SYCL for OpenCL</p>
+<blockquote>
+<p>Overview<br>Features</p>
+</blockquote>
+</li>
+<li><p>SYCL example</p>
+<blockquote>
+<p>Vector add</p>
+</blockquote>
+</li>
+</ul>
+<span id="more"></span>
+<h2 id="Introduction-to-GPGPU"><a href="#Introduction-to-GPGPU" class="headerlink" title="Introduction to GPGPU"></a>Introduction to GPGPU</h2><h3 id="Why-program-GPUs"><a href="#Why-program-GPUs" class="headerlink" title="Why program GPUs"></a>Why program GPUs</h3><ul>
+<li><p>Need for parallellism to gain performance</p>
+<blockquote>
+<p>“Free lunch” provided by Moore’s law is Over<br>adding even more CPU cores is showing diminishing returns</p>
+</blockquote>
+</li>
+<li><p>GPUs are extremely efficient for</p>
+<blockquote>
+<p>data parallel tasks<br>Arithmetic heavy computations</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="CPU-VS-GPU-architecture"><a href="#CPU-VS-GPU-architecture" class="headerlink" title="CPU VS GPU architecture"></a>CPU VS GPU architecture</h3><p><img src="/img/2020/0415/cpugpu.png" alt="&quot;cpugpu&quot;"></p>
+<p><strong>CPU:</strong></p>
+<ul>
+<li>task parallellism</li>
+<li>small number of large cores</li>
+<li>seperate instrustions on each core independently</li>
+<li>higher power consumption</li>
+<li>lower memory bandwidth</li>
+<li>random memory access</li>
+</ul>
+<p><strong>GPU:</strong></p>
+<ul>
+<li>data parallellism</li>
+<li>large number of small execution Units</li>
+<li>single instrustions on all multiple execution units in lock-step</li>
+<li>lower power consumption</li>
+<li>higher memory bandwidth</li>
+<li>sequential memory access</li>
+</ul>
+<h3 id="common-CPU-Architecture"><a href="#common-CPU-Architecture" class="headerlink" title="common CPU Architecture"></a>common CPU Architecture</h3><p><img src="/img/2020/0415/cpuarch.png" alt="&quot;cpugpu&quot;"></p>
+<h3 id="common-GPU-Architecture"><a href="#common-GPU-Architecture" class="headerlink" title="common GPU Architecture"></a>common GPU Architecture</h3><p><img src="/img/2020/0415/gpuarch.png" alt="&quot;gpugpu&quot;"></p>
+<h3 id="common-system-architecture"><a href="#common-system-architecture" class="headerlink" title="common system architecture"></a>common system architecture</h3><p><img src="/img/2020/0415/commarch.png" alt="&quot;commarch&quot;"></p>
+<h3 id="GPUs-execute-in-lock-step"><a href="#GPUs-execute-in-lock-step" class="headerlink" title="GPUs execute in lock-step"></a>GPUs execute in lock-step</h3><p><img src="/img/2020/0415/lockstep.png" alt="&quot;lockstep&quot;"></p>
+<h3 id="GPUs-access-memory-sequentially"><a href="#GPUs-access-memory-sequentially" class="headerlink" title="GPUs access memory sequentially"></a>GPUs access memory sequentially</h3><p><img src="/img/2020/0415/accmem.png" alt="&quot;accmem&quot;"></p>
+<h3 id="General-GPU-programming-tips"><a href="#General-GPU-programming-tips" class="headerlink" title="General GPU programming tips"></a>General GPU programming tips</h3><ul>
+<li>ensure the task is suitable<br>GPUs are most efficient for data parallel tasks<br>performance gain from prforming computing &gt; cost of moving data</li>
+<li>avoid branching<br>waves of processing elements execute in lock-step<br>both sides of branches execute with the other masked</li>
+<li>avoid non-coalesced memory access<br>GPUs access memory more efficiently if accessed as contiguous blocks</li>
+<li>avoid exponsive data movement<br>the bottleneck in GPU programming is data movement between CPU and GPU memory<br>it’s important to have data as clse to the procesing as possible</li>
+</ul>
+<h2 id="SYCL-for-OpenCL"><a href="#SYCL-for-OpenCL" class="headerlink" title="SYCL for OpenCL"></a>SYCL for OpenCL</h2><h3 id="what-is-OpenCL"><a href="#what-is-OpenCL" class="headerlink" title="what is OpenCL"></a>what is OpenCL</h3><ul>
+<li>allows you to write kernels that execute on accelerators</li>
+<li>allows you to copy data between the host CPU and accelerators</li>
+<li>supports a wide range of devices</li>
+<li>comes in two components<br>Host side C API for en-queueing kernels and copying Data<br>Device side OpenCL C language for writing kernels</li>
+</ul>
+<h3 id="Motivation-of-SYCL"><a href="#Motivation-of-SYCL" class="headerlink" title="Motivation of SYCL"></a>Motivation of SYCL</h3><ul>
+<li>make heterogeneous programming more accessible<br>provide a foundation for efficient and portable templeate algorithms</li>
+<li>create a C++ for OpenCL ecosystem<br>define an open portable standard<br>provide the performance and portability of OpenCL<br>base only on standard C++</li>
+<li>provide a high-level shared source model<br>provide a high-level abstraction over OpenCL boiler plate Code<br>allow C++ template libraries to target OpenCL<br>allow type safety across host and device</li>
+</ul>
+<p><img src="/img/2020/0415/sycl.png" alt="&quot;sycl&quot;"></p>
+<p><img src="/img/2020/0415/ecosystem.png" alt="&quot;ecosystem&quot;"></p>
+<p><strong>how does shared source work? Regular C++ (Single Source)</strong><br><img src="/img/2020/0415/Regularc.png" alt="&quot;Regularc&quot;"></p>
+<p><strong>how does shared source work? OpenCL (separate Source)</strong><br><img src="/img/2020/0415/opencl.png" alt="&quot;opencl&quot;"></p>
+<p><strong>how does shared source work? SYCL (shared Source)</strong><br><img src="/img/2020/0415/sycl-shared-source.png" alt="&quot;sycl-shared-source&quot;"></p>
+<p><img src="/img/2020/0415/separate.png" alt="&quot;separate&quot;"></p>
+<p><img src="/img/2020/0415/dependency.png" alt="&quot;dependency&quot;"></p>
+<h3 id="Suported-Subset-of-C-in-Device-Code"><a href="#Suported-Subset-of-C-in-Device-Code" class="headerlink" title="Suported Subset of C++ in Device Code"></a>Suported Subset of C++ in Device Code</h3><p><strong>Suported Features</strong></p>
+<ul>
+<li>static polymorphism</li>
+<li>lambdas</li>
+<li>classes</li>
+<li>operator overloading</li>
+<li>templeates</li>
+<li>placement new</li>
+</ul>
+<p><strong>Non-Suported Features</strong></p>
+<ul>
+<li>dynamic polymorphism</li>
+<li>dynamic allocation</li>
+<li>exception handling</li>
+<li>RTTI</li>
+<li>static variables</li>
+<li>function pointers</li>
+</ul>
+<p><img src="/img/2020/0415/highapi.png" alt="&quot;highapi&quot;"></p>
+<h2 id="SYCL-example"><a href="#SYCL-example" class="headerlink" title="SYCL example"></a>SYCL example</h2><h3 id="Vector-add"><a href="#Vector-add" class="headerlink" title="Vector add"></a>Vector add</h3><p><img src="/img/2020/0415/add1.png" alt="&quot;add1&quot;"><br><img src="/img/2020/0415/add2.png" alt="&quot;add2&quot;"><br><img src="/img/2020/0415/add3.png" alt="&quot;add3&quot;"><br><img src="/img/2020/0415/add4.png" alt="&quot;add4&quot;"><br><img src="/img/2020/0415/add5.png" alt="&quot;add5&quot;"><br><img src="/img/2020/0415/add6.png" alt="&quot;add6&quot;"><br><img src="/img/2020/0415/add7.png" alt="&quot;add7&quot;"><br><img src="/img/2020/0415/add8.png" alt="&quot;add8&quot;"></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+      <div>
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+
+      </div>
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>小手一抖，金币到手</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt=" 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/SYCL/" rel="tag"><i class="fa fa-tag"></i> SYCL</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/04/14/ML-interview/" rel="next" title="深度学习面试常见问题集锦">
+                <i class="fa fa-chevron-left"></i> 深度学习面试常见问题集锦
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/04/22/topk-in-sycl/" rel="prev" title="topk in GPU">
+                topk in GPU <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/photo.jpg"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">134</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">13</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">84</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/huangzhiyuan" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:huangzy099@163.com" target="_blank" title="E-Mail">
+                    
+                      <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="http://blog.csdn.net/huangzhiyuan111" target="_blank" title="csdn">
+                    
+                      <i class="fa fa-fw fa-globe"></i>csdn</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://www.zhihu.com/people/justforfun099/activities" target="_blank" title="zhihu">
+                    
+                      <i class="fa fa-fw fa-globe"></i>zhihu</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Introduction-to-GPGPU"><span class="nav-number">1.</span> <span class="nav-text">Introduction to GPGPU</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Why-program-GPUs"><span class="nav-number">1.1.</span> <span class="nav-text">Why program GPUs</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CPU-VS-GPU-architecture"><span class="nav-number">1.2.</span> <span class="nav-text">CPU VS GPU architecture</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#common-CPU-Architecture"><span class="nav-number">1.3.</span> <span class="nav-text">common CPU Architecture</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#common-GPU-Architecture"><span class="nav-number">1.4.</span> <span class="nav-text">common GPU Architecture</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#common-system-architecture"><span class="nav-number">1.5.</span> <span class="nav-text">common system architecture</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GPUs-execute-in-lock-step"><span class="nav-number">1.6.</span> <span class="nav-text">GPUs execute in lock-step</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GPUs-access-memory-sequentially"><span class="nav-number">1.7.</span> <span class="nav-text">GPUs access memory sequentially</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#General-GPU-programming-tips"><span class="nav-number">1.8.</span> <span class="nav-text">General GPU programming tips</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SYCL-for-OpenCL"><span class="nav-number">2.</span> <span class="nav-text">SYCL for OpenCL</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#what-is-OpenCL"><span class="nav-number">2.1.</span> <span class="nav-text">what is OpenCL</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Motivation-of-SYCL"><span class="nav-number">2.2.</span> <span class="nav-text">Motivation of SYCL</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Suported-Subset-of-C-in-Device-Code"><span class="nav-number">2.3.</span> <span class="nav-text">Suported Subset of C++ in Device Code</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SYCL-example"><span class="nav-number">3.</span> <span class="nav-text">SYCL example</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Vector-add"><span class="nav-number">3.1.</span> <span class="nav-text">Vector add</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Huang</span>
+
+  
+</div>
+
+<div class="powered-by">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</div>
+
+<!--
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.3</div>
+
+
+
+ -->
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

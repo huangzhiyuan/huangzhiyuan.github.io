@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="SYCL,Vtune," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="最近需要验证一个bit_cast转换函数在GPU kernel里面的底层实现形式，之前一直猜想是Mov指令完成的，CPU端的代码往往通过gdb反汇编很容易看到每行代码对应个汇编语言，但是对于GPU的kernel，我却一直没有什么经验。刚好可以利用Intel最近准备release的OneAPI开发工具包，借助里面的gdb-oneapi和VTune工具来实现。本文就是记录这次踩坑过程。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用Vtune工具反汇编SYCL代码样例">
+<meta property="og:url" content="http://yoursite.com/2020/05/22/sycl-assemble-vtune/index.html">
+<meta property="og:site_name">
+<meta property="og:description" content="最近需要验证一个bit_cast转换函数在GPU kernel里面的底层实现形式，之前一直猜想是Mov指令完成的，CPU端的代码往往通过gdb反汇编很容易看到每行代码对应个汇编语言，但是对于GPU的kernel，我却一直没有什么经验。刚好可以利用Intel最近准备release的OneAPI开发工具包，借助里面的gdb-oneapi和VTune工具来实现。本文就是记录这次踩坑过程。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yoursite.com/img/2020/0522/oneapi.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0522/tool.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0522/vtune.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0522/assemble.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0522/inst.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0522/check.png">
+<meta property="article:published_time" content="2020-05-22T01:44:26.000Z">
+<meta property="article:modified_time" content="2020-05-22T02:28:08.000Z">
+<meta property="article:author" content="Huang">
+<meta property="article:tag" content="SYCL">
+<meta property="article:tag" content="Vtune">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/img/2020/0522/oneapi.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/05/22/sycl-assemble-vtune/"/>
+
+
+
+
+
+  <title>使用Vtune工具反汇编SYCL代码样例 | </title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title"></span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">靡不有初 鲜克有终</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/05/22/sycl-assemble-vtune/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/photo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">使用Vtune工具反汇编SYCL代码样例</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-05-22T09:44:26+08:00">
+                2020-05-22
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/GPU/" itemprop="url" rel="index">
+                    <span itemprop="name">GPU</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>最近需要验证一个<code>bit_cast</code>转换函数在GPU kernel里面的底层实现形式，之前一直猜想是<code>Mov</code>指令完成的，CPU端的代码往往通过gdb反汇编很容易看到每行代码对应个汇编语言，但是对于GPU的kernel，我却一直没有什么经验。刚好可以利用Intel最近准备release的<a target="_blank" rel="noopener" href="https://software.intel.com/content/www/us/en/develop/tools/oneapi.html?cid=sem&source=sa360&campid=2020_q2_iags_us_iagsoapi_iagsoapiee_awa_text-link_brand_exact_cd_dpd-oneapi-home_O-20WWS_google_div_oos_non-pbm&ad_group=brand_oneapi-home_awa&intel_term=intel+oneapi&sa360id=43700053523136066&gclid=Cj0KCQjwzZj2BRDVARIsABs3l9IXlGeC-Ez1z9BMTgrMlEOh3zXpuGhO4AenRk9X8H_oThOAUi1je2IaAiIaEALw_wcB">OneAPI</a>开发工具包，借助里面的gdb-oneapi和VTune工具来实现。本文就是记录这次踩坑过程。<br> <img src="/img/2020/0522/oneapi.png" alt="&quot;oneapi&quot;"></p>
+<span id="more"></span>
+
+<p> <img src="/img/2020/0522/tool.png" alt="&quot;tool&quot;"><br>这里使用到的就是Intel vtune profiler工具。该工具官方解释：<strong>Locate performance bottlenecks fast. Advanced sampling and profiling techniques quickly analyze your code, isolate issues, and deliver insights for optimizing performance on modern processors.</strong></p>
+<h2 id="Source-Code"><a href="#Source-Code" class="headerlink" title="Source Code"></a>Source Code</h2><p>先上测试代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br></pre></td><td class="code"><pre><span class="line">#pragma OPENCL EXTENSION cl_khr_fp16 : enable</span><br><span class="line"></span><br><span class="line">#include &lt;iostream&gt;</span><br><span class="line">#include &lt;CL/sycl.hpp&gt;</span><br><span class="line"></span><br><span class="line">//class kernel1;</span><br><span class="line">class kernel2;</span><br><span class="line">namespace sycl = cl::sycl;</span><br><span class="line"></span><br><span class="line">template &lt;typename To, typename From&gt; To bit_cast(const From &amp;from) &#123;</span><br><span class="line">#if __cpp_lib_bit_cast</span><br><span class="line">  return std::bit_cast&lt;To&gt;(from);</span><br><span class="line">#else</span><br><span class="line"></span><br><span class="line">#if __has_builtin(__builtin_bit_cast)</span><br><span class="line">  return __builtin_bit_cast(To, from);  // clang path</span><br><span class="line">#else</span><br><span class="line">  To to;</span><br><span class="line">  detail::memcpy(&amp;to, &amp;from, sizeof(To));</span><br><span class="line">  return to;</span><br><span class="line">#endif // __has_builtin(__builtin_bit_cast)</span><br><span class="line">#endif // __cpp_lib_bit_cast</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void add() &#123;</span><br><span class="line">  sycl::float4 a = &#123;1.0, 2.0, 3.0, 4.0&#125;;</span><br><span class="line">  sycl::float4 b = &#123;4.0, 3.0, 2.0, 3.0&#125;;</span><br><span class="line">  sycl::float4 c = &#123;.0, 0.0, 0.0, 0.0&#125;;</span><br><span class="line"></span><br><span class="line">  sycl::default_selector device_selector;</span><br><span class="line"></span><br><span class="line">  sycl::queue queue(device_selector);</span><br><span class="line">  std::cout &lt;&lt; &quot;Running on &quot;</span><br><span class="line">            &lt;&lt; queue.get_device().get_info&lt;sycl::info::device::name&gt;()</span><br><span class="line">            &lt;&lt; &quot;\n&quot;;</span><br><span class="line">  &#123;</span><br><span class="line">  sycl::buffer&lt;sycl::float4, 1&gt; a_sycl(&amp;a, sycl::range&lt;1&gt;(1));</span><br><span class="line">  sycl::buffer&lt;sycl::float4, 1&gt; b_sycl(&amp;b, sycl::range&lt;1&gt;(1));</span><br><span class="line">  sycl::buffer&lt;sycl::float4, 1&gt; c_sycl(&amp;c, sycl::range&lt;1&gt;(1));</span><br><span class="line"></span><br><span class="line">  queue.submit([&amp;] (sycl::handler&amp; cgh) &#123;</span><br><span class="line">  auto a_acc = a_sycl.get_access&lt;sycl::access::mode::read&gt;(cgh);</span><br><span class="line">  auto b_acc = b_sycl.get_access&lt;sycl::access::mode::read&gt;(cgh);</span><br><span class="line">  auto c_acc = c_sycl.get_access&lt;sycl::access::mode::discard_write&gt;(cgh);</span><br><span class="line"></span><br><span class="line">  cgh.single_task&lt;class vector_addition&gt;([=] () &#123;</span><br><span class="line">    c_acc[0] = a_acc[0] + b_acc[0];</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  &#125;</span><br><span class="line">  std::cout &lt;&lt; &quot;  A &#123; &quot; &lt;&lt; a.x() &lt;&lt; &quot;, &quot; &lt;&lt; a.y() &lt;&lt; &quot;, &quot; &lt;&lt; a.z() &lt;&lt; &quot;, &quot; &lt;&lt; a.w() &lt;&lt; &quot; &#125;\n&quot;</span><br><span class="line">        &lt;&lt; &quot;+ B &#123; &quot; &lt;&lt; b.x() &lt;&lt; &quot;, &quot; &lt;&lt; b.y() &lt;&lt; &quot;, &quot; &lt;&lt; b.z() &lt;&lt; &quot;, &quot; &lt;&lt; b.w() &lt;&lt; &quot; &#125;\n&quot;</span><br><span class="line">        &lt;&lt; &quot;------------------\n&quot;</span><br><span class="line">        &lt;&lt; &quot;= C &#123; &quot; &lt;&lt; c.x() &lt;&lt; &quot;, &quot; &lt;&lt; c.y() &lt;&lt; &quot;, &quot; &lt;&lt; c.z() &lt;&lt; &quot;, &quot; &lt;&lt; c.w() &lt;&lt; &quot; &#125;&quot;</span><br><span class="line">        &lt;&lt; std::endl;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void bitCast() &#123;</span><br><span class="line">  // sycl::gpu_selector device_selector;</span><br><span class="line">  // sycl::queue queue(device_selector);</span><br><span class="line">  cl::sycl::queue queue;</span><br><span class="line">  std::cout &lt;&lt; &quot;Running on &quot; &lt;&lt; queue.get_device().get_info&lt;cl::sycl::info::device::name&gt;() &lt;&lt; &quot;\n&quot;;</span><br><span class="line"></span><br><span class="line">  constexpr size_t LENGTH = 64;</span><br><span class="line">  unsigned short res[64] = &#123;0&#125;;</span><br><span class="line">  cl::sycl::range&lt;1&gt; data_range &#123;LENGTH&#125;;</span><br><span class="line">  &#123;</span><br><span class="line">    cl::sycl::buffer&lt;unsigned short, 1&gt; buf_res(res, 1);</span><br><span class="line">    cl::sycl::half tmp(0.0f);</span><br><span class="line">    queue.submit([&amp;] (sycl::handler&amp; cgh) &#123;</span><br><span class="line">      auto a_acc = buf_res.get_access&lt;sycl::access::mode::discard_write&gt;(cgh);</span><br><span class="line">      cgh.parallel_for&lt;class kernel2&gt;(data_range, [=](cl::sycl::id&lt;1&gt; index) &#123;</span><br><span class="line">        a_acc[index] = bit_cast&lt;unsigned short, cl::sycl::half&gt;(tmp);</span><br><span class="line">        // a_acc[index] = 0x42;</span><br><span class="line">        //a_acc[0] = __builtin_bit_cast(unsigned short, tmp);</span><br><span class="line">      &#125;);</span><br><span class="line">    &#125;);</span><br><span class="line">    queue.wait_and_throw();</span><br><span class="line">  &#125;</span><br><span class="line">  std::cout &lt;&lt; &quot;bit_cast &quot; &lt;&lt; res[0] &lt;&lt; std::endl;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">int main() &#123;</span><br><span class="line">  add();</span><br><span class="line">  bitCast();</span><br><span class="line">  return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这段code比较简单，借助SYCL环境，有两个functions，<code>add()``用来验证简单的</code>scalar<code> 加法，</code>bitCast()<code>用来验证`__builtin_bit_cast()</code> function（需要clang++编译器支持）。<br>这里直接安装整个Intel OneAPI工具包即可。<br>这里的kernel block块是下面，需要验证<code>a_acc[index] = bit_cast&lt;unsigned short, cl::sycl::half&gt;(tmp);</code>对应的汇编代码实现。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">cl::sycl::range&lt;1&gt; data_range &#123;LENGTH&#125;;</span><br><span class="line">&#123;</span><br><span class="line">  cl::sycl::buffer&lt;unsigned short, 1&gt; buf_res(res, 1);</span><br><span class="line">  cl::sycl::half tmp(0.0f);</span><br><span class="line">  queue.submit([&amp;] (sycl::handler&amp; cgh) &#123;</span><br><span class="line">    auto a_acc = buf_res.get_access&lt;sycl::access::mode::discard_write&gt;(cgh);</span><br><span class="line">    cgh.parallel_for&lt;class kernel2&gt;(data_range, [=](cl::sycl::id&lt;1&gt; index) &#123;</span><br><span class="line">      a_acc[index] = bit_cast&lt;unsigned short, cl::sycl::half&gt;(tmp);</span><br><span class="line">      // a_acc[index] = 0x42;</span><br><span class="line">      //a_acc[0] = __builtin_bit_cast(unsigned short, tmp);</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;);</span><br><span class="line">  queue.wait_and_throw();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Build"><a href="#Build" class="headerlink" title="Build"></a>Build</h2><p><code>build</code>步采用makefile来编译。<br>安装并配置oneapie环境变量。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source /home/zhiyuanh/intel/inteloneapi/setvars.sh</span><br></pre></td></tr></table></figure>
+
+<p>makefile文件夹内容如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">ONE_API_ROOT := /home/zhiyuanh/intel/inteloneapi</span><br><span class="line"></span><br><span class="line">SYCL_ROOT := $&#123;ONE_API_ROOT&#125;/compiler/latest/linux</span><br><span class="line"></span><br><span class="line">SYCLCXX := $(SYCL_ROOT)/bin/clang++</span><br><span class="line"></span><br><span class="line">CXXFLAGS := -I $(SYCL_ROOT)/lib/clang/10.0.0/include -fsycl -g -O0</span><br><span class="line"></span><br><span class="line">LDFLAGS := -L $(SYCL_ROOT)/lib -lOpenCL -fsycl -g</span><br><span class="line"></span><br><span class="line">first.o: first.cpp</span><br><span class="line">        $(SYCLCXX) -std=c++11 $(CXXFLAGS) -c first.cpp</span><br><span class="line"></span><br><span class="line">clean:</span><br><span class="line">        rm -f first.exe first.o</span><br></pre></td></tr></table></figure>
+<p>之后<code>make</code>生成<code>first</code>目标文件。</p>
+<h2 id="Vtune采集"><a href="#Vtune采集" class="headerlink" title="Vtune采集"></a>Vtune采集</h2><p>导入vtune并选择<code>GPU offload（preview）</code>模式。<br> <img src="/img/2020/0522/vtune.png" alt="&quot;vtune&quot;"></p>
+<p> 查看对应的source code和生成的汇编code。<br>  <img src="/img/2020/0522/assemble.png" alt="&quot;assemble&quot;"></p>
+<p>这里猜想77行内的源代码对应的是右边标红的<code>mov</code>指令，因为<code>cl::sycl::half</code>共有16个bit，对应的汇编符号是<code>UW</code>。该<code>mov</code>指令将一个<code>UW</code>写到<code>r9</code>寄存器，然后再最后send发射出去。中间没有任何一个环节有修改<code>r9</code>的指令。</p>
+<p>  <img src="/img/2020/0522/inst.png" alt="&quot;inst&quot;"></p>
+<p>这里做一小测试，将77行注释，换成一行<code>a_acc[index] = 0x42</code>常量赋值，如果真是对应那条<code>mov</code>指令，那么现在的新的指令里面会有<code>0x42</code>这个立即数。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">cl::sycl::range&lt;1&gt; data_range &#123;LENGTH&#125;;</span><br><span class="line">&#123;</span><br><span class="line">  cl::sycl::buffer&lt;unsigned short, 1&gt; buf_res(res, 1);</span><br><span class="line">  cl::sycl::half tmp(0.0f);</span><br><span class="line">  queue.submit([&amp;] (sycl::handler&amp; cgh) &#123;</span><br><span class="line">    auto a_acc = buf_res.get_access&lt;sycl::access::mode::discard_write&gt;(cgh);</span><br><span class="line">    cgh.parallel_for&lt;class kernel2&gt;(data_range, [=](cl::sycl::id&lt;1&gt; index) &#123;</span><br><span class="line">      //a_acc[index] = bit_cast&lt;unsigned short, cl::sycl::half&gt;(tmp);</span><br><span class="line">      a_acc[index] = 0x42;</span><br><span class="line">      //a_acc[0] = __builtin_bit_cast(unsigned short, tmp);</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;);</span><br><span class="line">  queue.wait_and_throw();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/img/2020/0522/check.png" alt="&quot;check&quot;"><br>果然和我们猜想一样。</p>
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p><code>bit_cast</code>转换函数在GPU kernel里面的底层实现形式，之前一直猜想是<code>Mov</code>指令完成的，但也有一些其他额外的指令比如<code>mul</code>, <code>or</code>, <code>shl</code>这些可能是算地址偏移量相关。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+      <div>
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+
+      </div>
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>小手一抖，金币到手</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt=" 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/SYCL/" rel="tag"><i class="fa fa-tag"></i> SYCL</a>
+          
+            <a href="/tags/Vtune/" rel="tag"><i class="fa fa-tag"></i> Vtune</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/05/18/atomic-operations/" rel="next" title="Atomic Operations in CUDA">
+                <i class="fa fa-chevron-left"></i> Atomic Operations in CUDA
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/06/11/BLEU-in-NLP/" rel="prev" title="机器翻译评价指标之BLEU解析">
+                机器翻译评价指标之BLEU解析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/photo.jpg"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">134</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">13</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">84</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/huangzhiyuan" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:huangzy099@163.com" target="_blank" title="E-Mail">
+                    
+                      <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="http://blog.csdn.net/huangzhiyuan111" target="_blank" title="csdn">
+                    
+                      <i class="fa fa-fw fa-globe"></i>csdn</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://www.zhihu.com/people/justforfun099/activities" target="_blank" title="zhihu">
+                    
+                      <i class="fa fa-fw fa-globe"></i>zhihu</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Source-Code"><span class="nav-number">1.</span> <span class="nav-text">Source Code</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Build"><span class="nav-number">2.</span> <span class="nav-text">Build</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Vtune%E9%87%87%E9%9B%86"><span class="nav-number">3.</span> <span class="nav-text">Vtune采集</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AE%BA"><span class="nav-number">4.</span> <span class="nav-text">结论</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Huang</span>
+
+  
+</div>
+
+<div class="powered-by">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</div>
+
+<!--
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.3</div>
+
+
+
+ -->
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="mAP," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="如何衡量翻译的好坏？ 机器翻译越接近专业的人工翻译，它就越好。 这是我们的提议背后的核心理念。 为了判断机器翻译的质量，可以根据一个数值指标来衡量其与一个或多个人工参考翻译的接近程度。 因此，我们的MT评估系统需要两个成分：  一个“翻译接近度”数值指标 一个高质量的人工参考翻译语料库  BLEU（Bilingual Evaluation Understudy），相信大家对这个评价指标的概念已经很">
+<meta property="og:type" content="article">
+<meta property="og:title" content="机器翻译评价指标之BLEU解析">
+<meta property="og:url" content="http://yoursite.com/2020/06/11/BLEU-in-NLP/index.html">
+<meta property="og:site_name">
+<meta property="og:description" content="如何衡量翻译的好坏？ 机器翻译越接近专业的人工翻译，它就越好。 这是我们的提议背后的核心理念。 为了判断机器翻译的质量，可以根据一个数值指标来衡量其与一个或多个人工参考翻译的接近程度。 因此，我们的MT评估系统需要两个成分：  一个“翻译接近度”数值指标 一个高质量的人工参考翻译语料库  BLEU（Bilingual Evaluation Understudy），相信大家对这个评价指标的概念已经很">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yoursite.com/img/2020/0611/bleu.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0611/bp.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0611/1.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0611/2.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0611/3.png">
+<meta property="og:image" content="http://yoursite.com/img/2020/0611/4.png">
+<meta property="article:published_time" content="2020-06-11T05:52:54.000Z">
+<meta property="article:modified_time" content="2020-08-14T07:36:14.000Z">
+<meta property="article:author" content="Huang">
+<meta property="article:tag" content="mAP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/img/2020/0611/bleu.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/06/11/BLEU-in-NLP/"/>
+
+
+
+
+
+  <title>机器翻译评价指标之BLEU解析 | </title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title"></span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">靡不有初 鲜克有终</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/06/11/BLEU-in-NLP/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/photo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">机器翻译评价指标之BLEU解析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-06-11T13:52:54+08:00">
+                2020-06-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index">
+                    <span itemprop="name">深度学习</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>如何衡量翻译的好坏？ 机器翻译越接近专业的人工翻译，它就越好。 这是我们的提议背后的核心理念。 为了判断机器翻译的质量，可以根据一个数值指标来衡量其与一个或多个人工参考翻译的接近程度。 因此，我们的MT评估系统需要两个成分：</p>
+<ol>
+<li>一个“翻译接近度”数值指标</li>
+<li>一个高质量的人工参考翻译语料库</li>
+</ol>
+<p>BLEU（Bilingual Evaluation Understudy），相信大家对这个评价指标的概念已经很熟悉，随便百度谷歌就有相关介绍。原论文为<a target="_blank" rel="noopener" href="http://www.aclweb.org/anthology/P02-1040.pdf">BLEU: a Method for Automatic Evaluation of Machine Translation</a>，IBM出品。</p>
+<p>本文通过一个例子详细介绍BLEU是如何计算以及NLTK <a target="_blank" rel="noopener" href="http://www.nltk.org/_modules/nltk/align/bleu_score.html">nltk.align.bleu_score</a>模块的源码。</p>
+<p>首先祭出公式：</p>
+<p><img src="/img/2020/0611/bleu.png" alt="&quot;bleu&quot;"></p>
+<p>其中，<br><img src="/img/2020/0611/bp.png" alt="&quot;bp&quot;"><br>注意这里的BLEU值是针对一条翻译（一个样本）来说的。</p>
+<span id="more"></span>
+
+<p>NLTKnltk.align.bleu_score模块实现了这里的公式，主要包括三个函数，两个私有函数分别计算P和BP，一个函数整合计算BLEU值。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># 计算BLEU值</span><br><span class="line">def bleu(candidate, references, weights)</span><br><span class="line"></span><br><span class="line"># （1）私有函数，计算修正的n元精确率（Modified n-gram Precision）</span><br><span class="line">def _modified_precision(candidate, references, n)</span><br><span class="line"></span><br><span class="line"># （2）私有函数，计算BP惩罚因子</span><br><span class="line">def _brevity_penalty(candidate, references)</span><br></pre></td></tr></table></figure>
+
+<h2 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h2><p>候选译文（Predicted）：<br>It is a guide to action which ensures that the military always obeys the commands of the party</p>
+<p>参考译文（Gold Standard）<br>1：It is a guide to action that ensures that the military will forever heed Party commands<br>2：It is the guiding principle which guarantees the military forces always being under the command of the Party<br>3：It is the practical guide for the army always to heed the directions of the party</p>
+<h2 id="Modified-n-gram-Precision计算（也即是Pn）"><a href="#Modified-n-gram-Precision计算（也即是Pn）" class="headerlink" title="Modified n-gram Precision计算（也即是Pn）"></a>Modified n-gram Precision计算（也即是Pn）</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">def _modified_precision(candidate, references, n):</span><br><span class="line">    counts = Counter(ngrams(candidate, n))</span><br><span class="line"></span><br><span class="line">    if not counts:</span><br><span class="line">        return 0</span><br><span class="line"></span><br><span class="line">    max_counts = &#123;&#125;</span><br><span class="line">    for reference in references:</span><br><span class="line">        reference_counts = Counter(ngrams(reference, n))</span><br><span class="line">        for ngram in counts:</span><br><span class="line">            max_counts[ngram] = max(max_counts.get(ngram, 0), reference_counts[ngram])</span><br><span class="line"></span><br><span class="line">    clipped_counts = dict((ngram, min(count, max_counts[ngram])) for ngram, count in counts.items())</span><br><span class="line"></span><br><span class="line">    return sum(clipped_counts.values()) / sum(counts.values())</span><br></pre></td></tr></table></figure>
+
+<p>我们这里n取值为4，也就是从1-gram计算到4-gram。</p>
+<h3 id="Modified-1-gram-precision"><a href="#Modified-1-gram-precision" class="headerlink" title="Modified 1-gram precision"></a>Modified 1-gram precision</h3><p>首先统计候选译文里每个词出现的次数，然后统计每个词在参考译文中出现的次数，Max表示3个参考译文中的最大值，Min表示候选译文和Max两个的最小值。</p>
+<p><img src="/img/2020/0611/1.png" alt="&quot;1&quot;"></p>
+<h3 id="Modified-2-gram-precision"><a href="#Modified-2-gram-precision" class="headerlink" title="Modified 2-gram precision"></a>Modified 2-gram precision</h3><p><img src="/img/2020/0611/2.png" alt="&quot;2&quot;"></p>
+<h3 id="Modified-3-gram-precision"><a href="#Modified-3-gram-precision" class="headerlink" title="Modified 3-gram precision"></a>Modified 3-gram precision</h3><p><img src="/img/2020/0611/3.png" alt="&quot;3&quot;"></p>
+<h3 id="Modified-4-gram-precision"><a href="#Modified-4-gram-precision" class="headerlink" title="Modified 4-gram precision"></a>Modified 4-gram precision</h3><p><img src="/img/2020/0611/4.png" alt="&quot;4&quot;"></p>
+<h2 id="Brevity-Penalty-计算"><a href="#Brevity-Penalty-计算" class="headerlink" title="Brevity Penalty 计算"></a>Brevity Penalty 计算</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">def _brevity_penalty(candidate, references):</span><br><span class="line"></span><br><span class="line">    c = len(candidate)</span><br><span class="line">    ref_lens = (len(reference) for reference in references)</span><br><span class="line">    #这里有个知识点是Python中元组是可以比较的，如(0,1)&gt;(1,0)返回False，这里利用元组比较实现了选取参考翻译中长度最接近候选翻译的句子，当最接近的参考翻译有多个时，选取最短的。例如候选翻译长度是10，两个参考翻译长度分别为9和11，则r=9.</span><br><span class="line">    r = min(ref_lens, key=lambda ref_len: (abs(ref_len - c), ref_len))</span><br><span class="line">    print &#x27;r:&#x27;,r</span><br><span class="line"></span><br><span class="line">    if c &gt; r:</span><br><span class="line">        return 1</span><br><span class="line">    else:</span><br><span class="line">        return math.exp(1 - r / c)</span><br></pre></td></tr></table></figure>
+
+<p>下面计算BP（Brevity Penalty），翻译过来就是“过短惩罚”。由BP的公式可知取值范围是(0,1]，候选句子越短，越接近0。</p>
+<p>候选翻译句子长度为18，参考翻译分别为：16，18，16。<br>所以c = 18，r=18（参考翻译中选取长度最接近候选翻译的作为rr）</p>
+<p>所以BP = e^0 =1</p>
+<h2 id="整合"><a href="#整合" class="headerlink" title="整合"></a>整合</h2><p>最终<code>BLEU = 1 ⋅ exp(−0.684055269517) = 0.504566684006</code></p>
+<p>BLEU的取值范围是[0,1]，0最差，1最好。</p>
+<p>通过计算过程，我们可以看到，BLEU值其实也就是“改进版的n-gram”加上“过短惩罚因子”。</p>
+<p>参考：<br><a href="https://link.zhihu.com/?target=https://www.yiyibooks.cn/yiyibooks/BLEU_a_Method_for_Automatic_Evaluation_of_Machine_Translation/index.html">https://link.zhihu.com/?target=https%3A//www.yiyibooks.cn/yiyibooks/BLEU_a_Method_for_Automatic_Evaluation_of_Machine_Translation/index.html</a><br><a target="_blank" rel="noopener" href="https://blog.csdn.net/guolindonggld/java/article/details/56966200">https://blog.csdn.net/guolindonggld/java/article/details/56966200</a><br><a target="_blank" rel="noopener" href="https://www.zhihu.com/question/304798594/answer/567383628">https://www.zhihu.com/question/304798594/answer/567383628</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+      <div>
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+
+      </div>
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>小手一抖，金币到手</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt=" 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/mAP/" rel="tag"><i class="fa fa-tag"></i> mAP</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/05/22/sycl-assemble-vtune/" rel="next" title="使用Vtune工具反汇编SYCL代码样例">
+                <i class="fa fa-chevron-left"></i> 使用Vtune工具反汇编SYCL代码样例
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/07/02/pytorch-model-parameters-visualization/" rel="prev" title="PyTorch 模型参数可视化">
+                PyTorch 模型参数可视化 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/photo.jpg"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">134</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">13</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">84</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/huangzhiyuan" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:huangzy099@163.com" target="_blank" title="E-Mail">
+                    
+                      <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="http://blog.csdn.net/huangzhiyuan111" target="_blank" title="csdn">
+                    
+                      <i class="fa fa-fw fa-globe"></i>csdn</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://www.zhihu.com/people/justforfun099/activities" target="_blank" title="zhihu">
+                    
+                      <i class="fa fa-fw fa-globe"></i>zhihu</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BE%8B%E5%AD%90"><span class="nav-number">1.</span> <span class="nav-text">例子</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Modified-n-gram-Precision%E8%AE%A1%E7%AE%97%EF%BC%88%E4%B9%9F%E5%8D%B3%E6%98%AFPn%EF%BC%89"><span class="nav-number">2.</span> <span class="nav-text">Modified n-gram Precision计算（也即是Pn）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Modified-1-gram-precision"><span class="nav-number">2.1.</span> <span class="nav-text">Modified 1-gram precision</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Modified-2-gram-precision"><span class="nav-number">2.2.</span> <span class="nav-text">Modified 2-gram precision</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Modified-3-gram-precision"><span class="nav-number">2.3.</span> <span class="nav-text">Modified 3-gram precision</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Modified-4-gram-precision"><span class="nav-number">2.4.</span> <span class="nav-text">Modified 4-gram precision</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Brevity-Penalty-%E8%AE%A1%E7%AE%97"><span class="nav-number">3.</span> <span class="nav-text">Brevity Penalty 计算</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B4%E5%90%88"><span class="nav-number">4.</span> <span class="nav-text">整合</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Huang</span>
+
+  
+</div>
+
+<div class="powered-by">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</div>
+
+<!--
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.3</div>
+
+
+
+ -->
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

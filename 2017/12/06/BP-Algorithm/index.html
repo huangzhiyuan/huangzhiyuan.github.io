@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="BP算法," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="对于初学者来说，了解了一个算法的重要意义，往往会引起他对算法本身的重视。BP(Back Propagation，后向传播)算法，具有非凡的历史意义和重大的现实意义。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="神经网络——BP算法">
+<meta property="og:url" content="http://yoursite.com/2017/12/06/BP-Algorithm/index.html">
+<meta property="og:site_name">
+<meta property="og:description" content="对于初学者来说，了解了一个算法的重要意义，往往会引起他对算法本身的重视。BP(Back Propagation，后向传播)算法，具有非凡的历史意义和重大的现实意义。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yoursite.com/img/2017/1206/BP_Algorithm/11.jpg">
+<meta property="og:image" content="http://yoursite.com/img/2017/1206/BP_Algorithm/12.jpg">
+<meta property="og:image" content="http://yoursite.com/img/2017/1206/BP_Algorithm/13.png">
+<meta property="og:image" content="http://yoursite.com/img/2017/1206/BP_Algorithm/14.jpg">
+<meta property="og:image" content="http://yoursite.com/img/2017/1206/BP_Algorithm/15.jpg">
+<meta property="og:image" content="http://yoursite.com/img/2017/1206/BP_Algorithm/16.png">
+<meta property="og:image" content="http://yoursite.com/img/2017/1206/BP_Algorithm/1.png">
+<meta property="og:image" content="http://yoursite.com/img/2017/1206/BP_Algorithm/2.jpg">
+<meta property="og:image" content="http://yoursite.com/img/2017/1206/BP_Algorithm/3.png">
+<meta property="og:image" content="http://yoursite.com/img/2017/1206/BP_Algorithm/4.png">
+<meta property="og:image" content="http://yoursite.com/img/2017/1206/BP_Algorithm/5.png">
+<meta property="og:image" content="http://yoursite.com/img/2017/1206/BP_Algorithm/6.png">
+<meta property="og:image" content="http://yoursite.com/img/2017/1206/BP_Algorithm/7.png">
+<meta property="og:image" content="http://yoursite.com/img/2017/1206/BP_Algorithm/8.png">
+<meta property="og:image" content="http://yoursite.com/img/2017/1206/BP_Algorithm/9.png">
+<meta property="og:image" content="http://yoursite.com/img/2017/1206/BP_Algorithm/10.png">
+<meta property="article:published_time" content="2017-12-06T13:40:02.000Z">
+<meta property="article:modified_time" content="2020-03-01T12:07:12.000Z">
+<meta property="article:author" content="Huang">
+<meta property="article:tag" content="BP算法">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/img/2017/1206/BP_Algorithm/11.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/12/06/BP-Algorithm/"/>
+
+
+
+
+
+  <title>神经网络——BP算法 | </title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title"></span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">靡不有初 鲜克有终</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/12/06/BP-Algorithm/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/photo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">神经网络——BP算法</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-06T21:40:02+08:00">
+                2017-12-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index">
+                    <span itemprop="name">机器学习</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>　　对于初学者来说，了解了一个算法的重要意义，往往会引起他对算法本身的重视。BP(Back Propagation，后向传播)算法，具有非凡的历史意义和重大的现实意义。</p>
+<span id="more"></span>
+
+<h1 id="BP算法的意义"><a href="#BP算法的意义" class="headerlink" title="BP算法的意义"></a>BP算法的意义</h1><h2 id="历史意义"><a href="#历史意义" class="headerlink" title="历史意义"></a>历史意义</h2><p>　　1969年,作为人工神经网络创始人的明斯基(Marrin M insky)和佩珀特(Seymour Papert)合作出版了《感知器》一书,论证了简单的线性感知器功能有限,不能解决如“异或”(XOR )这样的基本问题,而且对多层网络也持悲观态度。这些论点给神经网络研究以沉重的打击,很多科学家纷纷离开这一领域,神经网络的研究走向长达10年的低潮时期。</p>
+<p>　　1974年哈佛大学的Paul　Werbos发明BP算法时，正值神经外网络低潮期，并未受到应有的重视。1983年，加州理工学院的物理学家John Hopfield利用神经网络，在旅行商这个NP完全问题的求解上获得当时最好成绩，引起了轰动<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/27239198">2</a>。然而,Hopfield的研究成果仍未能指出明斯基等人论点的错误所在,要推动神经网络研究的全面开展必须直接解除对感知器——多层网络算法的疑虑。<br>真正打破明斯基冰封魔咒的是，David　Rumelhart等学者出版的《平行分布处理:认知的微观结构探索》一书。书中完整地提出了BP算法,系统地解决了多层网络中隐单元连接权的学习问题,并在数学上给出了完整的推导。这是神经网络发展史上的里程碑，BP算法迅速走红，掀起了神经网络的第二次高潮。<br>　　因此，BP算法的历史意义：明确地否定了明斯基等人的错误观点，对神经网络第二次高潮具有决定性意义。</p>
+<h2 id="现实意义"><a href="#现实意义" class="headerlink" title="现实意义"></a>现实意义</h2><p>　　这一点是说BP算法在神经网络领域中的地位和意义。<br>　　<em><strong>BP算法是迄今最成功的神经网络学习算法，现实任务中使用神经网络时，大多是在使用BP算法进行训练<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/27239198">2</a>,包括最近炙手可热的深度学习概念下的卷积神经网络(CNNs)。</strong></em></p>
+<h1 id="什么是BP算法"><a href="#什么是BP算法" class="headerlink" title="什么是BP算法"></a>什么是BP算法</h1><h2 id="BP神经网络"><a href="#BP神经网络" class="headerlink" title="BP神经网络"></a>BP神经网络</h2><p>　　BP神经网络是这样一种神经网络模型，它是由一个输入层、一个输出层和一个或多个隐层构成，它的激活函数采用sigmoid函数，采用BP算法训练的多层前馈神经网络。</p>
+<h2 id="BP算法基本思想"><a href="#BP算法基本思想" class="headerlink" title="BP算法基本思想"></a>BP算法基本思想</h2><p>　　BP算法全称叫作误差反向传播(error Back　Propagation，或者也叫作误差逆传播)算法。其算法基本思想为：在2.1所述的前馈网络中，输入信号经输入层输入，通过隐层计算由输出层输出，输出值与标记值比较，若有误差，将误差反向由输出层向输入层传播，在这个过程中，利用梯度下降算法对神经元权值进行调整。</p>
+<h3 id="BP算法介绍"><a href="#BP算法介绍" class="headerlink" title="BP算法介绍"></a>BP算法介绍</h3><p>　　要想搞懂BP算法，需要先直观理解多层神经网络的训练。<br>　　机器学习可以看做是数理统计的一个应用，在数理统计中一个常见的任务就是拟合，也就是给定一些样本点，用合适的曲线揭示这些样本点随着自变量的变化关系。深度学习同样也是为了这个目的，只不过此时，样本点不再限定为(x, y)点对，而可以是由向量、矩阵等等组成的广义点对(X,Y)。而此时，(X,Y)之间的关系也变得十分复杂，不太可能用一个简单函数表示。然而，人们发现可以用多层神经网络来表示这样的关系，而多层神经网络的本质就是一个多层复合的函数。借用网上找到的一幅图<a target="_blank" rel="noopener" href="http://blog.csdn.net/zouxy09/article/details/9993371">1</a>，来直观描绘一下这种复合关系。</p>
+<p> <img src="/img/2017/1206/BP_Algorithm/11.jpg" alt="&quot;11&quot;"></p>
+<p>其对应的表达式如下：<br> <img src="/img/2017/1206/BP_Algorithm/12.jpg" alt="&quot;12&quot;"></p>
+<p>　　上面式中的Wij就是相邻两层神经元之间的权值，它们就是深度学习需要学习的参数，也就相当于直线拟合y=k*x+b中的待求参数k和b。<br>　　和直线拟合一样，深度学习的训练也有一个目标函数，这个目标函数定义了什么样的参数才算一组“好参数”，不过在机器学习中，一般是采用成本函数（cost function），然后，训练目标就是通过调整每一个权值Wij来使得cost达到最小。cost函数也可以看成是由所有待求权值Wij为自变量的复合函数，而且基本上是非凸的，即含有许多局部最小值。但实际中发现，采用我们常用的梯度下降法就可以有效的求解最小化cost函数的问题。<br>　　梯度下降法需要给定一个初始点，并求出该点的梯度向量，然后以负梯度方向为搜索方向，以一定的步长进行搜索，从而确定下一个迭代点，再计算该新的梯度方向，如此重复直到cost收敛。那么如何计算梯度呢？</p>
+<p> <img src="/img/2017/1206/BP_Algorithm/13.png" alt="&quot;13&quot;"></p>
+<p> <img src="/img/2017/1206/BP_Algorithm/14.jpg" alt="&quot;14&quot;"></p>
+<p>在图中，引入了中间变量c,d。</p>
+<p>　　为了求出a=2, b=1时，e的梯度，我们可以先利用偏导数的定义求出不同层之间相邻节点的偏导关系，如下图所示。</p>
+<p> <img src="/img/2017/1206/BP_Algorithm/15.jpg" alt="&quot;15&quot;"><br> <img src="/img/2017/1206/BP_Algorithm/16.png" alt="&quot;16&quot;"></p>
+<p>　　大家也许已经注意到，这样做是十分冗余的，因为很多路径被重复访问了。比如上图中，a-c-e和b-c-e就都走了路径c-e。对于权值动则数万的深度模型中的神经网络，这样的冗余所导致的计算量是相当大的。同样是利用链式法则，BP算法则机智地避开了这种冗余，它对于每　　一个路径只访问一次就能求顶点对所有下层节点的偏导值。<br>　　正如反向传播(BP)算法的名字说的那样，BP算法是反向(自上往下)来寻找路径的。从最上层的节点e开始，初始值为1，以层为单位进行处理。对于e的下一层的所有子节点，将1乘以e到某个节点路径上的偏导值，并将结果“堆放”在该子节点中。等e所在的层按照这样传播完毕后，第二层的每一个节点都“堆放”些值，然后我们针对每个节点，把它里面所有“堆放”的值求和，就得到了顶点e对该节点的偏导。然后将这些第二层的节点各自作为起始顶点，初始值设为顶点e对它们的偏导值，以”层”为单位重复上述传播过程，即可求出顶点e对每一层节点的偏导数。<br>　　以上图为例，节点c接受e发送的1<em>2并堆放起来，节点d接受e发送的1</em>3并堆放起来，至此第二层完毕，求出各节点总堆放量并继续向下一层发送。节点c向a发送2<em>1并对堆放起来，节点c向b发送2</em>1并堆放起来，节点d向b发送3<em>1并堆放起来，至此第三层完毕，节点a堆放起来的量为2，节点b堆放起来的量为2</em>1+3*1=5, 即顶点e对b的偏导数为5.<br>　　举个不太恰当的例子，如果把上图中的箭头表示欠钱的关系，即c→e表示e欠c的钱。以a, b为例，直接计算e对它们俩的偏导相当于a, 　　b各自去讨薪。a向c讨薪，c说e欠我钱，你向他要。于是a又跨过c去找e。b先向c讨薪，同样又转向e，b又向d讨薪，再次转向e。可以看到，追款之路，充满艰辛，而且还有重复，即a, b 都从c转向e。<br>　　而BP算法就是主动还款。e把所欠之钱还给c，d。c，d收到钱，乐呵地把钱转发给了a，b，皆大欢喜。</p>
+<h2 id="BP算法数学工具"><a href="#BP算法数学工具" class="headerlink" title="BP算法数学工具"></a>BP算法数学工具</h2><p>BP算法中核心的数学工具就是微积分的链式求导法则。</p>
+<p> <img src="/img/2017/1206/BP_Algorithm/1.png" alt="&quot;1&quot;"></p>
+<h2 id="BP算法的推导"><a href="#BP算法的推导" class="headerlink" title="BP算法的推导"></a>BP算法的推导</h2><p> <img src="/img/2017/1206/BP_Algorithm/2.jpg" alt="&quot;2&quot;"><br> <img src="/img/2017/1206/BP_Algorithm/3.png" alt="&quot;3&quot;"><br> <img src="/img/2017/1206/BP_Algorithm/4.png" alt="&quot;4&quot;"><br> <img src="/img/2017/1206/BP_Algorithm/5.png" alt="&quot;5&quot;"><br> <img src="/img/2017/1206/BP_Algorithm/6.png" alt="&quot;6&quot;"><br> <img src="/img/2017/1206/BP_Algorithm/7.png" alt="&quot;7&quot;"><br> <img src="/img/2017/1206/BP_Algorithm/8.png" alt="&quot;8&quot;"><br> <img src="/img/2017/1206/BP_Algorithm/9.png" alt="&quot;9&quot;"><br> <img src="/img/2017/1206/BP_Algorithm/10.png" alt="&quot;10&quot;"></p>
+<h1 id="BP算法的缺点"><a href="#BP算法的缺点" class="headerlink" title="BP算法的缺点"></a>BP算法的缺点</h1><h2 id="局部极小值问题"><a href="#局部极小值问题" class="headerlink" title="局部极小值问题"></a>局部极小值问题</h2><p>BP算法的缺点，首当其冲就是局部极小值问题。</p>
+<h2 id="算法训练非常慢"><a href="#算法训练非常慢" class="headerlink" title="算法训练非常慢"></a>算法训练非常慢</h2><p>BP算法本质上是梯度下降，而它所要优化的目标函数又非常复杂，这使得BP算法效率低下。</p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a target="_blank" rel="noopener" href="http://blog.csdn.net/zouxy09/article/details/9993371">1</a>、《BP算法的哲学思考》，成素梅、郝中华著</p>
+<p><a target="_blank" rel="noopener" href="https://www.zhihu.com/question/27239198">2</a>、《机器学习》，周志华著</p>
+<p><a target="_blank" rel="noopener" href="http://www.jianshu.com/p/c5cda5a52ee4">3</a>、<a target="_blank" rel="noopener" href="http://blog.csdn.net/zouxy09/article/details/9993371">Deep Learning论文笔记之（四）CNN卷积神经网络推导和实现</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.zhihu.com/question/27239198">4</a>、<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/27239198">知乎：如何直观地解释 back propagation 算法？</a></p>
+<p>另一种较为直观的介绍，参见知乎：<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/27239198">Deep learning</a></p>
+<p><a target="_blank" rel="noopener" href="http://www.jianshu.com/p/c5cda5a52ee4"><strong>原文链接</strong></a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+      <div>
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+
+      </div>
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>小手一抖，金币到手</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt=" 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/BP%E7%AE%97%E6%B3%95/" rel="tag"><i class="fa fa-tag"></i> BP算法</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/12/05/CNN-RNN-DNN/" rel="next" title="CNN/RNN/DNN">
+                <i class="fa fa-chevron-left"></i> CNN/RNN/DNN
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/12/06/CNN-introduction/" rel="prev" title="一文读懂卷积神经网络CNN">
+                一文读懂卷积神经网络CNN <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/photo.jpg"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">134</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">13</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">84</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/huangzhiyuan" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:huangzy099@163.com" target="_blank" title="E-Mail">
+                    
+                      <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="http://blog.csdn.net/huangzhiyuan111" target="_blank" title="csdn">
+                    
+                      <i class="fa fa-fw fa-globe"></i>csdn</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://www.zhihu.com/people/justforfun099/activities" target="_blank" title="zhihu">
+                    
+                      <i class="fa fa-fw fa-globe"></i>zhihu</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#BP%E7%AE%97%E6%B3%95%E7%9A%84%E6%84%8F%E4%B9%89"><span class="nav-number">1.</span> <span class="nav-text">BP算法的意义</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8E%86%E5%8F%B2%E6%84%8F%E4%B9%89"><span class="nav-number">1.1.</span> <span class="nav-text">历史意义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8E%B0%E5%AE%9E%E6%84%8F%E4%B9%89"><span class="nav-number">1.2.</span> <span class="nav-text">现实意义</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFBP%E7%AE%97%E6%B3%95"><span class="nav-number">2.</span> <span class="nav-text">什么是BP算法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#BP%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C"><span class="nav-number">2.1.</span> <span class="nav-text">BP神经网络</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BP%E7%AE%97%E6%B3%95%E5%9F%BA%E6%9C%AC%E6%80%9D%E6%83%B3"><span class="nav-number">2.2.</span> <span class="nav-text">BP算法基本思想</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#BP%E7%AE%97%E6%B3%95%E4%BB%8B%E7%BB%8D"><span class="nav-number">2.2.1.</span> <span class="nav-text">BP算法介绍</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BP%E7%AE%97%E6%B3%95%E6%95%B0%E5%AD%A6%E5%B7%A5%E5%85%B7"><span class="nav-number">2.3.</span> <span class="nav-text">BP算法数学工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BP%E7%AE%97%E6%B3%95%E7%9A%84%E6%8E%A8%E5%AF%BC"><span class="nav-number">2.4.</span> <span class="nav-text">BP算法的推导</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#BP%E7%AE%97%E6%B3%95%E7%9A%84%E7%BC%BA%E7%82%B9"><span class="nav-number">3.</span> <span class="nav-text">BP算法的缺点</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B1%80%E9%83%A8%E6%9E%81%E5%B0%8F%E5%80%BC%E9%97%AE%E9%A2%98"><span class="nav-number">3.1.</span> <span class="nav-text">局部极小值问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%97%E6%B3%95%E8%AE%AD%E7%BB%83%E9%9D%9E%E5%B8%B8%E6%85%A2"><span class="nav-number">3.2.</span> <span class="nav-text">算法训练非常慢</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">4.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Huang</span>
+
+  
+</div>
+
+<div class="powered-by">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</div>
+
+<!--
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.3</div>
+
+
+
+ -->
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

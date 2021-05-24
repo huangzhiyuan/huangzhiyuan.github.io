@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="深入理解计算机系统," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="该系列文章摘抄于深入理解计算机系统第三章程序的机器级表示部分。书中部分章节介绍过于详细或基础，故不总结于此。只摘抄之前认识不深刻或者不理解的知识盲区。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入理解计算机系统-3-程序的机器级表示">
+<meta property="og:url" content="http://yoursite.com/2020/03/15/computer-system-chapter-3-data-format-transmission/index.html">
+<meta property="og:site_name">
+<meta property="og:description" content="该系列文章摘抄于深入理解计算机系统第三章程序的机器级表示部分。书中部分章节介绍过于详细或基础，故不总结于此。只摘抄之前认识不深刻或者不理解的知识盲区。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yoursite.com/img/2020/0315/register.jpg">
+<meta property="og:image" content="http://yoursite.com/img/2020/0315/data-format.jpg">
+<meta property="article:published_time" content="2020-03-15T03:40:13.000Z">
+<meta property="article:modified_time" content="2020-03-16T13:24:42.000Z">
+<meta property="article:author" content="Huang">
+<meta property="article:tag" content="深入理解计算机系统">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/img/2020/0315/register.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/03/15/computer-system-chapter-3-data-format-transmission/"/>
+
+
+
+
+
+  <title>深入理解计算机系统-3-程序的机器级表示 | </title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title"></span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">靡不有初 鲜克有终</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/03/15/computer-system-chapter-3-data-format-transmission/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/photo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">深入理解计算机系统-3-程序的机器级表示</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-03-15T11:40:13+08:00">
+                2020-03-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%AF%BB%E4%B9%A6/" itemprop="url" rel="index">
+                    <span itemprop="name">读书</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>该系列文章摘抄于深入理解计算机系统第三章程序的机器级表示部分。书中部分章节介绍过于详细或基础，故不总结于此。只摘抄之前认识不深刻或者不理解的知识盲区。</p>
+<span id="more"></span>
+
+<h2 id="数据格式"><a href="#数据格式" class="headerlink" title="数据格式"></a>数据格式</h2><p>由于是从16位体系结构扩展成32位，Intel用术语“字（word）”，表示16位数据类型。因此称32位位“双字（double words）”，称64位位“四字（quad words）”。C语言基本数据类型对应的x86-64表示如下表：</p>
+<table>
+<thead>
+<tr>
+<th align="left">C声明</th>
+<th align="center">Intel数据类型</th>
+<th align="center">汇编代码后缀</th>
+<th align="right">大小(字节)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">char</td>
+<td align="center">字节</td>
+<td align="center">b</td>
+<td align="right">1</td>
+</tr>
+<tr>
+<td align="left">short</td>
+<td align="center">字</td>
+<td align="center">w</td>
+<td align="right">2</td>
+</tr>
+<tr>
+<td align="left">int</td>
+<td align="center">双字</td>
+<td align="center">l</td>
+<td align="right">4</td>
+</tr>
+<tr>
+<td align="left">long</td>
+<td align="center">四字</td>
+<td align="center">q</td>
+<td align="right">8</td>
+</tr>
+<tr>
+<td align="left">char*</td>
+<td align="center">四字</td>
+<td align="center">q</td>
+<td align="right">8</td>
+</tr>
+<tr>
+<td align="left">float</td>
+<td align="center">单精度</td>
+<td align="center">s</td>
+<td align="right">4</td>
+</tr>
+<tr>
+<td align="left">double</td>
+<td align="center">双精度</td>
+<td align="center">l</td>
+<td align="right">8</td>
+</tr>
+</tbody></table>
+<p>如图所示，大多数GCC生成的汇编代码指令都有一个字符的后缀，报名操作数的大小。例如，数据传输指令有四个变种：</p>
+<ul>
+<li>movb 传送字节</li>
+<li>movw 传送字</li>
+<li>movl 传送双字</li>
+<li>movq 传送四字</li>
+</ul>
+<h2 id="访问信息"><a href="#访问信息" class="headerlink" title="访问信息"></a>访问信息</h2><p>一个x86-64的中央处理单元CPU包含一组<strong>16</strong>个存储64位值的通用目的寄存器。这些寄存器用来存储整数数据和指针。下图所示。他们的名字都以%r开头，不过后面还跟着一些不同的命名规则的名字，这是由于指令集历史演化造成的。最初的80886中有8个16位的寄存区，即图中的%ax到%sp。扩展到IA32架构时，这些寄存器也扩展成了32位，标号从%eax到%esp。扩展到x86-64后，原来的8个寄存器扩展成64位，标号从%rax到%rsp。除此之外还增加了8个新的寄存器，标号按照新的命名规则制定，从%r8到%r15。<br> <img src="/img/2020/0315/register.jpg" alt="&quot;register&quot;"></p>
+<h3 id="操作数指示符"><a href="#操作数指示符" class="headerlink" title="操作数指示符"></a>操作数指示符</h3><p>大多数指令有一个或多个操作数（operand），指示出执行一个操作中要使用的源数据值，以及放置结果的目的位置。x86-64支持多种操作数格式。<br> <img src="/img/2020/0315/data-format.jpg" alt="&quot;dataformat&quot;"></p>
+<p>各种操作数类型分为三种类型：</p>
+<ul>
+<li>立即数（immediate）。用来表示常数值， “$” + 标准C表示法表示的整数。如$-123, $0x1F。</li>
+<li>寄存区（register）。表示某个寄存器的内容。用ra表示任意寄存区a，用引用R[ra]表示它的值。</li>
+<li>内存引用。它会根据计算出来的地址（有效地址）访问某个内存位置。因为它将内存看成一个很大的字节数组。</li>
+</ul>
+<h3 id="数据传送指令"><a href="#数据传送指令" class="headerlink" title="数据传送指令"></a>数据传送指令</h3><p>最频繁使用的指令是将数据从一个位置复制到另一个位置的指令。下表的指令都执行同样的操作，主要的区别在于操作的数据大小不同，分别是1,2,4,8字节。</p>
+<table>
+<thead>
+<tr>
+<th align="center">指令</th>
+<th align="center">效果</th>
+<th align="center">描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">MOV   S, D</td>
+<td align="center">D &lt;– S</td>
+<td align="center">传送</td>
+</tr>
+<tr>
+<td align="center">movb</td>
+<td align="center"></td>
+<td align="center">传送字节</td>
+</tr>
+<tr>
+<td align="center">movw</td>
+<td align="center"></td>
+<td align="center">传送字</td>
+</tr>
+<tr>
+<td align="center">movl</td>
+<td align="center"></td>
+<td align="center">传送双字</td>
+</tr>
+<tr>
+<td align="center">movq</td>
+<td align="center"></td>
+<td align="center">传送四字</td>
+</tr>
+<tr>
+<td align="center">movabsq I,R</td>
+<td align="center">R &lt;– I</td>
+<td align="center">传送绝对的四字</td>
+</tr>
+</tbody></table>
+<p>下面的<code>MOV</code>指令示例给出了源和目的类型的五种可能的组合，第一个是源操作数，第二个是目的操作数。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">1. movl $0x4050,%eas</span><br><span class="line">Immediate -- Register, 4 bytes</span><br><span class="line"></span><br><span class="line">2. movw %bp,%sp</span><br><span class="line">Register -- Register, 2 bytes</span><br><span class="line"></span><br><span class="line">3. movb (%rdi, %rcx), %al</span><br><span class="line">Memory -- Register, 1 byte</span><br><span class="line"></span><br><span class="line">4. movb $-17, (%rsp)</span><br><span class="line">Immediate -- Memory, 1 byte</span><br><span class="line"></span><br><span class="line">5. movq %rax, -12(%rbp)</span><br><span class="line">Register -- Memory, 8 bytes</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>下图记录的是两类数据移动指令，在将较小的源值复制到较大的目的时使用。<code>MOVZ</code>类中的指令把目的中剩余的字节填充为0，而<code>MOVS</code>类中的指令通过符号扩展来填充。</p>
+<table>
+<thead>
+<tr>
+<th align="center">指令</th>
+<th align="center">效果</th>
+<th align="center">描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">MOVZ   S, R</td>
+<td align="center">R &lt; - -零扩展（S）</td>
+<td align="center">以零扩展进行传送</td>
+</tr>
+<tr>
+<td align="center">movzbw</td>
+<td align="center"></td>
+<td align="center">将做了零扩展的字节传送到字</td>
+</tr>
+<tr>
+<td align="center">movzbl</td>
+<td align="center"></td>
+<td align="center">将做了零扩展的字节传送到双字</td>
+</tr>
+<tr>
+<td align="center">movzbq</td>
+<td align="center"></td>
+<td align="center">将做了零扩展的字节传送到四字</td>
+</tr>
+<tr>
+<td align="center">movzwl</td>
+<td align="center"></td>
+<td align="center">将做了零扩展的字传送到双字</td>
+</tr>
+<tr>
+<td align="center">movzwq</td>
+<td align="center"></td>
+<td align="center">将做了零扩展的字传送到四字</td>
+</tr>
+</tbody></table>
+<p>这些指令以寄存区或内存地址作为源，以寄存区作为目的。<br><strong>注意，并没有将做了零扩展的双字传送到四字的指令movzlq</strong>。不过这样的数据传送可以用以寄存器为目的的movl实现。这一技术利用的属性是，生成4字节值并以寄存器作为目的指令会把高四字节置为零。</p>
+<table>
+<thead>
+<tr>
+<th align="center">指令</th>
+<th align="center">效果</th>
+<th align="center">描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">MOVS   S, R</td>
+<td align="center">R &lt; - -符合扩展（S）</td>
+<td align="center">以符号扩展进行传送</td>
+</tr>
+<tr>
+<td align="center">movsbw</td>
+<td align="center"></td>
+<td align="center">将做了符号扩展的字节传送到字</td>
+</tr>
+<tr>
+<td align="center">movsbl</td>
+<td align="center"></td>
+<td align="center">将做了符号扩展的字节传送到双字</td>
+</tr>
+<tr>
+<td align="center">movsbq</td>
+<td align="center"></td>
+<td align="center">将做了符号扩展的字节传送到四字</td>
+</tr>
+<tr>
+<td align="center">movswl</td>
+<td align="center"></td>
+<td align="center">将做了符号扩展的字传送到双字</td>
+</tr>
+<tr>
+<td align="center">movswq</td>
+<td align="center"></td>
+<td align="center">将做了符号扩展的字传送到四字</td>
+</tr>
+<tr>
+<td align="center">movslq</td>
+<td align="center"></td>
+<td align="center">将做了符号扩展的双字传送到四字</td>
+</tr>
+<tr>
+<td align="center">cltq</td>
+<td align="center">%rax &lt; – 符号扩展（%eax）</td>
+<td align="center">把%eax符号扩展到%rax</td>
+</tr>
+</tbody></table>
+<p>MOVS这些指令以寄存区或内存地址作为源，以寄存区作为目的。cltq指令只用于寄存器%eax和%rax。</p>
+<p><strong>理解数据传输如何改变目的寄存器</strong><br>关于数据传送指令是否以及如何修改目的寄存器的高位字节有两种不同的方法。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">1 movabsq $0x0011223344556677, %rax       %rax = 0011223344556677</span><br><span class="line">2 movb    $-1, %al                        %rax = 00112233445566FF</span><br><span class="line">3 movw    $-1, %ax                        %rax = 001122334455FFFF</span><br><span class="line">4 movl    $-1, %eax                       %rax = 00000000FFFFFFFF</span><br><span class="line">5 movq    $-1, %rax                       %rax = FFFFFFFFFFFFFFFF</span><br></pre></td></tr></table></figure>
+
+<p>接下来的讨论中，都用十六进制表示。这个例子中，第一行的指令把寄存区%rax初始化为位模式<code>0011223344556677</code>。剩下的指令的源操作数是立即数值-1。-1的十六进制表示位FF…F，这里F的数量是表述中字节数量的2倍。2,3,5行结果源出于此。例外是第四行movl，大多数情况下mov指令只会修改目的操作数指定的那些寄存区字节或内存位置。但是movl指令以寄存器作为目的时，它会把寄存器的高位4字节设置为0，造成这个例外的原因是x86-64采用的惯例，即任何为寄存器生成32位值的指令都会把该寄存器的高位部分置零。</p>
+<p><strong>字节传送指令比较</strong><br>下面这个例子说明不同的是数据传送指令如何改变或者不改变目的的高位字节。仔细观察就可以发现movb， movsbq, movzbq之间的细微差别。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">1 movabsq $0x0011223344556677, %rax       %rax = 0011223344556677</span><br><span class="line">2 movb    $0xAA, %dl                      %dl  = AA</span><br><span class="line">3 movb    $dl, %al                        %rax = 00112233445566AA</span><br><span class="line">4 movsbq  $dl, %rax                       %rax = FFFFFFFFFFFFFFAA</span><br><span class="line">5 movzbq  $dl, %rax                       %rax = 00000000000000AA</span><br></pre></td></tr></table></figure>
+<p>前2行分别完成对%rax和%dl寄存区的初始化，后3行分别使用movb/movsbq/movzbq完成从%dl到%rax的低字节copy。movb指令不改变其他字节。movsbq根据符号将其他7个字节设为全1或全0，A的十六进制表示为0x1010，因此符号扩展会将高位字节全部设置为FF。movzbq指令总是将其他7个字节全部设置为0。</p>
+<h3 id="数据传送示例"><a href="#数据传送示例" class="headerlink" title="数据传送示例"></a>数据传送示例</h3><p>假设变量sp和dp被声明为类型</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">src_t *sp;</span><br><span class="line">dest_t *dp;</span><br><span class="line"></span><br><span class="line">*dp = (dest_t)*sp;</span><br></pre></td></tr></table></figure>
+<p>假设sp和dp的值分别存储在寄存器%rdi和%rsi中，对于下面表中的每个表项，给出实现指定数据传送的两条指令。其中第一条指令应该从内存中读数，做适当的装换，并设置寄存器%rax的适当部分。然后第二条指令要把%rax的适当部分写到内存，在这两种情况下，寄存器的部分可以是%rax,%eax,%ax和%al，两者互不相同。</p>
+<table>
+<thead>
+<tr>
+<th align="center">src_t</th>
+<th align="center">dest_t</th>
+<th align="center">指令</th>
+<th align="center">注释</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">long</td>
+<td align="center">long</td>
+<td align="center">movq(%rdi), %rax<br>movq %rax, (%rsi)</td>
+<td align="center">读8个字节<br>存8个字节</td>
+</tr>
+<tr>
+<td align="center">char</td>
+<td align="center">int</td>
+<td align="center">movsbl(%rdi), %eax<br>movl %eax, (%rsi)</td>
+<td align="center">将char转换成int<br>存4个字节</td>
+</tr>
+<tr>
+<td align="center">char</td>
+<td align="center">unsigned</td>
+<td align="center">movsbl(%rdi), %eax<br>movl %eax, (%rsi)</td>
+<td align="center">将char转换成int<br>存4个字节</td>
+</tr>
+<tr>
+<td align="center">unsigned char</td>
+<td align="center">long</td>
+<td align="center">movzbl(%rdi), %eax<br>movq %rax, (%rsi)</td>
+<td align="center">读一个字节并零扩展<br>存8个字节</td>
+</tr>
+<tr>
+<td align="center">int</td>
+<td align="center">char</td>
+<td align="center">movl(%rdi), %eax<br>movb %al, (%rsi)</td>
+<td align="center">读4个字节<br>存低位字节</td>
+</tr>
+<tr>
+<td align="center">unsigned</td>
+<td align="center">unsigned char</td>
+<td align="center">movl(%rdi), %eax<br>movb %al, (%rsi)</td>
+<td align="center">读4个字节<br>存低位字节</td>
+</tr>
+<tr>
+<td align="center">char</td>
+<td align="center">short</td>
+<td align="center">movsbw(%rdi), %ax<br>movw %ax, (%rsi)</td>
+<td align="center">读1个字节并符号<br>存2个字节</td>
+</tr>
+</tbody></table>
+
+      
+    </div>
+    
+    
+    
+
+    
+      <div>
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+
+      </div>
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>小手一抖，金币到手</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt=" 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/" rel="tag"><i class="fa fa-tag"></i> 深入理解计算机系统</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/03/14/bill-gates-exit-board-director/" rel="next" title="比尔·盖茨退出微软董事会，回顾盖茨与微软的传奇故事">
+                <i class="fa fa-chevron-left"></i> 比尔·盖茨退出微软董事会，回顾盖茨与微软的传奇故事
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/03/16/top10-cv-scientist/" rel="prev" title="全球前10的计算机深度学习科学家">
+                全球前10的计算机深度学习科学家 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/photo.jpg"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">134</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">13</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">84</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/huangzhiyuan" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:huangzy099@163.com" target="_blank" title="E-Mail">
+                    
+                      <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="http://blog.csdn.net/huangzhiyuan111" target="_blank" title="csdn">
+                    
+                      <i class="fa fa-fw fa-globe"></i>csdn</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://www.zhihu.com/people/justforfun099/activities" target="_blank" title="zhihu">
+                    
+                      <i class="fa fa-fw fa-globe"></i>zhihu</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E6%A0%BC%E5%BC%8F"><span class="nav-number">1.</span> <span class="nav-text">数据格式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%BF%E9%97%AE%E4%BF%A1%E6%81%AF"><span class="nav-number">2.</span> <span class="nav-text">访问信息</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%93%8D%E4%BD%9C%E6%95%B0%E6%8C%87%E7%A4%BA%E7%AC%A6"><span class="nav-number">2.1.</span> <span class="nav-text">操作数指示符</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E4%BC%A0%E9%80%81%E6%8C%87%E4%BB%A4"><span class="nav-number">2.2.</span> <span class="nav-text">数据传送指令</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E4%BC%A0%E9%80%81%E7%A4%BA%E4%BE%8B"><span class="nav-number">2.3.</span> <span class="nav-text">数据传送示例</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Huang</span>
+
+  
+</div>
+
+<div class="powered-by">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</div>
+
+<!--
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.3</div>
+
+
+
+ -->
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

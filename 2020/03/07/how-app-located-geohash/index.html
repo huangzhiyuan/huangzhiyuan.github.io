@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="geohash," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="什么是geohash？它的原理是什么？它帮助我们解决了哪些痛点，本文为你娓娓道来。（本文包含以下内容，阅读完需要约10分钟）  我们日常生活中遇到哪些定位的场景 简单复习一下经纬度 geohash原理解析 geohash存在的边界问题 如何解决边界问题 计算两点距离的计算">
+<meta property="og:type" content="article">
+<meta property="og:title" content="app快速定位算法的实现-geohash算法研究">
+<meta property="og:url" content="http://yoursite.com/2020/03/07/how-app-located-geohash/index.html">
+<meta property="og:site_name">
+<meta property="og:description" content="什么是geohash？它的原理是什么？它帮助我们解决了哪些痛点，本文为你娓娓道来。（本文包含以下内容，阅读完需要约10分钟）  我们日常生活中遇到哪些定位的场景 简单复习一下经纬度 geohash原理解析 geohash存在的边界问题 如何解决边界问题 计算两点距离的计算">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yoursite.com/img/2020/0307/1.jpg">
+<meta property="og:image" content="http://yoursite.com/img/2020/0307/2.jpg">
+<meta property="og:image" content="http://yoursite.com/img/2020/0307/3.jpg">
+<meta property="og:image" content="http://yoursite.com/img/2020/0307/4.jpg">
+<meta property="og:image" content="http://yoursite.com/img/2020/0307/5.jpg">
+<meta property="og:image" content="http://yoursite.com/img/2020/0307/6.jpg">
+<meta property="og:image" content="http://yoursite.com/img/2020/0307/7.jpg">
+<meta property="og:image" content="http://yoursite.com/img/2020/0307/8.jpg">
+<meta property="og:image" content="http://yoursite.com/img/2020/0307/9.jpg">
+<meta property="og:image" content="http://yoursite.com/img/2020/0307/10.jpg">
+<meta property="og:image" content="http://yoursite.com/img/2020/0307/11.jpg">
+<meta property="og:image" content="http://yoursite.com/img/2020/0307/12.jpg">
+<meta property="article:published_time" content="2020-03-07T12:41:20.000Z">
+<meta property="article:modified_time" content="2020-03-07T13:47:26.000Z">
+<meta property="article:author" content="Huang">
+<meta property="article:tag" content="geohash">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/img/2020/0307/1.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/03/07/how-app-located-geohash/"/>
+
+
+
+
+
+  <title>app快速定位算法的实现-geohash算法研究 | </title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title"></span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">靡不有初 鲜克有终</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/03/07/how-app-located-geohash/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/photo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">app快速定位算法的实现-geohash算法研究</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-03-07T20:41:20+08:00">
+                2020-03-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93/" itemprop="url" rel="index">
+                    <span itemprop="name">技术总结</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>什么是geohash？它的原理是什么？它帮助我们解决了哪些痛点，本文为你娓娓道来。<br>（本文包含以下内容，阅读完需要约10分钟）</p>
+<ul>
+<li>我们日常生活中遇到哪些定位的场景</li>
+<li>简单复习一下经纬度</li>
+<li>geohash原理解析</li>
+<li>geohash存在的边界问题</li>
+<li>如何解决边界问题</li>
+<li>计算两点距离的计算</li>
+</ul>
+<span id="more"></span>
+
+<h2 id="我们日常生活中遇到哪些定位的场景"><a href="#我们日常生活中遇到哪些定位的场景" class="headerlink" title="我们日常生活中遇到哪些定位的场景"></a>我们日常生活中遇到哪些定位的场景</h2><p>我们上下班经常会用APP打车和共享单车，下面2张图，应该都很熟悉，打开定位，查找我附近的车，那么，这个是怎么实现的呢？<br><img src="/img/2020/0307/1.jpg" alt="&quot;1&quot;"></p>
+<p>我脑海中第一个实现方式是：实时上报经纬度。在数据库里，把经纬度都标记为索引，通过查找对比经纬度的值，来找到附近1km的车子，但是这种做法第一是索引比较多，数值比较大，二是需要循环遍历经纬度，查询会很慢，效率很低。</p>
+<p>那么，这些APP是怎么做到，既能精准定位，又能快速查找呢？答案就是 geohash</p>
+<p><strong>geohash通过算法将1个定位的经度和纬度2个数值，转换成1个hash字符串。如果2个地方距离越近，那么他们的hash值的前缀越相同。然后通过数据库中like操作符 “ like wtw366%” 快速查找到附近的车。</strong></p>
+<p>比如上海腾讯大厦的经纬度是： <code>（31.1688749, 121.3975184）</code>，那么转换成geohash就是 <code>wtw366ngz5qt</code>，我们想找附近的车子，可以用：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">select * from cart where geohash like &#x27;wtw366%&#x27; ;</span><br><span class="line">select * from cart where LEFT(geohash, 6) = &#x27;wtw366&#x27;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="简单复习一下经纬度"><a href="#简单复习一下经纬度" class="headerlink" title="简单复习一下经纬度"></a>简单复习一下经纬度</h2><p>在大致了解什么是geohash之后，我们先来复习一下什么是经纬度（高中学的，可能已经忘记光了（逃）），这对于理解geohash有很大的帮助。</p>
+<p>我们将地球铺平开来，会得到下面这个平面图。<br><img src="/img/2020/0307/2.jpg" alt="&quot;2&quot;"></p>
+<p>以赤道和本初子午线为界，将地球分为经度和纬度。赤道是在0度，本初子午线也在0度。以赤道作为经度X横坐标，以本初子午线作为纬度 Y 竖坐标。</p>
+<p><img src="/img/2020/0307/3.jpg" alt="&quot;3&quot;"></p>
+<p>经度（longitude）和纬度（latitude）简称 <code>lng</code> 和 <code>lat</code>。</p>
+<p>其中，从本初子午线向东划分180度称为东经，用”E”表示：（0, 180]；向西划分180度为西经,用“W”表示：[-180, 0）</p>
+<p>以赤道为0度,向南北各分出90度，南北极的读数均是90度，北纬用“N”表示 :（0, 90] ，南纬用“S”表示: [-90, 0）</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">纬线和纬线是角度数值，并不是米。</span><br><span class="line">[ 表示等于， （表示小于</span><br></pre></td></tr></table></figure>
+<p>所以，我们常用十字坐标法来表示经纬度坐标图：<br><img src="/img/2020/0307/4.jpg" alt="&quot;4&quot;"></p>
+<p>我们一般读“经纬度”，其实，表示一个定位的书面经纬度是 “（纬度，经度）”。<br>比如上海腾讯大厦的定位就是： (31.1688749, 121.3975184）表示的是：纬度=31.1688749，经度=121.3975184</p>
+<h2 id="geohash原理解析"><a href="#geohash原理解析" class="headerlink" title="geohash原理解析"></a>geohash原理解析</h2><p>在了解什么是经纬度之后，现在我们就可以开始来说下geohash的原理了，geohash通过以下步骤，实现了将一个经纬度数子串，转换成1个hash字符串。</p>
+<ul>
+<li>指定一个位置的经纬度坐标值。</li>
+<li>根据十字坐标图和二分法，将纬度和经度划分成1和0的二进制数字串。</li>
+<li>按照“偶数位放经度，奇数位放纬度”算法，合并经度和纬度这2个二进制数字串。</li>
+<li>合并后的二进制数字串，按照从前往后，每隔5位，换算成十进制数字，最后不足5位的用0补齐。</li>
+<li>十进制数字，对应base32字符串算法的所在位置，一一匹配，得到了最后的字符串结果。</li>
+<li>按照进度划分截取，得到最终的geohash值。</li>
+</ul>
+<p>我们按照这个顺序，结合实际的例子，依次计算操作一下。</p>
+<h3 id="找出一个位置的经纬度"><a href="#找出一个位置的经纬度" class="headerlink" title="找出一个位置的经纬度"></a>找出一个位置的经纬度</h3><p>我们可以用各种地图和定位工具，比如依靠Google地图，通过定位或者搜索一个地点，就容易找出经纬度。<br><img src="/img/2020/0307/5.jpg" alt="&quot;5&quot;"></p>
+<p>这样，我们就找出了上海腾讯大厦的经纬度是 (31.1688749, 121.3975184)</p>
+<h3 id="将经纬度按照二分算法变成01二进制"><a href="#将经纬度按照二分算法变成01二进制" class="headerlink" title="将经纬度按照二分算法变成01二进制"></a>将经纬度按照二分算法变成01二进制</h3><ul>
+<li>由于31.1688749属于(0, 90)，所以取编码为1。</li>
+<li>然后再将(0, 90)分成 (0, 45), (45, 90)两个区间，而31.1688749位于(0, 45)，所以编码为0。</li>
+<li>然后再将(0, 45)分成 (0, 22.5), (22.5, 45)两个区间，而31.1688749位于(22.5, 45)，所以编码为1。<br>….<br>….<br>依次类推可得上海腾讯大厦纬度编码为：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">101011000101010000111101101101</span><br></pre></td></tr></table></figure>
+经度也用同样的算法，对(-180, 180)依次细分，(-180，0)、(0,180) ，得出编码为：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">110101100101001110111110011010</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="偶数位放经度，奇数位放纬度"><a href="#偶数位放经度，奇数位放纬度" class="headerlink" title="偶数位放经度，奇数位放纬度"></a>偶数位放经度，奇数位放纬度</h3><p>通过二分算法，我们得到了腾讯大厦的纬度和经度的二级制串为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">string(30) &quot;101011000101010000111101101101&quot;</span><br><span class="line">string(30) &quot;110101100101001110111110011010&quot;</span><br></pre></td></tr></table></figure>
+<p>现在需要按照”偶数位放经度，奇数位放纬度”，将这2个数字串，合二为一。那么这个到底怎么理解呢？我刚开始不理解到底怎么操作，后来经过一系列的思考，可以如下操作：<br><img src="/img/2020/0307/6.jpg" alt="&quot;6&quot;"></p>
+<p>由于无法用文字表述，我截了个操作图，如图上的箭头操作顺序所示，就是把纬度往右移动一个位置，然后依次串起来。</p>
+<h3 id="这样，合并之后，我们得了一个60个字符长度的的二进制数字串："><a href="#这样，合并之后，我们得了一个60个字符长度的的二进制数字串：" class="headerlink" title="这样，合并之后，我们得了一个60个字符长度的的二进制数字串："></a>这样，合并之后，我们得了一个60个字符长度的的二进制数字串：</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">string(60) &quot;111001100111100000110011000110101000111111111001011011011001&quot;</span><br></pre></td></tr></table></figure>
+
+<h3 id="二进制转换成十进制"><a href="#二进制转换成十进制" class="headerlink" title="二进制转换成十进制"></a>二进制转换成十进制</h3><p>我们把这个60位的二进制，按照从左往右，每5位划分成1个组，最后一组如果不足5位就用0补齐到5位。划分后如下所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">11100 11001 11100 00011 00110 00110 10100 01111 11111 00101 10110 11001</span><br></pre></td></tr></table></figure>
+<p>然后，把分好的二进制，转换成十进制：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">28 25 28 3 6 6 20 15 31 5 22 25</span><br></pre></td></tr></table></figure>
+<h3 id="匹配对应base32表算法的所在位置"><a href="#匹配对应base32表算法的所在位置" class="headerlink" title="匹配对应base32表算法的所在位置"></a>匹配对应base32表算法的所在位置</h3><p>base32表是用0-9、b-z（去掉a, i, l, o）这32个字母进行组合的编码集合，base-32如下所示：<br><code>0123456789bcdefghjkmnpqrstuvwxyz</code><br>为了更好理解和一一对应，我们把base32各个字符的位置信息和它的字符串用表对应起来：</p>
+<p><img src="/img/2020/0307/7.jpg" alt="&quot;7&quot;"></p>
+<p>所以， <code>28 25 28 3 6 6 20 15 31 5 22 25</code> 对应上面的表的位置就得到了，是：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wtw366ngz5qt</span><br></pre></td></tr></table></figure>
+<p>这样，最后我们得到了，上海腾讯大厦的经纬度（31.1688749, 121.3975184） 对应的 geohash 为 <code>wtw366ngz5qt</code>。</p>
+<h3 id="geohash-的精度问题"><a href="#geohash-的精度问题" class="headerlink" title="geohash 的精度问题"></a>geohash 的精度问题</h3><p>geohash其实表示的是一个矩形的块状区间，它总共分成最大12个字符串，也就是表示从 1-12 级。字符数越大，块区间就越小，那么定位就越精准。</p>
+<p>我们刚才计算上海腾讯大厦的geohash采用的是12级，基本计算出来的位置就是毫秒级别了，可以说是非常的精准了。<br><img src="/img/2020/0307/8.jpg" alt="&quot;8&quot;"></p>
+<p>上面是geohash字符串长度对应的区间精度，我们可以看到，当geohash为12位时，表示是37毫米范围的区间，已经是非常的精准了。当geohash为6位时，表示为1.2k米范围内的矩形位置。</p>
+<p>所以，当2个定位的geohash 前7位是一样的时，表示他们在附近1.2km的范围内。</p>
+<p>那我们还是用腾讯大厦的geohash值，分别截取经度为前7，6，5位看看，在地图上是怎么样的：<br><img src="/img/2020/0307/9.jpg" alt="&quot;9&quot;"><br><img src="/img/2020/0307/10.jpg" alt="&quot;10&quot;"><br><img src="/img/2020/0307/11.jpg" alt="&quot;11&quot;"></p>
+<p>所以，根据上面的图，随着字符越来越少，精度越来越小，这个矩形也越来越大，这一整块区间都共用一个geohash来表示。在实际应用中，我们就可以动态的调整精度，实现更大或者更小范围内的搜索，既能精准定位，又可以隐藏住一个地点的具区位信息。</p>
+<h2 id="geohash存在的边界问题"><a href="#geohash存在的边界问题" class="headerlink" title="geohash存在的边界问题"></a>geohash存在的边界问题</h2><p>由于geohash表示的是一个区块信息，在同一个区块里的2个位置，它会认为是最近的，然而，其实更近的位置可能刚好在另一个区间，这样就造成了不匹配的问题。这就存在一个边界问题。</p>
+<p>我们用实际例子来看。我们想找腾大附近1.5km范围内的便利店，我们选取geohash精度为6。园区有2家 A 和 B。B距离我们更近一点，但是，由于A 和腾大在一个hash区块内，所以，就得出了A是最佳的选择。这就是边界的问题。<br><img src="/img/2020/0307/12.jpg" alt="&quot;12&quot;"></p>
+<h2 id="如何解决边界问题"><a href="#如何解决边界问题" class="headerlink" title="如何解决边界问题"></a>如何解决边界问题</h2><p>那么如何解决这个边界问题，给出最近最优的算法方案呢？答案就是：把定位附近的8个方向的geohash都算出来。最后分别计算这些点和自己的距离（由于范围很小，点的数量就也很少，计算量就很少）过滤掉不满足条件的点就ok了。</p>
+<h2 id="计算两点距离的计算"><a href="#计算两点距离的计算" class="headerlink" title="计算两点距离的计算"></a>计算两点距离的计算</h2><p>通过余弦定理以及弧度计算方法，最终推导出来的算式A为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$s = acos(cos($radLat1) * cos($radLat2) * cos($radLng1 - $radLng2) + sin($radLat1) * sin($radLat2)) * $R</span><br></pre></td></tr></table></figure>
+<p>目前大多使用的是Google公开的距离计算公司，推导算式B为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$s = 2*asin(sqrt(pow(sin(($radLat1-$radLat2)/2),2)+cos($radLat1)*cos($radLat2)*pow(sin(($radLng1-$radLng2)/2),2)))*$R;</span><br></pre></td></tr></table></figure>
+<p>其中 : $radLat1、$radLng1，$radLat2，$``radLng2 为弧度$R为地球半径</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+      <div>
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+
+      </div>
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>小手一抖，金币到手</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt=" 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/geohash/" rel="tag"><i class="fa fa-tag"></i> geohash</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/03/06/this-is-real-git/" rel="next" title="Git内部原理揭秘">
+                <i class="fa fa-chevron-left"></i> Git内部原理揭秘
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/03/07/mAP-in-cv/" rel="prev" title="mAP">
+                mAP <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/photo.jpg"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">134</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">13</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">84</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/huangzhiyuan" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:huangzy099@163.com" target="_blank" title="E-Mail">
+                    
+                      <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="http://blog.csdn.net/huangzhiyuan111" target="_blank" title="csdn">
+                    
+                      <i class="fa fa-fw fa-globe"></i>csdn</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://www.zhihu.com/people/justforfun099/activities" target="_blank" title="zhihu">
+                    
+                      <i class="fa fa-fw fa-globe"></i>zhihu</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E4%BB%AC%E6%97%A5%E5%B8%B8%E7%94%9F%E6%B4%BB%E4%B8%AD%E9%81%87%E5%88%B0%E5%93%AA%E4%BA%9B%E5%AE%9A%E4%BD%8D%E7%9A%84%E5%9C%BA%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">我们日常生活中遇到哪些定位的场景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E5%8D%95%E5%A4%8D%E4%B9%A0%E4%B8%80%E4%B8%8B%E7%BB%8F%E7%BA%AC%E5%BA%A6"><span class="nav-number">2.</span> <span class="nav-text">简单复习一下经纬度</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#geohash%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90"><span class="nav-number">3.</span> <span class="nav-text">geohash原理解析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%BE%E5%87%BA%E4%B8%80%E4%B8%AA%E4%BD%8D%E7%BD%AE%E7%9A%84%E7%BB%8F%E7%BA%AC%E5%BA%A6"><span class="nav-number">3.1.</span> <span class="nav-text">找出一个位置的经纬度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B0%86%E7%BB%8F%E7%BA%AC%E5%BA%A6%E6%8C%89%E7%85%A7%E4%BA%8C%E5%88%86%E7%AE%97%E6%B3%95%E5%8F%98%E6%88%9001%E4%BA%8C%E8%BF%9B%E5%88%B6"><span class="nav-number">3.2.</span> <span class="nav-text">将经纬度按照二分算法变成01二进制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%81%B6%E6%95%B0%E4%BD%8D%E6%94%BE%E7%BB%8F%E5%BA%A6%EF%BC%8C%E5%A5%87%E6%95%B0%E4%BD%8D%E6%94%BE%E7%BA%AC%E5%BA%A6"><span class="nav-number">3.3.</span> <span class="nav-text">偶数位放经度，奇数位放纬度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%99%E6%A0%B7%EF%BC%8C%E5%90%88%E5%B9%B6%E4%B9%8B%E5%90%8E%EF%BC%8C%E6%88%91%E4%BB%AC%E5%BE%97%E4%BA%86%E4%B8%80%E4%B8%AA60%E4%B8%AA%E5%AD%97%E7%AC%A6%E9%95%BF%E5%BA%A6%E7%9A%84%E7%9A%84%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%95%B0%E5%AD%97%E4%B8%B2%EF%BC%9A"><span class="nav-number">3.4.</span> <span class="nav-text">这样，合并之后，我们得了一个60个字符长度的的二进制数字串：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%8C%E8%BF%9B%E5%88%B6%E8%BD%AC%E6%8D%A2%E6%88%90%E5%8D%81%E8%BF%9B%E5%88%B6"><span class="nav-number">3.5.</span> <span class="nav-text">二进制转换成十进制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8C%B9%E9%85%8D%E5%AF%B9%E5%BA%94base32%E8%A1%A8%E7%AE%97%E6%B3%95%E7%9A%84%E6%89%80%E5%9C%A8%E4%BD%8D%E7%BD%AE"><span class="nav-number">3.6.</span> <span class="nav-text">匹配对应base32表算法的所在位置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#geohash-%E7%9A%84%E7%B2%BE%E5%BA%A6%E9%97%AE%E9%A2%98"><span class="nav-number">3.7.</span> <span class="nav-text">geohash 的精度问题</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#geohash%E5%AD%98%E5%9C%A8%E7%9A%84%E8%BE%B9%E7%95%8C%E9%97%AE%E9%A2%98"><span class="nav-number">4.</span> <span class="nav-text">geohash存在的边界问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3%E8%BE%B9%E7%95%8C%E9%97%AE%E9%A2%98"><span class="nav-number">5.</span> <span class="nav-text">如何解决边界问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%A1%E7%AE%97%E4%B8%A4%E7%82%B9%E8%B7%9D%E7%A6%BB%E7%9A%84%E8%AE%A1%E7%AE%97"><span class="nav-number">6.</span> <span class="nav-text">计算两点距离的计算</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Huang</span>
+
+  
+</div>
+
+<div class="powered-by">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</div>
+
+<!--
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.3</div>
+
+
+
+ -->
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
