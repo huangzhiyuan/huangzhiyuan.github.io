@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.3" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.3">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.3">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.3" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Linux," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="实际上，性能优化一直都是大多数软件工程师头上的紧箍咒，甚至许多工作多年的资深工程师，有时也无法准确地分析出线上的很多性能问题。　　性能分析问题为什么这么难呢？性能优化是个系统工具，常常牵一发而动全身。它涉及了从程序设计、算法分析、编程语言，再到系统、存储、网络等各种底层基础设施的方方面面。每一个组件都可能出现问题，甚至多个组件同时出现问题。毫无疑问，性能优化是软件系统中最有挑战的工作指引，也是">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux性能优化实战之IO性能篇">
+<meta property="og:url" content="http://yoursite.com/2021/05/25/Linux-perf-optimize-actual-combat-CPU/index.html">
+<meta property="og:site_name">
+<meta property="og:description" content="实际上，性能优化一直都是大多数软件工程师头上的紧箍咒，甚至许多工作多年的资深工程师，有时也无法准确地分析出线上的很多性能问题。　　性能分析问题为什么这么难呢？性能优化是个系统工具，常常牵一发而动全身。它涉及了从程序设计、算法分析、编程语言，再到系统、存储、网络等各种底层基础设施的方方面面。每一个组件都可能出现问题，甚至多个组件同时出现问题。毫无疑问，性能优化是软件系统中最有挑战的工作指引，也是">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-05-24T16:53:03.000Z">
+<meta property="article:modified_time" content="2021-05-25T15:03:17.555Z">
+<meta property="article:author" content="Huang">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Pisces',
+    version: '5.1.3',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2021/05/25/Linux-perf-optimize-actual-combat-CPU/"/>
+
+
+
+
+
+  <title>Linux性能优化实战之IO性能篇 | </title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title"></span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">靡不有初 鲜克有终</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2021/05/25/Linux-perf-optimize-actual-combat-CPU/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/photo.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Linux性能优化实战之IO性能篇</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-05-25T00:53:03+08:00">
+                2021-05-25
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>　　实际上，性能优化一直都是大多数软件工程师头上的紧箍咒，甚至许多工作多年的资深工程师，有时也无法准确地分析出线上的很多性能问题。<br>　　性能分析问题为什么这么难呢？性能优化是个系统工具，常常牵一发而动全身。它涉及了从程序设计、算法分析、编程语言，再到系统、存储、网络等各种底层基础设施的方方面面。每一个组件都可能出现问题，甚至多个组件同时出现问题。毫无疑问，性能优化是软件系统中最有挑战的工作指引，也是最考验体现你综合能力的工作之一。该篇blog记录总结了倪朋飞老师在极客时间开设的[《Linux性能优化实战》][1]课程笔记。</p>
+<span id="more"></span>
+
+<h2 id="如何理解“平均负载”"><a href="#如何理解“平均负载”" class="headerlink" title="如何理解“平均负载”"></a>如何理解“平均负载”</h2><p>　　我们常用top或者uptime命令，来了解系统的负载情况。比如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">zhiyuanhuang@ZhiyuandeMacBook-Pro blog % uptime</span><br><span class="line">22:06  up  2:40, 2 users, load averages: 2.05 2.39 2.51</span><br></pre></td></tr></table></figure>
+<p>　　分别表示当前时间、系统运行时间、正在登陆用户数。最后三个数字则分别表示过去1分钟、5分钟、15分钟的平均负载。但是平均负载究竟代表了什么？简单来说，平均负载是指单位时间内，系统处于<strong>可运行状态</strong>和<strong>不可中断转态</strong>的平均进程数，也就是<strong>平均活跃进程数</strong>，它和CPU使用率并没有直接关系。所谓可运行转态的进程，是指正在使用CPU或者正在等待CPU的进程，也即是我们用ps命令看到的R状态（running或Runnable）的的进程。不可中断的进程是指正处于内核状态关键流程中的进程，并且这些进程是不可打断的。比如最常见的是等待硬件设备的IO响应，也就是我们在ps命令中看到的D状态（Uninterruptible Sleep，也称为Disk Sleep）的进程。<br>　　比如，当一个进程向磁盘读写数据时，为了保证数据的一致性，在得到磁盘回复前，它是不能被其他进程或者中断打断的，这个时候的进程就处于不可中断的转态。否则会出现磁盘数据与进程数据不一致的情况。所以，不可中断状态实际上是系统对进程和硬件设备的一种保护机制。<br>　　既然平均的是活跃进程数，那么最理想的情况就是每个CPU上面都刚好运行着一个进程，这个利用率最高。比如平均负载为2时，</p>
+<ul>
+<li>在只有2个CPU的系统上，所有的CPU都刚好被完全占用。</li>
+<li>在4个CPU的系统上，意味着有50%的空闲。</li>
+<li>在只有1个CPU的系统中，有一半的进程竞争不到CPU。</li>
+</ul>
+<h3 id="平均负载多少最合适"><a href="#平均负载多少最合适" class="headerlink" title="平均负载多少最合适"></a>平均负载多少最合适</h3><p>　　要评判平均负载，首先你要知道系统有几个CPU，这个可以通过top命令或者从文件/proc/cpuinfo获取，比如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ grep &quot;model name&quot; /proc/cpuinfo | wc -l</span><br></pre></td></tr></table></figure>
+<p>　　从例子中可以看出，平均负载有三个数值，到底该参考哪一个呢？实际上都要看，三个不同时间间隔的平均值，其实给我们提供了，分析系统负载趋势的数据来源，让我们更加全面更立体了解目前的负载状况。一般来说，当平均负载高于CPU数量70%的时候就应该分析排查负载高的问题。一旦负载过高，就可能导致进程响应变慢，进而影响服务的正常功能。</p>
+<h3 id="平均负载与CPU使用率"><a href="#平均负载与CPU使用率" class="headerlink" title="平均负载与CPU使用率"></a>平均负载与CPU使用率</h3><p>　　现实中，经常会把平均负载和CPU使用率混淆。可能会困惑，既然平均负载代表的是活跃进程数，那平均负载高了，不就意味着CPU使用率高吗？回到平均负载的含义上来，平均负载是指在单位时间内，处于可运行状态和不可中断状态的进程数。所以，它不仅包括了正在使用的CPU的进程，还包括等待CPU和等待IO的进程。而CPU使用率，是单位时间内繁忙情况的统计，和平均负载并不一定完全对应。比如</p>
+<ul>
+<li>CPU密集型进程，使用大量CPU会导致平均进程负载升高，此时两者是一致的；</li>
+<li>IO密集型进程，等待IO也会导致平均负载升高，但CPU使用率不一定很高；</li>
+<li>大量等待CPU的进程调度也会导致平均负载升高，此时的CPU使用率也会比较高。</li>
+</ul>
+<h3 id="案例分析"><a href="#案例分析" class="headerlink" title="案例分析"></a>案例分析</h3><p>　　工具iostat、mpstat、pidstat。其中stress是一个Linux系统压力的测试工具，这里用作异常进程模拟平均负载升高的场景。而sysstat包括了常用的Linux性能工具，用来监控和分析系统的性能。mpstat是一个常用的多核CPU性能分析工具，用来实时查看每个CPU的性能指标，以及所有CPU的平均指标。pidstat是一个常用的进程性能分析工具，用来实时查看进程的CPU、内存、IO以及上下文切换等性能指标。每种场景都需要打开3个中端。</p>
+<p><strong>场景一： CPU密集型进程</strong><br>终端1运行stress命令，模拟一个CPU使用率100%的场景：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ stress --cpu 1 --timeout 600</span><br></pre></td></tr></table></figure>
+<p>终端2运行uptime查看平均负载的变化情况：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># -d 参数表示高亮显示变化的区域</span><br><span class="line">$ watch -d uptime</span><br><span class="line">..., load average: 1.00, 0.75, 0.39</span><br></pre></td></tr></table></figure>
+<p>终端3运行mpstat查看CPU使用率变化：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># -P ALL 表示监控所有CPU，后面数字5表示间隔5秒后输出一组数据</span><br><span class="line">$ mpstat -P ALL 5</span><br><span class="line">Linux 4.15.0 (ubuntu) 09/22/18 _x86_64_ (2 CPU)</span><br><span class="line">13:30:06     CPU    %usr   %nice    %sys %iowait    %irq   %soft  %steal  %guest  %gnice   %idle</span><br><span class="line">13:30:11     all   50.05    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00   49.95</span><br><span class="line">13:30:11       0    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00  100.00</span><br><span class="line">13:30:11       1  100.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00</span><br></pre></td></tr></table></figure>
+<p>从终端二中可以看到，1 分钟的平均负载会慢慢增加到 1.00，而从终端三中还可以看到，正好有一个 CPU 的使用率为 100%，但它的 iowait 只有 0。这说明，平均负载的升高正是由于 CPU 使用率为 100%。到底是哪个进程导致了 CPU 使用率为 100% 呢？你可以使用 pidstat 来查询：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># 间隔5秒后输出一组数据</span><br><span class="line">$ pidstat -u 5 1</span><br><span class="line">13:37:07      UID       PID    %usr %system  %guest   %wait    %CPU   CPU  Command</span><br><span class="line">13:37:12        0      2962  100.00    0.00    0.00    0.00  100.00     1  stress</span><br></pre></td></tr></table></figure>
+<p>从这里可以明显看到，stress 进程的 CPU 使用率为 100%。</p>
+<p><strong>场景二： IO密集型进程</strong><br>首先还是运行 stress 命令，但这次模拟 I/O 压力，即不停地执行 sync：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ stress -i 1 --timeout 600</span><br></pre></td></tr></table></figure>
+<p>在第二个终端运行 uptime 查看平均负载的变化情况：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ watch -d uptime</span><br><span class="line">...,  load average: 1.06, 0.58, 0.37</span><br></pre></td></tr></table></figure>
+<p>第三个终端运行 mpstat 查看 CPU 使用率的变化情况：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># 显示所有CPU的指标，并在间隔5秒输出一组数据</span><br><span class="line">$ mpstat -P ALL 5 1</span><br><span class="line">Linux 4.15.0 (ubuntu)     09/22/18     _x86_64_    (2 CPU)</span><br><span class="line">13:41:28     CPU    %usr   %nice    %sys %iowait    %irq   %soft  %steal  %guest  %gnice   %idle</span><br><span class="line">13:41:33     all    0.21    0.00   12.07   32.67    0.00    0.21    0.00    0.00    0.00   54.84</span><br><span class="line">13:41:33       0    0.43    0.00   23.87   67.53    0.00    0.43    0.00    0.00    0.00    7.74</span><br><span class="line">13:41:33       1    0.00    0.00    0.81    0.20    0.00    0.00    0.00    0.00    0.00   98.99</span><br></pre></td></tr></table></figure>
+<p>从这里可以看到，1 分钟的平均负载会慢慢增加到 1.06，其中一个 CPU 的系统 CPU 使用率升高到了 23.87，而 iowait 高达 67.53%。这说明，平均负载的升高是由于 iowait 的升高。那么到底是哪个进程，导致 iowait 这么高呢？我们还是用 pidstat 来查询：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># 间隔5秒后输出一组数据，-u表示CPU指标</span><br><span class="line">$ pidstat -u 5 1</span><br><span class="line">Linux 4.15.0 (ubuntu)     09/22/18     _x86_64_    (2 CPU)</span><br><span class="line">13:42:08      UID       PID    %usr %system  %guest   %wait    %CPU   CPU  Command</span><br><span class="line">13:42:13        0       104    0.00    3.39    0.00    0.00    3.39     1  kworker/1:1H</span><br><span class="line">13:42:13        0       109    0.00    0.40    0.00    0.00    0.40     0  kworker/0:1H</span><br><span class="line">13:42:13        0      2997    2.00   35.53    0.00    3.99   37.52     1  stress</span><br><span class="line">13:42:13        0      3057    0.00    0.40    0.00    0.00    0.40     0  pidstat</span><br></pre></td></tr></table></figure>
+<p>可以发现，还是 stress 进程导致的。</p>
+<p><strong>场景三： 大量进程的进程</strong><br>当系统中运行进程超出 CPU 运行能力时，就会出现等待 CPU 的进程。我们还是使用 stress，但这次模拟的是 8 个进程：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ stress -c 8 --timeout 600</span><br></pre></td></tr></table></figure>
+<p>由于系统只有 2 个 CPU，明显比 8 个进程要少得多，因而，系统的 CPU 处于严重过载状态，平均负载高达 7.97：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ uptime</span><br><span class="line">...,  load average: 7.97, 5.93, 3.02</span><br></pre></td></tr></table></figure>
+<p>接着再运行 pidstat 来看一下进程的情况：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"># 间隔5秒后输出一组数据</span><br><span class="line">$ pidstat -u 5 1</span><br><span class="line">14:23:25      UID       PID    %usr %system  %guest   %wait    %CPU   CPU  Command</span><br><span class="line">14:23:30        0      3190   25.00    0.00    0.00   74.80   25.00     0  stress</span><br><span class="line">14:23:30        0      3191   25.00    0.00    0.00   75.20   25.00     0  stress</span><br><span class="line">14:23:30        0      3192   25.00    0.00    0.00   74.80   25.00     1  stress</span><br><span class="line">14:23:30        0      3193   25.00    0.00    0.00   75.00   25.00     1  stress</span><br><span class="line">14:23:30        0      3194   24.80    0.00    0.00   74.60   24.80     0  stress</span><br><span class="line">14:23:30        0      3195   24.80    0.00    0.00   75.00   24.80     0  stress</span><br><span class="line">14:23:30        0      3196   24.80    0.00    0.00   74.60   24.80     1  stress</span><br><span class="line">14:23:30        0      3197   24.80    0.00    0.00   74.80   24.80     1  stress</span><br><span class="line">14:23:30        0      3200    0.00    0.20    0.00    0.20    0.20     0  pidstat</span><br></pre></td></tr></table></figure>
+<p>可以看出，8 个进程在争抢 2 个 CPU，每个进程等待 CPU 的时间（也就是代码块中的 %wait 列）高达 75%。这些超出 CPU 计算能力的进程，最终导致 CPU 过载。</p>
+<h2 id="经常说的CPU上下文切换是什么意思"><a href="#经常说的CPU上下文切换是什么意思" class="headerlink" title="经常说的CPU上下文切换是什么意思"></a>经常说的CPU上下文切换是什么意思</h2><h2 id="某应用CPU使用率100-，该怎么办"><a href="#某应用CPU使用率100-，该怎么办" class="headerlink" title="某应用CPU使用率100%，该怎么办"></a>某应用CPU使用率100%，该怎么办</h2><h2 id="系统CPU使用率很高，为啥找不到高CPU的应用"><a href="#系统CPU使用率很高，为啥找不到高CPU的应用" class="headerlink" title="系统CPU使用率很高，为啥找不到高CPU的应用"></a>系统CPU使用率很高，为啥找不到高CPU的应用</h2><h2 id="系统中出现大量不可中断进程和僵尸进程怎么办"><a href="#系统中出现大量不可中断进程和僵尸进程怎么办" class="headerlink" title="系统中出现大量不可中断进程和僵尸进程怎么办"></a>系统中出现大量不可中断进程和僵尸进程怎么办</h2><h2 id="如何理解Linux软中断"><a href="#如何理解Linux软中断" class="headerlink" title="如何理解Linux软中断"></a>如何理解Linux软中断</h2><h2 id="系统的软中断CPU使用率升高，该怎么办"><a href="#系统的软中断CPU使用率升高，该怎么办" class="headerlink" title="系统的软中断CPU使用率升高，该怎么办"></a>系统的软中断CPU使用率升高，该怎么办</h2><h2 id="如何迅速分析出系统CPU的瓶颈在哪里"><a href="#如何迅速分析出系统CPU的瓶颈在哪里" class="headerlink" title="如何迅速分析出系统CPU的瓶颈在哪里"></a>如何迅速分析出系统CPU的瓶颈在哪里</h2><h2 id="CPU哪性能优化的几个思路"><a href="#CPU哪性能优化的几个思路" class="headerlink" title="CPU哪性能优化的几个思路"></a>CPU哪性能优化的几个思路</h2><h2 id="无法模拟出RES中断的问题，该怎么办"><a href="#无法模拟出RES中断的问题，该怎么办" class="headerlink" title="无法模拟出RES中断的问题，该怎么办"></a>无法模拟出RES中断的问题，该怎么办</h2><h2 id="如何用perf工具分析Java程序"><a href="#如何用perf工具分析Java程序" class="headerlink" title="如何用perf工具分析Java程序"></a>如何用perf工具分析Java程序</h2>
+      
+    </div>
+    
+    
+    
+
+    
+      <div>
+        <div>
+    
+        <div style="text-align:center;color: #ccc;font-size:14px;">-------------本文结束<i class="fa fa-paw"></i>感谢您的阅读-------------</div>
+    
+</div>
+
+      </div>
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>小手一抖，金币到手</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.jpg" alt=" 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Linux/" rel="tag"><i class="fa fa-tag"></i> Linux</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/05/25/Linux-perf-optimize-actual-combat-IO/" rel="next" title="Linux性能优化实战之IO性能篇">
+                <i class="fa fa-chevron-left"></i> Linux性能优化实战之IO性能篇
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2021/05/25/Linux-perf-optimize-actual-combat/" rel="prev" title="Linux性能优化实战">
+                Linux性能优化实战 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/photo.jpg"
+                alt="" />
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">138</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">13</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">84</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          <div class="links-of-author motion-element">
+            
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/huangzhiyuan" target="_blank" title="GitHub">
+                    
+                      <i class="fa fa-fw fa-github"></i>GitHub</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:huangzy099@163.com" target="_blank" title="E-Mail">
+                    
+                      <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="http://blog.csdn.net/huangzhiyuan111" target="_blank" title="csdn">
+                    
+                      <i class="fa fa-fw fa-globe"></i>csdn</a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="https://www.zhihu.com/people/justforfun099/activities" target="_blank" title="zhihu">
+                    
+                      <i class="fa fa-fw fa-globe"></i>zhihu</a>
+                </span>
+              
+            
+          </div>
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3%E2%80%9C%E5%B9%B3%E5%9D%87%E8%B4%9F%E8%BD%BD%E2%80%9D"><span class="nav-number">1.</span> <span class="nav-text">如何理解“平均负载”</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B9%B3%E5%9D%87%E8%B4%9F%E8%BD%BD%E5%A4%9A%E5%B0%91%E6%9C%80%E5%90%88%E9%80%82"><span class="nav-number">1.1.</span> <span class="nav-text">平均负载多少最合适</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B9%B3%E5%9D%87%E8%B4%9F%E8%BD%BD%E4%B8%8ECPU%E4%BD%BF%E7%94%A8%E7%8E%87"><span class="nav-number">1.2.</span> <span class="nav-text">平均负载与CPU使用率</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A1%88%E4%BE%8B%E5%88%86%E6%9E%90"><span class="nav-number">1.3.</span> <span class="nav-text">案例分析</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%8F%E5%B8%B8%E8%AF%B4%E7%9A%84CPU%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%87%E6%8D%A2%E6%98%AF%E4%BB%80%E4%B9%88%E6%84%8F%E6%80%9D"><span class="nav-number">2.</span> <span class="nav-text">经常说的CPU上下文切换是什么意思</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9F%90%E5%BA%94%E7%94%A8CPU%E4%BD%BF%E7%94%A8%E7%8E%87100-%EF%BC%8C%E8%AF%A5%E6%80%8E%E4%B9%88%E5%8A%9E"><span class="nav-number">3.</span> <span class="nav-text">某应用CPU使用率100%，该怎么办</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9FCPU%E4%BD%BF%E7%94%A8%E7%8E%87%E5%BE%88%E9%AB%98%EF%BC%8C%E4%B8%BA%E5%95%A5%E6%89%BE%E4%B8%8D%E5%88%B0%E9%AB%98CPU%E7%9A%84%E5%BA%94%E7%94%A8"><span class="nav-number">4.</span> <span class="nav-text">系统CPU使用率很高，为啥找不到高CPU的应用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E4%B8%AD%E5%87%BA%E7%8E%B0%E5%A4%A7%E9%87%8F%E4%B8%8D%E5%8F%AF%E4%B8%AD%E6%96%AD%E8%BF%9B%E7%A8%8B%E5%92%8C%E5%83%B5%E5%B0%B8%E8%BF%9B%E7%A8%8B%E6%80%8E%E4%B9%88%E5%8A%9E"><span class="nav-number">5.</span> <span class="nav-text">系统中出现大量不可中断进程和僵尸进程怎么办</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3Linux%E8%BD%AF%E4%B8%AD%E6%96%AD"><span class="nav-number">6.</span> <span class="nav-text">如何理解Linux软中断</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E7%9A%84%E8%BD%AF%E4%B8%AD%E6%96%ADCPU%E4%BD%BF%E7%94%A8%E7%8E%87%E5%8D%87%E9%AB%98%EF%BC%8C%E8%AF%A5%E6%80%8E%E4%B9%88%E5%8A%9E"><span class="nav-number">7.</span> <span class="nav-text">系统的软中断CPU使用率升高，该怎么办</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E8%BF%85%E9%80%9F%E5%88%86%E6%9E%90%E5%87%BA%E7%B3%BB%E7%BB%9FCPU%E7%9A%84%E7%93%B6%E9%A2%88%E5%9C%A8%E5%93%AA%E9%87%8C"><span class="nav-number">8.</span> <span class="nav-text">如何迅速分析出系统CPU的瓶颈在哪里</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CPU%E5%93%AA%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E7%9A%84%E5%87%A0%E4%B8%AA%E6%80%9D%E8%B7%AF"><span class="nav-number">9.</span> <span class="nav-text">CPU哪性能优化的几个思路</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%97%A0%E6%B3%95%E6%A8%A1%E6%8B%9F%E5%87%BARES%E4%B8%AD%E6%96%AD%E7%9A%84%E9%97%AE%E9%A2%98%EF%BC%8C%E8%AF%A5%E6%80%8E%E4%B9%88%E5%8A%9E"><span class="nav-number">10.</span> <span class="nav-text">无法模拟出RES中断的问题，该怎么办</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E7%94%A8perf%E5%B7%A5%E5%85%B7%E5%88%86%E6%9E%90Java%E7%A8%8B%E5%BA%8F"><span class="nav-number">11.</span> <span class="nav-text">如何用perf工具分析Java程序</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Huang</span>
+
+  
+</div>
+
+<div class="powered-by">
+<i class="fa fa-user-md"></i><span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</div>
+
+<!--
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.3</div>
+
+
+
+ -->
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.3"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.3"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.3"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.3"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.3"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

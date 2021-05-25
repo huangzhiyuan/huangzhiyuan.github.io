@@ -79,18 +79,22 @@
 
 
 
-<meta name="description" content="开发者必看，超全机器学习术语表汇总。">
+<meta name="description" content="实际上，性能优化一直都是大多数软件工程师头上的紧箍咒，甚至许多工作多年的资深工程师，有时也无法准确地分析出线上的很多性能问题。　　性能分析问题为什么这么难呢？性能优化是个系统工具，常常牵一发而动全身。它涉及了从程序设计、算法分析、编程语言，再到系统、存储、网络等各种底层基础设施的方方面面。每一个组件都可能出现问题，甚至多个组件同时出现问题。毫无疑问，性能优化是软件系统中最有挑战的工作指引，也是">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Linux性能优化实战">
 <meta property="og:url" content="http://yoursite.com/2021/05/25/Linux-perf-optimize-actual-combat/index.html">
 <meta property="og:site_name">
-<meta property="og:description" content="开发者必看，超全机器学习术语表汇总。">
+<meta property="og:description" content="实际上，性能优化一直都是大多数软件工程师头上的紧箍咒，甚至许多工作多年的资深工程师，有时也无法准确地分析出线上的很多性能问题。　　性能分析问题为什么这么难呢？性能优化是个系统工具，常常牵一发而动全身。它涉及了从程序设计、算法分析、编程语言，再到系统、存储、网络等各种底层基础设施的方方面面。每一个组件都可能出现问题，甚至多个组件同时出现问题。毫无疑问，性能优化是软件系统中最有挑战的工作指引，也是">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yoursite.com/img/2021/0525/1.png">
+<meta property="og:image" content="http://yoursite.com/img/2021/0525/linux_perf_tool.png">
+<meta property="og:image" content="http://yoursite.com/img/2021/0525/si_wei_picture.png">
 <meta property="article:published_time" content="2021-05-24T16:53:03.000Z">
-<meta property="article:modified_time" content="2021-05-24T16:55:41.218Z">
+<meta property="article:modified_time" content="2021-05-25T12:17:12.539Z">
 <meta property="article:author" content="Huang">
 <meta property="article:tag" content="Linux">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/img/2021/0525/1.png">
 
 
 
@@ -320,8 +324,31 @@
       
 
       
-        <p>　　开发者必看，超全机器学习术语表汇总。</p>
+        <p>　　实际上，性能优化一直都是大多数软件工程师头上的紧箍咒，甚至许多工作多年的资深工程师，有时也无法准确地分析出线上的很多性能问题。<br>　　性能分析问题为什么这么难呢？性能优化是个系统工具，常常牵一发而动全身。它涉及了从程序设计、算法分析、编程语言，再到系统、存储、网络等各种底层基础设施的方方面面。每一个组件都可能出现问题，甚至多个组件同时出现问题。毫无疑问，性能优化是软件系统中最有挑战的工作指引，也是最考验体现你综合能力的工作之一。该篇blog记录总结了倪朋飞老师在极客时间开设的<a target="_blank" rel="noopener" href="https://time.geekbang.org/column/article/68728">《Linux性能优化实战》</a>课程笔记。</p>
 <span id="more"></span>
+
+<h2 id="开篇词"><a href="#开篇词" class="headerlink" title="开篇词"></a>开篇词</h2><p>　　对于我们大多数人来说，最好的学习方式之一就是带着问题学习。这种方法远比抱着大厚本原理书籍高效，且保证不会轻易把自己积累下来的信心打垮。学习更要学会抓住重点。其实只要了解了少数几个系统组件的基本原理和协作方式，掌握基本的性能指标和工具，学会实际工作中性能优化的常用技巧，就可以准确分析和优化大多数的性能问题了。在此基础之上，再去阅读哪些经典的操作系统或者图书，更能事半功倍。<br>　　在这个专栏里面，作者以案例驱动的思路，分别讲解了Linux性能的基本指标、工具、以及相应的观测、分析和调优方法。具体来看分为5个模块。包括<strong>CPU性能、磁盘IO性能、内存性能以及网络性能</strong>。每个模块还浅入深出分为4个不同的篇章。</p>
+<blockquote>
+<p><strong>基础篇</strong>， 介绍Linux必备的基本原理以及对应的性能指标和性能工具。比如理解平均负载，怎么理解上下文切换，Linux内存的工作原理。</p>
+</blockquote>
+<blockquote>
+<p><strong>案例篇</strong>， 通过模拟案例，帮助分析高手在遇到资源瓶颈时，是如何观测、定位、分析并优化这些性能问题的。</p>
+</blockquote>
+<blockquote>
+<p><strong>套路篇</strong>， 理解了基础，亲身体验了模拟案例，梳理出排查问题的整体思路，也就是检查性能问题的一般步骤。</p>
+</blockquote>
+<blockquote>
+<p><strong>答疑篇</strong>， 系统解答出现频次较多的问题。</p>
+</blockquote>
+<h2 id="如何入门学习Linux性能优化"><a href="#如何入门学习Linux性能优化" class="headerlink" title="如何入门学习Linux性能优化"></a>如何入门学习Linux性能优化</h2><h3 id="性能指标的概念"><a href="#性能指标的概念" class="headerlink" title="性能指标的概念"></a>性能指标的概念</h3><p>　　其实，性能问题并没有我们想象中的那么复杂。也不需要我们了解每个组件的所有实现细节。<br>　　当看到性能指标是，首先会想到的就是“高并发”和“响应快”。它们正对应着性能优化的两个核心目标“吞吐”和“延时”，这两个指标是从应用负载的视角来考察性能，直接影响了产品终端的用户体验。跟它们对应的，是从系统资源的视角出发的指标，比如资源利用率和饱和度等。</p>
+<p><img src="/img/2021/0525/1.png" alt="&quot;perf_indicators&quot;"></p>
+<p>　　随着应用负载的增加，系统资源的使用率也会升高，甚至到达极限。而性能问题的本质就是资源以及达到瓶颈，但请求的处理却还不够快，无法支撑更多的请求。性能分析，其实就是找出应用和系统的瓶颈，并设法去避免或者缓解它们。从而更高效的利用资源处理更多请求。常用步骤如下：</p>
+<blockquote>
+<p>选择指标评估应用程序和系统的性能；<br>为应用程序和系统设置性能目标；<br>进行性能基准测试；<br>性能分析定位瓶颈；<br>优化系统和应用程序；<br>性能监控和告警。</p>
+</blockquote>
+<p><img src="/img/2021/0525/linux_perf_tool.png" alt="&quot;perf_tool&quot;"><br>(图片来自：<a target="_blank" rel="noopener" href="http://www.brendangregg.com/Perf/linux_perf_tools_full.png">brendangregg.com</a>)</p>
+<p>这个图是Linux性能分析最重要的参考资料之一。它告诉我们，在不同的子系统中出现性能问题后，应该用什么样的工具来观测和分析。<br>总结的思维导图如下：</p>
+<p><img src="/img/2021/0525/si_wei_picture.png" alt="&quot;思维导图&quot;"></p>
 
       
     </div>
@@ -387,8 +414,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2021/01/10/quantization-in-pytorch/" rel="next" title="PyTorch中的量化总结">
-                <i class="fa fa-chevron-left"></i> PyTorch中的量化总结
+              <a href="/2021/05/25/Linux-perf-optimize-actual-combat-CPU/" rel="next" title="Linux性能优化实战之IO性能篇">
+                <i class="fa fa-chevron-left"></i> Linux性能优化实战之IO性能篇
               </a>
             
           </div>
@@ -447,8 +474,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -467,7 +503,7 @@
               
                 <a href="/archives">
               
-                  <span class="site-state-item-count">134</span>
+                  <span class="site-state-item-count">138</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -540,6 +576,22 @@
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%80%E7%AF%87%E8%AF%8D"><span class="nav-number">1.</span> <span class="nav-text">开篇词</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E5%85%A5%E9%97%A8%E5%AD%A6%E4%B9%A0Linux%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96"><span class="nav-number">2.</span> <span class="nav-text">如何入门学习Linux性能优化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E6%8C%87%E6%A0%87%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="nav-number">2.1.</span> <span class="nav-text">性能指标的概念</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       

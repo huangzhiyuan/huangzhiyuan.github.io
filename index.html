@@ -319,7 +319,7 @@
 
       
         
-          <p>　　开发者必看，超全机器学习术语表汇总。</p>
+          <p>　　实际上，性能优化一直都是大多数软件工程师头上的紧箍咒，甚至许多工作多年的资深工程师，有时也无法准确地分析出线上的很多性能问题。<br>　　性能分析问题为什么这么难呢？性能优化是个系统工具，常常牵一发而动全身。它涉及了从程序设计、算法分析、编程语言，再到系统、存储、网络等各种底层基础设施的方方面面。每一个组件都可能出现问题，甚至多个组件同时出现问题。毫无疑问，性能优化是软件系统中最有挑战的工作指引，也是最考验体现你综合能力的工作之一。该篇blog记录总结了倪朋飞老师在极客时间开设的<a target="_blank" rel="noopener" href="https://time.geekbang.org/column/article/68728">《Linux性能优化实战》</a>课程笔记。</p>
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/2021/05/25/Linux-perf-optimize-actual-combat/#more" rel="contents">
@@ -375,7 +375,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2021/01/10/quantization-in-pytorch/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2021/05/25/Linux-perf-optimize-actual-combat-CPU/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="">
@@ -394,7 +394,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2021/01/10/quantization-in-pytorch/" itemprop="url">PyTorch中的量化总结</a></h1>
+                <a class="post-title-link" href="/2021/05/25/Linux-perf-optimize-actual-combat-CPU/" itemprop="url">Linux性能优化实战之IO性能篇</a></h1>
         
 
         <div class="post-meta">
@@ -406,8 +406,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-01-10T20:04:42+08:00">
-                2021-01-10
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-05-25T00:53:03+08:00">
+                2021-05-25
               </time>
             
 
@@ -416,28 +416,6 @@
             
           </span>
 
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93/" itemprop="url" rel="index">
-                    <span itemprop="name">技术总结</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
           
 
           
@@ -467,13 +445,10 @@
 
       
         
-          <p><strong>背景：</strong><br>在深度学习中，量化指的是使用更少的bit来存储原本以浮点数存储的tensor，以及使用更少的bit来完成原本以浮点数完成的计算。这么做的好处主要有如下几点：</p>
-<ul>
-<li>更少的模型体积，接近4倍的减少；</li>
-<li>可以更快的计算，由于更少的内存访问和更快的int8计算，可以快2~4倍。<br>一个量化后的模型，其部分或者全部的tensor操作会使用int类型来计算，而不是使用量化之前的float类型。当然，量化还需要底层硬件支持，x86 CPU（支持AVX2）、ARM CPU、Google TPU、Nvidia Volta/Turing/Ampere、Qualcomm DSP这些主流硬件都对量化提供了支持。
+          <p>　　实际上，性能优化一直都是大多数软件工程师头上的紧箍咒，甚至许多工作多年的资深工程师，有时也无法准确地分析出线上的很多性能问题。<br>　　性能分析问题为什么这么难呢？性能优化是个系统工具，常常牵一发而动全身。它涉及了从程序设计、算法分析、编程语言，再到系统、存储、网络等各种底层基础设施的方方面面。每一个组件都可能出现问题，甚至多个组件同时出现问题。毫无疑问，性能优化是软件系统中最有挑战的工作指引，也是最考验体现你综合能力的工作之一。该篇blog记录总结了倪朋飞老师在极客时间开设的[《Linux性能优化实战》][1]课程笔记。</p>
           <!--noindex-->
           <div class="post-button text-center">
-            <a class="btn" href="/2021/01/10/quantization-in-pytorch/#more" rel="contents">
+            <a class="btn" href="/2021/05/25/Linux-perf-optimize-actual-combat-CPU/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -526,7 +501,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2021/01/10/memory-brief-introduction/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2021/05/25/Linux-perf-optimize-actual-combat-IO/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="">
@@ -545,7 +520,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2021/01/10/memory-brief-introduction/" itemprop="url">简要解读内存性能</a></h1>
+                <a class="post-title-link" href="/2021/05/25/Linux-perf-optimize-actual-combat-IO/" itemprop="url">Linux性能优化实战之IO性能篇</a></h1>
         
 
         <div class="post-meta">
@@ -557,8 +532,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-01-10T11:11:53+08:00">
-                2021-01-10
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-05-25T00:53:03+08:00">
+                2021-05-25
               </time>
             
 
@@ -567,28 +542,6 @@
             
           </span>
 
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93/" itemprop="url" rel="index">
-                    <span itemprop="name">技术总结</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
           
 
           
@@ -618,11 +571,10 @@
 
       
         
-          <p>一台服务器，不管是物理机还是虚拟机，必不可少的就是内存，内存的性能又是如何来衡量呢。</p>
-<p><img src="/img/2021/0110/4.jpg" alt="&quot;CPU Memory&quot;"></p>
+          <p>　　实际上，性能优化一直都是大多数软件工程师头上的紧箍咒，甚至许多工作多年的资深工程师，有时也无法准确地分析出线上的很多性能问题。<br>　　性能分析问题为什么这么难呢？性能优化是个系统工具，常常牵一发而动全身。它涉及了从程序设计、算法分析、编程语言，再到系统、存储、网络等各种底层基础设施的方方面面。每一个组件都可能出现问题，甚至多个组件同时出现问题。毫无疑问，性能优化是软件系统中最有挑战的工作指引，也是最考验体现你综合能力的工作之一。该篇blog记录总结了倪朋飞老师在极客时间开设的[《Linux性能优化实战》][1]课程笔记。</p>
           <!--noindex-->
           <div class="post-button text-center">
-            <a class="btn" href="/2021/01/10/memory-brief-introduction/#more" rel="contents">
+            <a class="btn" href="/2021/05/25/Linux-perf-optimize-actual-combat-IO/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -675,7 +627,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2021/01/10/docker-info/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2021/05/25/Linux-perf-optimize-actual-combat-Memory/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="">
@@ -694,7 +646,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2021/01/10/docker-info/" itemprop="url">容器、docker、虚拟机</a></h1>
+                <a class="post-title-link" href="/2021/05/25/Linux-perf-optimize-actual-combat-Memory/" itemprop="url">Linux性能优化实战之内存性能篇</a></h1>
         
 
         <div class="post-meta">
@@ -706,8 +658,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-01-10T10:36:31+08:00">
-                2021-01-10
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-05-25T00:53:03+08:00">
+                2021-05-25
               </time>
             
 
@@ -716,28 +668,6 @@
             
           </span>
 
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93/" itemprop="url" rel="index">
-                    <span itemprop="name">技术总结</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
           
 
           
@@ -767,11 +697,10 @@
 
       
         
-          <p>容器技术起源于Linux，是一种内核虚拟化技术，提供轻量级的虚拟化，以便隔离进程和资源。尽管容器技术已经出现很久，却是随着Docker的出现而变得广为人知。Docker是第一个使容器能在不同机器之间移植的系统。它不仅简化了打包应用的流程，也简化了打包应用的库和依赖，甚至整个操作系统的文件系统能被打包成一个简单的可移植的包，这个包可以被用来在任何其他运行Docker的机器上使用。</p>
-<p>容器和虚拟机具有相似的资源隔离和分配方式，容器虚拟化了操作系统而不是硬件，更加便携和高效。</p>
+          <p>　　实际上，性能优化一直都是大多数软件工程师头上的紧箍咒，甚至许多工作多年的资深工程师，有时也无法准确地分析出线上的很多性能问题。<br>　　性能分析问题为什么这么难呢？性能优化是个系统工具，常常牵一发而动全身。它涉及了从程序设计、算法分析、编程语言，再到系统、存储、网络等各种底层基础设施的方方面面。每一个组件都可能出现问题，甚至多个组件同时出现问题。毫无疑问，性能优化是软件系统中最有挑战的工作指引，也是最考验体现你综合能力的工作之一。该篇blog记录总结了倪朋飞老师在极客时间开设的[《Linux性能优化实战》][1]课程笔记。</p>
           <!--noindex-->
           <div class="post-button text-center">
-            <a class="btn" href="/2021/01/10/docker-info/#more" rel="contents">
+            <a class="btn" href="/2021/05/25/Linux-perf-optimize-actual-combat-Memory/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -824,7 +753,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2021/01/07/Linux-IO-and-zero-copy-tech/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2021/05/25/Linux-perf-optimize-actual-combat-Network/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="">
@@ -843,7 +772,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2021/01/07/Linux-IO-and-zero-copy-tech/" itemprop="url">Linux IO原理解析和zero-copy技术揭秘</a></h1>
+                <a class="post-title-link" href="/2021/05/25/Linux-perf-optimize-actual-combat-Network/" itemprop="url">Linux性能优化实战之网络性能篇</a></h1>
         
 
         <div class="post-meta">
@@ -855,8 +784,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-01-07T21:38:01+08:00">
-                2021-01-07
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-05-25T00:53:03+08:00">
+                2021-05-25
               </time>
             
 
@@ -865,28 +794,6 @@
             
           </span>
 
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93/" itemprop="url" rel="index">
-                    <span itemprop="name">技术总结</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
           
 
           
@@ -916,12 +823,10 @@
 
       
         
-          <p><img src="/img/2021/0107/1.jpg" alt="&quot;linux-zero-copy&quot;"></p>
-<p>原文链接：<a target="_blank" rel="noopener" href="https://strikefreedom.top/linux-io-and-zero-copy">https://strikefreedom.top/linux-io-and-zero-copy</a></p>
-<p>早就想写篇关于介绍IO操作的技术总结，直到今天看到这篇文章介绍的如此逻辑清晰，也把自己之前掌握的知识串了起来，读完收获颇多。这里就做个搬运工，原文请参见上面链接。<br>如今的网络应用早已从 CPU 密集型转向了 I/O 密集型，网络服务器大多是基于 C-S 模型，也即 客户端 - 服务端 模型，客户端需要和服务端进行大量的网络通信，这也决定了现代网络应用的性能瓶颈：I/O。</p>
+          <p>　　实际上，性能优化一直都是大多数软件工程师头上的紧箍咒，甚至许多工作多年的资深工程师，有时也无法准确地分析出线上的很多性能问题。<br>　　性能分析问题为什么这么难呢？性能优化是个系统工具，常常牵一发而动全身。它涉及了从程序设计、算法分析、编程语言，再到系统、存储、网络等各种底层基础设施的方方面面。每一个组件都可能出现问题，甚至多个组件同时出现问题。毫无疑问，性能优化是软件系统中最有挑战的工作指引，也是最考验体现你综合能力的工作之一。该篇blog记录总结了倪朋飞老师在极客时间开设的[《Linux性能优化实战》][1]课程笔记。</p>
           <!--noindex-->
           <div class="post-button text-center">
-            <a class="btn" href="/2021/01/07/Linux-IO-and-zero-copy-tech/#more" rel="contents">
+            <a class="btn" href="/2021/05/25/Linux-perf-optimize-actual-combat-Network/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -965,7 +870,7 @@
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/27/">27</a><a class="extend next" rel="next" href="/page/2/">&lt;i class&#x3D;&quot;fa fa-angle-right&quot;&gt;&lt;&#x2F;i&gt;</a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/28/">28</a><a class="extend next" rel="next" href="/page/2/">&lt;i class&#x3D;&quot;fa fa-angle-right&quot;&gt;&lt;&#x2F;i&gt;</a>
   </nav>
 
 
@@ -1015,7 +920,7 @@
               
                 <a href="/archives">
               
-                  <span class="site-state-item-count">134</span>
+                  <span class="site-state-item-count">138</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
