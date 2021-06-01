@@ -88,8 +88,14 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://yoursite.com/img/2021/0526/cpu_context.png">
 <meta property="og:image" content="http://yoursite.com/img/2021/0526/ring.png">
+<meta property="og:image" content="http://yoursite.com/img/2021/0526/context_change.png">
+<meta property="og:image" content="http://yoursite.com/img/2021/0526/cache.png">
+<meta property="og:image" content="http://yoursite.com/img/2021/0526/cpu_perf_base.png">
+<meta property="og:image" content="http://yoursite.com/img/2021/0526/perf_tool.png">
+<meta property="og:image" content="http://yoursite.com/img/2021/0526/tool_perf.png">
+<meta property="og:image" content="http://yoursite.com/img/2021/0526/tool.png">
 <meta property="article:published_time" content="2021-05-24T16:53:03.000Z">
-<meta property="article:modified_time" content="2021-05-26T15:11:41.986Z">
+<meta property="article:modified_time" content="2021-05-28T05:26:13.649Z">
 <meta property="article:author" content="Huang">
 <meta property="article:tag" content="Linux">
 <meta name="twitter:card" content="summary">
@@ -377,8 +383,64 @@
 <blockquote>
 <p>内核空间（Ring 0）具有最高权限，可以直接访问所有资源；<br>用户空间（Ring 3）只能访问受限资源，不能直接访问内存等硬件设备，必须通过系统调用陷入到内核中，才能访问这些特权资源。</p>
 </blockquote>
-<p><img src="/img/2021/0526/ring.png" alt="&quot;ring kernel&quot;"><br>　　换个角度看，也就是说，进程既可以在用户空间运行，又可以在内核空间中运行。进程在用户空间运行时，被称为进程的用户态，而陷入内核空间的时候，被称为进程的内核态。从用户态到内核态的转变，需要通过系统调用来完成。比如，当我们查看文件内容时，就需要多次系统调用来完成：首先调用 open() 打开文件，然后调用 read() 读取文件内容，并调用 write() 将内容写到标准输出，最后再调用 close() 关闭文件。<br>　　系统调用的过程有没有发生 CPU 上下文的切换呢？答案自然是肯定的。CPU寄存器里原来用户态的指令位置，需要先保存起来。接着，为了执行内核态代码，CPU寄存器需要更新为内核态指令的新位置。最后才是跳转到内核态运行内核任务。而系统调用结束后，CPU 寄存器需要恢复原来保存的用户态，然后再切换到用户空间，继续运行进程。所以，一次系统调用的过程，其实是发生了两次 CPU 上下文切换。</p>
-<h3 id="线程上下文切换"><a href="#线程上下文切换" class="headerlink" title="线程上下文切换"></a>线程上下文切换</h3><h3 id="中断上下文切换"><a href="#中断上下文切换" class="headerlink" title="中断上下文切换"></a>中断上下文切换</h3><h2 id="某应用CPU使用率100-，该怎么办"><a href="#某应用CPU使用率100-，该怎么办" class="headerlink" title="某应用CPU使用率100%，该怎么办"></a>某应用CPU使用率100%，该怎么办</h2><h2 id="系统CPU使用率很高，为啥找不到高CPU的应用"><a href="#系统CPU使用率很高，为啥找不到高CPU的应用" class="headerlink" title="系统CPU使用率很高，为啥找不到高CPU的应用"></a>系统CPU使用率很高，为啥找不到高CPU的应用</h2><h2 id="系统中出现大量不可中断进程和僵尸进程怎么办"><a href="#系统中出现大量不可中断进程和僵尸进程怎么办" class="headerlink" title="系统中出现大量不可中断进程和僵尸进程怎么办"></a>系统中出现大量不可中断进程和僵尸进程怎么办</h2><h2 id="如何理解Linux软中断"><a href="#如何理解Linux软中断" class="headerlink" title="如何理解Linux软中断"></a>如何理解Linux软中断</h2><h2 id="系统的软中断CPU使用率升高，该怎么办"><a href="#系统的软中断CPU使用率升高，该怎么办" class="headerlink" title="系统的软中断CPU使用率升高，该怎么办"></a>系统的软中断CPU使用率升高，该怎么办</h2><h2 id="如何迅速分析出系统CPU的瓶颈在哪里"><a href="#如何迅速分析出系统CPU的瓶颈在哪里" class="headerlink" title="如何迅速分析出系统CPU的瓶颈在哪里"></a>如何迅速分析出系统CPU的瓶颈在哪里</h2><h2 id="CPU哪性能优化的几个思路"><a href="#CPU哪性能优化的几个思路" class="headerlink" title="CPU哪性能优化的几个思路"></a>CPU哪性能优化的几个思路</h2><h2 id="无法模拟出RES中断的问题，该怎么办"><a href="#无法模拟出RES中断的问题，该怎么办" class="headerlink" title="无法模拟出RES中断的问题，该怎么办"></a>无法模拟出RES中断的问题，该怎么办</h2><h2 id="如何用perf工具分析Java程序"><a href="#如何用perf工具分析Java程序" class="headerlink" title="如何用perf工具分析Java程序"></a>如何用perf工具分析Java程序</h2>
+<p><img src="/img/2021/0526/ring.png" alt="&quot;ring kernel&quot;"></p>
+<p>　　换个角度看，也就是说，进程既可以在用户空间运行，又可以在内核空间中运行。进程在用户空间运行时，被称为进程的用户态，而陷入内核空间的时候，被称为进程的内核态。从用户态到内核态的转变，需要通过系统调用来完成。比如，当我们查看文件内容时，就需要多次系统调用来完成：首先调用 open() 打开文件，然后调用 read() 读取文件内容，并调用 write() 将内容写到标准输出，最后再调用 close() 关闭文件。<br>　　系统调用的过程有没有发生 CPU 上下文的切换呢？答案自然是肯定的。CPU寄存器里原来用户态的指令位置，需要先保存起来。接着，为了执行内核态代码，CPU寄存器需要更新为内核态指令的新位置。最后才是跳转到内核态运行内核任务。而系统调用结束后，CPU 寄存器需要恢复原来保存的用户态，然后再切换到用户空间，继续运行进程。所以，一次系统调用的过程，其实是发生了两次 CPU 上下文切换。<br>　　需要注意的是，系统调动过程中，并不会设计到虚拟内存等进程用户态的资源，也不会切换进程。</p>
+<blockquote>
+<p>进程上下文切换，是指从一个进程切换到另一个进程。<br>而系统调用过程中一直是同一个进程在运行。</p>
+</blockquote>
+<p>　　所以，<strong>系统调用过程通常称为特权模式切换，而不是上下文切换</strong>。实际上，系统调用过程中，CPU的上下文切换还是无法避免的。那么，进程上下文切换和系统调用有什么区别呢？<br>　　首先，进程是由内核来管理和调度，进程的切换只能发生在内核态。所以进程的上下文切换不仅包括了虚拟内存、栈、全局变量等用户空间的资源，还包括了内核堆栈、寄存器等内核空间的状态。因此，进程的上下文切换就比系统调用时多了一步：在保存当前进程的内核状态和 CPU 寄存器之前，需要先把该进程的虚拟内存、栈等保存下来；而加载了下一进程的内核态后，还需要刷新进程的虚拟内存和用户栈。<br>如下图所示，保存上下文和恢复上下文的过程并不是“免费”的，需要内核在 CPU 上运行才能完成。</p>
+<p><img src="/img/2021/0526/context_change.png" alt="&quot;context change&quot;"></p>
+<p>　　根据 Tsuna 的测试报告，每次上下文切换都需要几十纳秒到数微秒的 CPU 时间。这个时间还是相当可观的，特别是在进程上下文切换次数较多的情况下，很容易导致 CPU 将大量时间耗费在寄存器、内核栈以及虚拟内存等资源的保存和恢复上，进而大大缩短了真正运行进程的时间。这也正是上一节中我们所讲的，导致平均负载升高的一个重要因素。</p>
+<p>另外，我们知道， Linux 通过 TLB（Translation Lookaside Buffer）来管理虚拟内存到物理内存的映射关系。当虚拟内存更新后，TLB 也需要刷新，内存的访问也会随之变慢。特别是在多处理器系统上，缓存是被多个处理器共享的，刷新缓存不仅会影响当前处理器的进程，还会影响共享缓存的其他处理器的进程。</p>
+<p>显然，进程切换时才需要切换上下文，换句话说，只有在进程调度的时候，才需要切换上下文。Linux 为每个 CPU 都维护了一个就绪队列，将活跃进程（即正在运行和正在等待 CPU 的进程）按照优先级和等待 CPU 的时间排序，然后选择最需要 CPU 的进程，也就是优先级最高和等待 CPU 时间最长的进程来运行。那么，进程在什么时候才会被调度到 CPU 上运行呢？<br>最容易想到的一个时机，就是进程执行完终止了，它之前使用的 CPU 会释放出来，这个时候再从就绪队列里，拿一个新的进程过来运行。其实还有很多其他场景，也会触发进程调度，在这里我给你逐个梳理下。</p>
+<p>其一，为了保证所有进程可以得到公平调度，CPU 时间被划分为一段段的时间片，这些时间片再被轮流分配给各个进程。这样，当某个进程的时间片耗尽了，就会被系统挂起，切换到其它正在等待 CPU 的进程运行。<br>其二，进程在系统资源不足（比如内存不足）时，要等到资源满足后才可以运行，这个时候进程也会被挂起，并由系统调度其他进程运行。<br>其三，当进程通过睡眠函数 sleep 这样的方法将自己主动挂起时，自然也会重新调度。<br>其四，当有优先级更高的进程运行时，为了保证高优先级进程的运行，当前进程会被挂起，由高优先级进程来运行。<br>最后一个，发生硬件中断时，CPU 上的进程会被中断挂起，转而执行内核中的中断服务程序。</p>
+<p>上下文切换引起的性能问题的幕后元凶往往就是以上几个场景。</p>
+<h3 id="线程上下文切换"><a href="#线程上下文切换" class="headerlink" title="线程上下文切换"></a>线程上下文切换</h3><p>线程与进程最大的区别在于，线程是调度的基本单位，而进程则是资源拥有的基本单位。说白了，所谓内核中的任务调度，实际上的调度对象是线程；而进程只是给线程提供了虚拟内存、全局变量等资源。所以，对于线程和进程，我们可以这么理解：</p>
+<ul>
+<li>当进程只有一个线程时，可以认为进程就等于线程。</li>
+<li>当进程拥有多个线程时，这些线程会共享相同的虚拟内存和全局变量等资源。这些资源在上下文切换时是不需要修改的。</li>
+<li>另外，线程也有自己的私有数据，比如栈和寄存器等，这些在上下文切换时也是需要保存的。</li>
+</ul>
+<p>这么一来，线程的上下文切换其实就可以分为两种情况：<br>第一种， 前后两个线程属于不同进程。此时，因为资源不共享，所以切换过程就跟进程上下文切换是一样。<br>第二种，前后两个线程属于同一个进程。此时，因为虚拟内存是共享的，所以在切换时，虚拟内存这些资源就保持不动，只需要切换线程的私有数据、寄存器等不共享的数据。<br>到这里你应该也发现了，虽然同为上下文切换，但同进程内的线程切换，要比多进程间的切换消耗更少的资源，而这，也正是多线程代替多进程的一个优势。</p>
+<h3 id="中断上下文切换"><a href="#中断上下文切换" class="headerlink" title="中断上下文切换"></a>中断上下文切换</h3><p>为了快速响应硬件的事件，中断处理会打断进程的正常调度和执行，转而调用中断处理程序，响应设备事件。而在打断其他进程时，就需要将进程当前的状态保存下来，这样在中断结束后，进程仍然可以从原来的状态恢复运行。</p>
+<p>跟进程上下文不同，中断上下文切换并不涉及到进程的用户态。所以，即便中断过程打断了一个正处在用户态的进程，也不需要保存和恢复这个进程的虚拟内存、全局变量等用户态资源。中断上下文，其实只包括内核态中断服务程序执行所必需的状态，包括 CPU 寄存器、内核堆栈、硬件中断参数等。<br>对同一个 CPU 来说，中断处理比进程拥有更高的优先级，所以中断上下文切换并不会与进程上下文切换同时发生。同样道理，由于中断会打断正常进程的调度和执行，所以大部分中断处理程序都短小精悍，以便尽可能快的执行结束。另外，跟进程上下文切换一样，中断上下文切换也需要消耗 CPU，切换次数过多也会耗费大量的 CPU，甚至严重降低系统的整体性能。</p>
+<h3 id="vmstat"><a href="#vmstat" class="headerlink" title="vmstat"></a>vmstat</h3><p>vmstat 是一个常用的系统性能分析工具，主要用来分析系统的内存使用情况，也常用来分析 CPU 上下文切换和中断的次数。用法如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># 每隔5秒输出1组数据</span><br><span class="line">$ vmstat 5</span><br><span class="line">procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----</span><br><span class="line"> r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st</span><br><span class="line"> 0  0      0 7005360  91564 818900    0    0     0     0   25   33  0  0 100  0  0</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>需要重点关注下面四列内容：</p>
+<blockquote>
+<p>**cs (context switch)**是每秒上下文切换的次数<br><strong>in (interrupt)</strong> 则是每秒中断的次数<br>**r (Running or Runnable)**是就绪队列的长度，也就是正在运行和等待CPU的进程数。<br>**b (Blocked)**则是处于不可中断睡眠状态的进程数。</p>
+</blockquote>
+<p>vmstat 只给出了系统总体的上下文切换情况，要想查看每个进程的详细情况，就需要使用我们前面提到过的 pidstat 了。给它加上 -w 选项，你就可以查看每个进程上下文切换的情况了。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># 每隔5秒输出1组数据</span><br><span class="line">$ pidstat -w 5</span><br><span class="line">Linux 4.15.0 (ubuntu)  09/23/18  _x86_64_  (2 CPU)</span><br><span class="line"></span><br><span class="line">08:18:26      UID       PID   cswch/s nvcswch/s  Command</span><br><span class="line">08:18:31        0         1      0.20      0.00  systemd</span><br><span class="line">08:18:31        0         8      5.40      0.00  rcu_sched</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>这个结果中有两列内容是我们的重点关注对象。一个是 cswch ，表示每秒自愿上下文切换（voluntary context switches）的次数，另一个则是 nvcswch ，表示每秒非自愿上下文切换（non voluntary context switches）的次数。</p>
+<p>这两个概念你一定要牢牢记住，因为它们意味着不同的性能问题：<br>所谓自愿上下文切换，是指进程无法获取所需资源，导致的上下文切换。比如说， I/O、内存等系统资源不足时，就会发生自愿上下文切换。<br>而非自愿上下文切换，则是指进程由于时间片已到等原因，被系统强制调度，进而发生的上下文切换。比如说，大量进程都在争抢 CPU 时，就容易发生非自愿上下文切换。</p>
+<h2 id="CPU哪性能优化的几个思路"><a href="#CPU哪性能优化的几个思路" class="headerlink" title="CPU哪性能优化的几个思路"></a>CPU哪性能优化的几个思路</h2><p>　　CPU 的性能指标那么多，CPU性能分析工具也是一抓一大把，如果离开专栏，换成实际的工作场景，我又该观察什么指标、选择哪个性能工具呢？我们先来回顾下，描述 CPU 的性能指标都有哪些。<br>　　首先，最容易想到的应该是 <strong>CPU 使用率</strong>，这也是实际环境中最常见的一个性能指标。CPU 使用率描述了非空闲时间占总 CPU 时间的百分比，根据 CPU 上运行任务的不同，又被分为用户 CPU、系统 CPU、等待 I/O CPU、软中断和硬中断等。</p>
+<blockquote>
+<p>用户 CPU 使用率，包括用户态 CPU 使用率（user）和低优先级用户态 CPU 使用率（nice），表示 CPU 在用户态运行的时间百分比。用户 CPU 使用率高，通常说明有应用程序比较繁忙。<br>系统 CPU 使用率，表示 CPU 在内核态运行的时间百分比（不包括中断）。系统 CPU 使用率高，说明内核比较繁忙。<br>等待 I/O 的 CPU 使用率，通常也称为 iowait，表示等待 I/O 的时间百分比。iowait 高，通常说明系统与硬件设备的 I/O 交互时间比较长。<br>软中断和硬中断的CPU使用率，分别表示内核调用软中断处理程序、硬中断处理程序的时间百分比。它们的使用率高，通常说明系统发生了大量的中断。<br>除了上面这些，还有在虚拟化环境中会用到的窃取CPU使用率（steal）和客户CPU使用率（guest），分别表示被其他虚拟机占用的 CPU 时间百分比，和运行客户虚拟机的 CPU 时间百分比。</p>
+</blockquote>
+<p>　　第二个比较容易想到的，应该是平均负载（Load Average），也就是系统的平均活跃进程数。它反应了系统的整体负载情况，主要包括三个数值，分别指过去 1 分钟、过去 5 分钟和过去15分钟的平均负载。理想情况下，平均负载等于逻辑CPU个数，这表示每个CPU都恰好被充分利用。如果平均负载大于逻辑 CPU 个数，就表示负载比较重了。</p>
+<p>　　第三个，也是在专栏学习前你估计不太会注意到的，进程上下文切换，包括：</p>
+<blockquote>
+<p>无法获取资源而导致的自愿上下文切换；<br>被系统强制调度导致的非自愿上下文切换。</p>
+</blockquote>
+<p>　　上下文切换，本身是保证 Linux 正常运行的一项核心功能。但过多的上下文切换，会将原本运行进程的CPU时间，消耗在寄存器、内核栈以及虚拟内存等数据的保存和恢复上，缩短进程真正运行的时间，成为性能瓶颈。</p>
+<p>　　除了上面几种，还有一个指标，CPU 缓存的命中率。由于 CPU 发展的速度远快于内存的发展CPU的处理速度就比内存的访问速度快得多。这样，CPU在访问内存的时候，免不了要等待内存的响应。为了协调这两者巨大的性能差距，CPU 缓存（通常是多级缓存）就出现了。</p>
+<p><img src="/img/2021/0526/cache.png" alt="&quot;cpu cache&quot;"></p>
+<p>就像上面这张图显示的，CPU缓存的速度介于CPU和内存之间，缓存的是热点的内存数据。根据不断增长的热点数据，这些缓存按照大小不同分为 L1、L2、L3 等三级缓存，其中 L1 和 L2 常用在单核中，L3则用在多核中。从L1到L3，三级缓存的大小依次增大，相应的，性能依次降低（当然比内存还是好得多）。而它们的命中率，衡量的是 CPU 缓存的复用情况，命中率越高，则表示性能越好。</p>
+<p>　　现将CPU常用性能指标总结如下：</p>
+<p><img src="/img/2021/0526/cpu_perf_base.png" alt="&quot;cpu perf&quot;"></p>
+<p>活学活用，把性能指标和性能工具联系起来第一个维度，从CPU的性能指标出发。也就是说，当你要查看某个性能指标时，要清楚知道哪些工具可以做到。</p>
+<p><img src="/img/2021/0526/perf_tool.png" alt="&quot;perf tool&quot;"></p>
+<p><img src="/img/2021/0526/tool_perf.png" alt="&quot;tool perf&quot;"></p>
+<p>在实际生产环境中，我们通常都希望尽可能快地定位系统的瓶颈，然后尽可能快地优化性能，也就是要又快又准地解决性能问题。所以，为了缩小排查范围，我通常会先运行几个支持指标较多的工具，如 top、vmstat 和 pidstat 。为什么是这三个工具呢？仔细看看下面这张图，你就清楚了。</p>
+<p><img src="/img/2021/0526/tool.png" alt="&quot;tool&quot;"></p>
+<p>这张图里，列出了<strong>top、vmstat和pidstat</strong>分别提供的重要的CPU指标，并用虚线表示关联关系，对应出了性能分析下一步的方向。<br>通过这张图你可以发现，这三个命令，几乎包含了所有重要的 CPU 性能指标，比如：</p>
+<ul>
+<li>从 top 的输出可以得到各种 CPU 使用率以及僵尸进程和平均负载等信息。</li>
+<li>从 vmstat 的输出可以得到上下文切换次数、中断次数、运行状态和不可中断状态的进程数。</li>
+<li>从 pidstat 的输出可以得到进程的用户 CPU 使用率、系统 CPU 使用率、以及自愿上下文切换和非自愿上下文切换情况。</li>
+</ul>
+
       
     </div>
     
@@ -443,8 +505,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2021/05/25/Linux-perf-optimize-actual-combat-IO/" rel="next" title="Linux性能优化实战之IO性能篇">
-                <i class="fa fa-chevron-left"></i> Linux性能优化实战之IO性能篇
+              <a href="/2021/05/25/Linux-perf-optimize-actual-combat-Network/" rel="next" title="Linux性能优化实战之网络性能篇">
+                <i class="fa fa-chevron-left"></i> Linux性能优化实战之网络性能篇
               </a>
             
           </div>
@@ -453,8 +515,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2021/05/25/Linux-perf-optimize-actual-combat/" rel="prev" title="Linux性能优化实战">
-                Linux性能优化实战 <i class="fa fa-chevron-right"></i>
+              <a href="/2021/05/25/Linux-perf-optimize-actual-combat-IO/" rel="prev" title="Linux性能优化实战之IO性能篇">
+                Linux性能优化实战之IO性能篇 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -619,7 +681,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3%E2%80%9C%E5%B9%B3%E5%9D%87%E8%B4%9F%E8%BD%BD%E2%80%9D"><span class="nav-number">1.</span> <span class="nav-text">如何理解“平均负载”</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B9%B3%E5%9D%87%E8%B4%9F%E8%BD%BD%E5%A4%9A%E5%B0%91%E6%9C%80%E5%90%88%E9%80%82"><span class="nav-number">1.1.</span> <span class="nav-text">平均负载多少最合适</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B9%B3%E5%9D%87%E8%B4%9F%E8%BD%BD%E4%B8%8ECPU%E4%BD%BF%E7%94%A8%E7%8E%87"><span class="nav-number">1.2.</span> <span class="nav-text">平均负载与CPU使用率</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A1%88%E4%BE%8B%E5%88%86%E6%9E%90"><span class="nav-number">1.3.</span> <span class="nav-text">案例分析</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%8F%E5%B8%B8%E8%AF%B4%E7%9A%84CPU%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%87%E6%8D%A2%E6%98%AF%E4%BB%80%E4%B9%88%E6%84%8F%E6%80%9D"><span class="nav-number">2.</span> <span class="nav-text">经常说的CPU上下文切换是什么意思</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%87%E6%8D%A2"><span class="nav-number">2.1.</span> <span class="nav-text">进程上下文切换</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BA%BF%E7%A8%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%87%E6%8D%A2"><span class="nav-number">2.2.</span> <span class="nav-text">线程上下文切换</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%AD%E6%96%AD%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%87%E6%8D%A2"><span class="nav-number">2.3.</span> <span class="nav-text">中断上下文切换</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9F%90%E5%BA%94%E7%94%A8CPU%E4%BD%BF%E7%94%A8%E7%8E%87100-%EF%BC%8C%E8%AF%A5%E6%80%8E%E4%B9%88%E5%8A%9E"><span class="nav-number">3.</span> <span class="nav-text">某应用CPU使用率100%，该怎么办</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9FCPU%E4%BD%BF%E7%94%A8%E7%8E%87%E5%BE%88%E9%AB%98%EF%BC%8C%E4%B8%BA%E5%95%A5%E6%89%BE%E4%B8%8D%E5%88%B0%E9%AB%98CPU%E7%9A%84%E5%BA%94%E7%94%A8"><span class="nav-number">4.</span> <span class="nav-text">系统CPU使用率很高，为啥找不到高CPU的应用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E4%B8%AD%E5%87%BA%E7%8E%B0%E5%A4%A7%E9%87%8F%E4%B8%8D%E5%8F%AF%E4%B8%AD%E6%96%AD%E8%BF%9B%E7%A8%8B%E5%92%8C%E5%83%B5%E5%B0%B8%E8%BF%9B%E7%A8%8B%E6%80%8E%E4%B9%88%E5%8A%9E"><span class="nav-number">5.</span> <span class="nav-text">系统中出现大量不可中断进程和僵尸进程怎么办</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3Linux%E8%BD%AF%E4%B8%AD%E6%96%AD"><span class="nav-number">6.</span> <span class="nav-text">如何理解Linux软中断</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E7%9A%84%E8%BD%AF%E4%B8%AD%E6%96%ADCPU%E4%BD%BF%E7%94%A8%E7%8E%87%E5%8D%87%E9%AB%98%EF%BC%8C%E8%AF%A5%E6%80%8E%E4%B9%88%E5%8A%9E"><span class="nav-number">7.</span> <span class="nav-text">系统的软中断CPU使用率升高，该怎么办</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E8%BF%85%E9%80%9F%E5%88%86%E6%9E%90%E5%87%BA%E7%B3%BB%E7%BB%9FCPU%E7%9A%84%E7%93%B6%E9%A2%88%E5%9C%A8%E5%93%AA%E9%87%8C"><span class="nav-number">8.</span> <span class="nav-text">如何迅速分析出系统CPU的瓶颈在哪里</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CPU%E5%93%AA%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E7%9A%84%E5%87%A0%E4%B8%AA%E6%80%9D%E8%B7%AF"><span class="nav-number">9.</span> <span class="nav-text">CPU哪性能优化的几个思路</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%97%A0%E6%B3%95%E6%A8%A1%E6%8B%9F%E5%87%BARES%E4%B8%AD%E6%96%AD%E7%9A%84%E9%97%AE%E9%A2%98%EF%BC%8C%E8%AF%A5%E6%80%8E%E4%B9%88%E5%8A%9E"><span class="nav-number">10.</span> <span class="nav-text">无法模拟出RES中断的问题，该怎么办</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E7%94%A8perf%E5%B7%A5%E5%85%B7%E5%88%86%E6%9E%90Java%E7%A8%8B%E5%BA%8F"><span class="nav-number">11.</span> <span class="nav-text">如何用perf工具分析Java程序</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3%E2%80%9C%E5%B9%B3%E5%9D%87%E8%B4%9F%E8%BD%BD%E2%80%9D"><span class="nav-number">1.</span> <span class="nav-text">如何理解“平均负载”</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B9%B3%E5%9D%87%E8%B4%9F%E8%BD%BD%E5%A4%9A%E5%B0%91%E6%9C%80%E5%90%88%E9%80%82"><span class="nav-number">1.1.</span> <span class="nav-text">平均负载多少最合适</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B9%B3%E5%9D%87%E8%B4%9F%E8%BD%BD%E4%B8%8ECPU%E4%BD%BF%E7%94%A8%E7%8E%87"><span class="nav-number">1.2.</span> <span class="nav-text">平均负载与CPU使用率</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A1%88%E4%BE%8B%E5%88%86%E6%9E%90"><span class="nav-number">1.3.</span> <span class="nav-text">案例分析</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%8F%E5%B8%B8%E8%AF%B4%E7%9A%84CPU%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%87%E6%8D%A2%E6%98%AF%E4%BB%80%E4%B9%88%E6%84%8F%E6%80%9D"><span class="nav-number">2.</span> <span class="nav-text">经常说的CPU上下文切换是什么意思</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%87%E6%8D%A2"><span class="nav-number">2.1.</span> <span class="nav-text">进程上下文切换</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BA%BF%E7%A8%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%87%E6%8D%A2"><span class="nav-number">2.2.</span> <span class="nav-text">线程上下文切换</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%AD%E6%96%AD%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%87%E6%8D%A2"><span class="nav-number">2.3.</span> <span class="nav-text">中断上下文切换</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#vmstat"><span class="nav-number">2.4.</span> <span class="nav-text">vmstat</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CPU%E5%93%AA%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E7%9A%84%E5%87%A0%E4%B8%AA%E6%80%9D%E8%B7%AF"><span class="nav-number">3.</span> <span class="nav-text">CPU哪性能优化的几个思路</span></a></li></ol></div>
             
 
           </div>
