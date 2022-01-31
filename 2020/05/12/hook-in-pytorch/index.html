@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>PyTorch Hook用法解析 | Blog</title>
+  <meta name="description" content="hook在维基百科中定义：钩子编程（hooking），也称作“挂钩”，是计算机程序设计术语，指通过拦截软件模块间的函数调用、消息传递、事件传递来修改或扩展操作系统、应用程序或其他软件组件的行为的各种技术。处理被拦截的函数调用、事件、消息的代码，被称为钩子（hook）。 Hook 是 PyTorch 中一个十分有用的特性。利用它，我们可以不必改变网络输入输出的结构，方便地获取、改变网络中间层变量的值">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PyTorch Hook用法解析">
+<meta property="og:url" content="http://huangzhiyuan.github.io/2020/05/12/hook-in-pytorch/index.html">
+<meta property="og:site_name" content="靡不有初 鲜克有终">
+<meta property="og:description" content="hook在维基百科中定义：钩子编程（hooking），也称作“挂钩”，是计算机程序设计术语，指通过拦截软件模块间的函数调用、消息传递、事件传递来修改或扩展操作系统、应用程序或其他软件组件的行为的各种技术。处理被拦截的函数调用、事件、消息的代码，被称为钩子（hook）。 Hook 是 PyTorch 中一个十分有用的特性。利用它，我们可以不必改变网络输入输出的结构，方便地获取、改变网络中间层变量的值">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0512/conv1.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0512/conv2.jpg">
+<meta property="article:published_time" content="2020-05-12T08:43:39.000Z">
+<meta property="article:modified_time" content="2020-05-12T09:12:52.000Z">
+<meta property="article:author" content="黄志远">
+<meta property="article:tag" content="hook">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://huangzhiyuan.github.io/img/2020/0512/conv1.jpg">
+  <!-- Canonical links -->
+  <link rel="canonical" href="http://huangzhiyuan.github.io/2020/05/12/hook-in-pytorch/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="靡不有初 鲜克有终" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/cofess" target="_blank">
+          <img class="img-circle img-rotate" src="/images/photo.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">黄志远</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">研发攻城狮</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Shanghai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/huangzhiyuan" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/u/7041265015" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://www.zhihu.com/people/justforfun099/activitie" target="_blank" title="Zhihu" data-toggle=tooltip data-placement=top><i class="icon icon-zhihu"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验，广告位招租中~</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/CUDA/">CUDA</a><span class="category-list-count">10</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/GPU/">GPU</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Hexo/">Hexo</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Linux/">Linux</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/python/">python</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a><span class="category-list-count">15</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93/">技术总结</a><span class="category-list-count">47</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a><span class="category-list-count">22</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a><span class="category-list-count">14</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%94%B5%E5%BD%B1/">电影</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%AF%BB%E4%B9%A6/">读书</a><span class="category-list-count">8</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/AI/" rel="tag">AI</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AWK/" rel="tag">AWK</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/BP%E7%AE%97%E6%B3%95/" rel="tag">BP算法</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/" rel="tag">C++</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CNN/" rel="tag">CNN</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CPU-cache/" rel="tag">CPU-cache</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Optimization/" rel="tag">Code Optimization</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DL-Framwork/" rel="tag">DL Framwork</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DNNL/" rel="tag">DNNL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/" rel="tag">Docker</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GPU/" rel="tag">GPU</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Horovod/" rel="tag">Horovod</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java-memory/" rel="tag">Java memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java-%E9%9B%86%E5%90%88%E6%A1%86%E6%9E%B6/" rel="tag">Java 集合框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/KNN/" rel="tag">KNN</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LSTM/" rel="tag">LSTM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux/" rel="tag">Linux</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MLPerf/" rel="tag">MLPerf</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Memory/" rel="tag">Memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NUMA/" rel="tag">NUMA</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenMP/" rel="tag">OpenMP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RNN/" rel="tag">RNN</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SYCL/" rel="tag">SYCL</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TCP-IP/" rel="tag">TCP/IP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TVM/" rel="tag">TVM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/VIM/" rel="tag">VIM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Vtune/" rel="tag">Vtune</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/affinity/" rel="tag">affinity</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/batch-size/" rel="tag">batch-size</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/compiler/" rel="tag">compiler</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/conda-pip/" rel="tag">conda/pip</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cpu/" rel="tag">cpu</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cs179/" rel="tag">cs179</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cuda/" rel="tag">cuda</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/diff/" rel="tag">diff</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/embedding/" rel="tag">embedding</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gdb/" rel="tag">gdb</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/geohash/" rel="tag">geohash</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hash/" rel="tag">hash</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/" rel="tag">hexo</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hook/" rel="tag">hook</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hyperthreading/" rel="tag">hyperthreading</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/leetcode/" rel="tag">leetcode</a><span class="tag-list-count">18</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/license/" rel="tag">license</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mAP/" rel="tag">mAP</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/markdown/" rel="tag">markdown</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/memory/" rel="tag">memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ml2014/" rel="tag">ml2014</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pytorch/" rel="tag">pytorch</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/quantization/" rel="tag">quantization</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/stream-event/" rel="tag">stream/event</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tensorboard/" rel="tag">tensorboard</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tensoriterator/" rel="tag">tensoriterator</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/topk/" rel="tag">topk</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/volatile/" rel="tag">volatile</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vscode/" rel="tag">vscode</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webchat/" rel="tag">webchat</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/zero-copy/" rel="tag">zero-copy</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%B7%E5%80%BC%E8%A7%82/" rel="tag">价值观</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BD%93%E8%82%B2/" rel="tag">体育</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%81%A5%E8%BA%AB/" rel="tag">健身</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="tag">分布式</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%89%91%E6%8C%87offer/" rel="tag">剑指offer</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%89%AF%E4%B8%9A/" rel="tag">副业</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A0%E5%AF%86/" rel="tag">加密</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%A4%A7%E7%89%9B/" rel="tag">大牛</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%BD%B1%E8%AF%84/" rel="tag">影评</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%8A%A2%E7%BA%A2%E5%8C%85/" rel="tag">抢红包</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%91%98%E6%8A%84/" rel="tag">摘抄</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%96%B0%E9%97%BB/" rel="tag">新闻</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/" rel="tag">深入理解计算机系统</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E6%A1%86%E6%9E%B6/" rel="tag">深度学习框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%94%9F%E6%B4%BB/" rel="tag">生活</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%94%B5%E5%BD%B1/" rel="tag">电影</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1/" rel="tag">知识图谱</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E5%85%BB/" rel="tag">程序员的自我修养</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%81%8C%E4%B8%9A/" rel="tag">职业</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AF%BB%E4%B9%A6/" rel="tag">读书</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag">随笔</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9D%A2%E8%AF%95/" rel="tag">面试</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/" rel="tag">高并发</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/AI/" style="font-size: 13.13px;">AI</a> <a href="/tags/AWK/" style="font-size: 13px;">AWK</a> <a href="/tags/BP%E7%AE%97%E6%B3%95/" style="font-size: 13px;">BP算法</a> <a href="/tags/C/" style="font-size: 13.13px;">C++</a> <a href="/tags/CNN/" style="font-size: 13.13px;">CNN</a> <a href="/tags/CPU-cache/" style="font-size: 13px;">CPU-cache</a> <a href="/tags/Code-Optimization/" style="font-size: 13px;">Code Optimization</a> <a href="/tags/DL-Framwork/" style="font-size: 13px;">DL Framwork</a> <a href="/tags/DNNL/" style="font-size: 13px;">DNNL</a> <a href="/tags/Docker/" style="font-size: 13px;">Docker</a> <a href="/tags/GPU/" style="font-size: 13.5px;">GPU</a> <a href="/tags/Horovod/" style="font-size: 13px;">Horovod</a> <a href="/tags/Java-memory/" style="font-size: 13px;">Java memory</a> <a href="/tags/Java-%E9%9B%86%E5%90%88%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">Java 集合框架</a> <a href="/tags/KNN/" style="font-size: 13px;">KNN</a> <a href="/tags/LSTM/" style="font-size: 13px;">LSTM</a> <a href="/tags/Linux/" style="font-size: 13.5px;">Linux</a> <a href="/tags/MLPerf/" style="font-size: 13px;">MLPerf</a> <a href="/tags/Memory/" style="font-size: 13px;">Memory</a> <a href="/tags/NUMA/" style="font-size: 13px;">NUMA</a> <a href="/tags/OpenMP/" style="font-size: 13px;">OpenMP</a> <a href="/tags/RNN/" style="font-size: 13px;">RNN</a> <a href="/tags/SYCL/" style="font-size: 13.38px;">SYCL</a> <a href="/tags/TCP-IP/" style="font-size: 13px;">TCP/IP</a> <a href="/tags/TVM/" style="font-size: 13px;">TVM</a> <a href="/tags/VIM/" style="font-size: 13px;">VIM</a> <a href="/tags/Vtune/" style="font-size: 13px;">Vtune</a> <a href="/tags/affinity/" style="font-size: 13px;">affinity</a> <a href="/tags/atomic/" style="font-size: 13px;">atomic</a> <a href="/tags/batch-size/" style="font-size: 13px;">batch-size</a> <a href="/tags/compiler/" style="font-size: 13px;">compiler</a> <a href="/tags/conda-pip/" style="font-size: 13px;">conda/pip</a> <a href="/tags/cpu/" style="font-size: 13.13px;">cpu</a> <a href="/tags/cs179/" style="font-size: 13.63px;">cs179</a> <a href="/tags/cuda/" style="font-size: 13.88px;">cuda</a> <a href="/tags/diff/" style="font-size: 13px;">diff</a> <a href="/tags/embedding/" style="font-size: 13px;">embedding</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/gdb/" style="font-size: 13px;">gdb</a> <a href="/tags/geohash/" style="font-size: 13px;">geohash</a> <a href="/tags/git/" style="font-size: 13.13px;">git</a> <a href="/tags/hash/" style="font-size: 13px;">hash</a> <a href="/tags/hexo/" style="font-size: 13px;">hexo</a> <a href="/tags/hook/" style="font-size: 13px;">hook</a> <a href="/tags/hyperthreading/" style="font-size: 13px;">hyperthreading</a> <a href="/tags/leetcode/" style="font-size: 14px;">leetcode</a> <a href="/tags/license/" style="font-size: 13px;">license</a> <a href="/tags/mAP/" style="font-size: 13.13px;">mAP</a> <a href="/tags/markdown/" style="font-size: 13.13px;">markdown</a> <a href="/tags/memory/" style="font-size: 13px;">memory</a> <a href="/tags/ml2014/" style="font-size: 13px;">ml2014</a> <a href="/tags/pytorch/" style="font-size: 13.75px;">pytorch</a> <a href="/tags/quantization/" style="font-size: 13px;">quantization</a> <a href="/tags/stream-event/" style="font-size: 13px;">stream/event</a> <a href="/tags/tensorboard/" style="font-size: 13px;">tensorboard</a> <a href="/tags/tensoriterator/" style="font-size: 13px;">tensoriterator</a> <a href="/tags/topk/" style="font-size: 13px;">topk</a> <a href="/tags/volatile/" style="font-size: 13px;">volatile</a> <a href="/tags/vscode/" style="font-size: 13px;">vscode</a> <a href="/tags/webchat/" style="font-size: 13px;">webchat</a> <a href="/tags/zero-copy/" style="font-size: 13px;">zero-copy</a> <a href="/tags/%E4%BB%B7%E5%80%BC%E8%A7%82/" style="font-size: 13px;">价值观</a> <a href="/tags/%E4%BD%93%E8%82%B2/" style="font-size: 13px;">体育</a> <a href="/tags/%E5%81%A5%E8%BA%AB/" style="font-size: 13px;">健身</a> <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" style="font-size: 13px;">分布式</a> <a href="/tags/%E5%89%91%E6%8C%87offer/" style="font-size: 13px;">剑指offer</a> <a href="/tags/%E5%89%AF%E4%B8%9A/" style="font-size: 13px;">副业</a> <a href="/tags/%E5%8A%A0%E5%AF%86/" style="font-size: 13px;">加密</a> <a href="/tags/%E5%A4%A7%E7%89%9B/" style="font-size: 13px;">大牛</a> <a href="/tags/%E5%BD%B1%E8%AF%84/" style="font-size: 13.13px;">影评</a> <a href="/tags/%E6%8A%A2%E7%BA%A2%E5%8C%85/" style="font-size: 13px;">抢红包</a> <a href="/tags/%E6%91%98%E6%8A%84/" style="font-size: 13.25px;">摘抄</a> <a href="/tags/%E6%96%B0%E9%97%BB/" style="font-size: 13.75px;">新闻</a> <a href="/tags/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/" style="font-size: 13px;">深入理解计算机系统</a> <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">深度学习框架</a> <a href="/tags/%E7%94%9F%E6%B4%BB/" style="font-size: 13.13px;">生活</a> <a href="/tags/%E7%94%B5%E5%BD%B1/" style="font-size: 13.13px;">电影</a> <a href="/tags/%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1/" style="font-size: 13px;">知识图谱</a> <a href="/tags/%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E5%85%BB/" style="font-size: 13.13px;">程序员的自我修养</a> <a href="/tags/%E8%81%8C%E4%B8%9A/" style="font-size: 13px;">职业</a> <a href="/tags/%E8%AF%BB%E4%B9%A6/" style="font-size: 13.25px;">读书</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 13px;">随笔</a> <a href="/tags/%E9%9D%A2%E8%AF%95/" style="font-size: 13px;">面试</a> <a href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/" style="font-size: 13px;">高并发</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">八月 2020</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/07/">七月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/06/">六月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/05/">五月 2020</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">10</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">39</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/02/">二月 2020</a><span class="archive-list-count">32</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">十月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/12/">十二月 2017</a><span class="archive-list-count">9</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/11/">十一月 2017</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/07/">七月 2017</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">六月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/05/">五月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/03/">三月 2017</a><span class="archive-list-count">7</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/02/">二月 2016</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-CPU/" class="title">Linux性能优化实战之CPU性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-IO/" class="title">Linux性能优化实战之IO性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-Memory/" class="title">Linux性能优化实战之内存性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-Network/" class="title">Linux性能优化实战之网络性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat/" class="title">Linux性能优化实战</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-hook-in-pytorch" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      PyTorch Hook用法解析
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2020/05/12/hook-in-pytorch/" class="article-date">
+	  <time datetime="2020-05-12T08:43:39.000Z" itemprop="datePublished">2020-05-12</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/hook/" rel="tag">hook</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2020/05/12/hook-in-pytorch/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <p>hook在维基百科中定义：钩子编程（hooking），也称作“挂钩”，是计算机程序设计术语，指通过拦截软件模块间的函数调用、消息传递、事件传递来修改或扩展操作系统、应用程序或其他软件组件的行为的各种技术。处理被拦截的函数调用、事件、消息的代码，被称为钩子（hook）。</p>
+<p>Hook 是 PyTorch 中一个十分有用的特性。利用它，我们可以<strong>不必改变网络输入输出的结构，方便地获取、改变网络中间层变量的值和梯度</strong>。这个功能被广泛用于可视化神经网络中间层的 feature、gradient，从而诊断神经网络中可能出现的问题，分析网络有效性。本文将结合代码，由浅入深地介绍 pytorch 中 hook 的用法。本文分为三部分：</p>
+<ul>
+<li>Hook for Tensors ：针对 Tensor 的 hook</li>
+<li>Hook for Modules：针对例如 nn.Conv2dnn.Linear等网络模块的 hook</li>
+<li>Guided Backpropagation：利用 Hook 实现的一段神经网络可视化代码</li>
+</ul>
+<span id="more"></span>
+
+<h2 id="Hook-for-Tensors"><a href="#Hook-for-Tensors" class="headerlink" title="Hook for Tensors"></a>Hook for Tensors</h2><p>在pytorch docs搜索hook，可以发现有四个hook相关的函数，分别为register_hook，register_backward_hook，register_forward_hook，register_forward_pre_hook。其中register_hook属于tensor类，而后面三个属于moudule类。</p>
+<p>在 PyTorch 的计算图（computation graph）中，只有叶子结点（leaf nodes）的变量会保留梯度。而所有中间变量的梯度只被用于反向传播，一旦完成反向传播，中间变量的梯度就将自动释放，从而节约内存。如下面这段代码所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">X----------             W ------</span><br><span class="line">          -                    -</span><br><span class="line">          -----&gt; + ---&gt; Z ---&gt; * ---&gt; O</span><br><span class="line">          -</span><br><span class="line">Y----------</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">import torch</span><br><span class="line"></span><br><span class="line">x = torch.Tensor([0, 1, 2, 3]).requires_grad_()</span><br><span class="line">y = torch.Tensor([4, 5, 6, 7]).requires_grad_()</span><br><span class="line">w = torch.Tensor([1, 2, 3, 4]).requires_grad_()</span><br><span class="line">z = x+y</span><br><span class="line"># z.retain_grad()</span><br><span class="line"></span><br><span class="line">o = w.matmul(z)</span><br><span class="line">o.backward()</span><br><span class="line"># o.retain_grad()</span><br><span class="line"></span><br><span class="line">print(&#x27;x.requires_grad:&#x27;, x.requires_grad) # True</span><br><span class="line">print(&#x27;y.requires_grad:&#x27;, y.requires_grad) # True</span><br><span class="line">print(&#x27;z.requires_grad:&#x27;, z.requires_grad) # True</span><br><span class="line">print(&#x27;w.requires_grad:&#x27;, w.requires_grad) # True</span><br><span class="line">print(&#x27;o.requires_grad:&#x27;, o.requires_grad) # True</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">print(&#x27;x.grad:&#x27;, x.grad) # tensor([1., 2., 3., 4.])</span><br><span class="line">print(&#x27;y.grad:&#x27;, y.grad) # tensor([1., 2., 3., 4.])</span><br><span class="line">print(&#x27;w.grad:&#x27;, w.grad) # tensor([ 4.,  6.,  8., 10.])</span><br><span class="line">print(&#x27;z.grad:&#x27;, z.grad) # None</span><br><span class="line">print(&#x27;o.grad:&#x27;, o.grad) # None</span><br></pre></td></tr></table></figure>
+<p>由于 z 和 o 为中间变量（并非直接指定数值的变量，而是由别的变量计算得到的变量），它们虽然 requires_grad 的参数都是 True，但是反向传播后，它们的梯度并没有保存下来，而是直接删除了，因此是 None。如果想在反向传播之后保留它们的梯度，则需要特殊指定：把上面代码中的z.retain_grad() 和 o.retain_grad的注释去掉，可以得到它们对应的梯度，运行结果如下所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">x.requires_grad: True</span><br><span class="line">y.requires_grad: True</span><br><span class="line">z.requires_grad: True</span><br><span class="line">w.requires_grad: True</span><br><span class="line">o.requires_grad: True</span><br><span class="line">x.grad: tensor([1., 2., 3., 4.])</span><br><span class="line">y.grad: tensor([1., 2., 3., 4.])</span><br><span class="line">w.grad: tensor([ 4.,  6.,  8., 10.])</span><br><span class="line">z.grad: tensor([1., 2., 3., 4.])</span><br><span class="line">o.grad: tensor(1.)</span><br></pre></td></tr></table></figure>
+<p>但是，这种加 <code>retain_grad()</code> 的方案会增加内存占用，并不是个好办法，对此的一种替代方案，就是用 hook 保存中间变量的梯度。</p>
+<p>对于中间变量z，hook 的使用方式为：<code>z.register_hook(hook_fn)</code>，其中 <code>hook_fn</code> 为一个用户自定义的函数，其签名为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hook_fn(grad) -&gt; Tensor or None</span><br></pre></td></tr></table></figure>
+
+<p>它的输入为变量 <code>z</code> 的梯度，输出为一个 Tensor 或者是 None （None 一般用于直接打印梯度）。反向传播时，梯度传播到变量 z，再继续向前传播之前，将会传入 hook_fn。如果 hook_fn的返回值是 None，那么梯度将不改变，继续向前传播，如果 hook_fn的返回值是 Tensor 类型，则该 Tensor 将取代 z 原有的梯度，向前传播。</p>
+<p>下面的示例代码中 hook_fn 不改变梯度值，仅仅是打印梯度：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">import torch</span><br><span class="line"></span><br><span class="line">x = torch.Tensor([0, 1, 2, 3]).requires_grad_()</span><br><span class="line">y = torch.Tensor([4, 5, 6, 7]).requires_grad_()</span><br><span class="line">w = torch.Tensor([1, 2, 3, 4]).requires_grad_()</span><br><span class="line">z = x+y</span><br><span class="line"></span><br><span class="line"># ===================</span><br><span class="line">def hook_fn(grad):</span><br><span class="line">    print(grad)</span><br><span class="line"></span><br><span class="line">z.register_hook(hook_fn)</span><br><span class="line"># ===================</span><br><span class="line"></span><br><span class="line">o = w.matmul(z)</span><br><span class="line"></span><br><span class="line">print(&#x27;=====Start backprop=====&#x27;)</span><br><span class="line">o.backward()</span><br><span class="line">print(&#x27;=====End backprop=====&#x27;)</span><br><span class="line"></span><br><span class="line">print(&#x27;x.grad:&#x27;, x.grad)</span><br><span class="line">print(&#x27;y.grad:&#x27;, y.grad)</span><br><span class="line">print(&#x27;w.grad:&#x27;, w.grad)</span><br><span class="line">print(&#x27;z.grad:&#x27;, z.grad)</span><br></pre></td></tr></table></figure>
+
+<p>运行结果如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">=====Start backprop=====</span><br><span class="line">tensor([1., 2., 3., 4.])</span><br><span class="line">=====End backprop=====</span><br><span class="line">x.grad: tensor([1., 2., 3., 4.])</span><br><span class="line">y.grad: tensor([1., 2., 3., 4.])</span><br><span class="line">w.grad: tensor([ 4.,  6.,  8., 10.])</span><br><span class="line">z.grad: None</span><br></pre></td></tr></table></figure>
+<p>我们发现，z 绑定了hook_fn后，梯度反向传播时将会打印出 o 对 z 的偏导，和上文中 z.retain_grad()方法得到的 z 的偏导一致。</p>
+<p>接下来可以试一下，在 hook_fn 中改变梯度值，看看会有什么结果。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">import torch</span><br><span class="line"></span><br><span class="line">x = torch.Tensor([0, 1, 2, 3]).requires_grad_()</span><br><span class="line">y = torch.Tensor([4, 5, 6, 7]).requires_grad_()</span><br><span class="line">w = torch.Tensor([1, 2, 3, 4]).requires_grad_()</span><br><span class="line">z = x + y</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"># ===================</span><br><span class="line">def hook_fn(grad):</span><br><span class="line">    g = 2 * grad</span><br><span class="line">    print(g)</span><br><span class="line">    return g</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">z.register_hook(hook_fn)</span><br><span class="line"># ===================</span><br><span class="line"></span><br><span class="line">o = w.matmul(z)</span><br><span class="line"></span><br><span class="line">print(&#x27;=====Start backprop=====&#x27;)</span><br><span class="line">o.backward()</span><br><span class="line">print(&#x27;=====End backprop=====&#x27;)</span><br><span class="line"></span><br><span class="line">print(&#x27;x.grad:&#x27;, x.grad)</span><br><span class="line">print(&#x27;y.grad:&#x27;, y.grad)</span><br><span class="line">print(&#x27;w.grad:&#x27;, w.grad)</span><br><span class="line">print(&#x27;z.grad:&#x27;, z.grad)</span><br></pre></td></tr></table></figure>
+<p>运行结果如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">=====Start backprop=====</span><br><span class="line">tensor([2., 4., 6., 8.])</span><br><span class="line">=====End backprop=====</span><br><span class="line">x.grad: tensor([2., 4., 6., 8.])</span><br><span class="line">y.grad: tensor([2., 4., 6., 8.])</span><br><span class="line">w.grad: tensor([ 4.,  6.,  8., 10.])</span><br><span class="line">z.grad: None</span><br></pre></td></tr></table></figure>
+
+<p>发现 z 的梯度变为两倍后，受其影响，x和y的梯度也都变成了原来的两倍。在实际代码中，为了方便，也可以用 lambda 表达式来代替函数，简写为如下形式：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">import torch</span><br><span class="line"></span><br><span class="line">x = torch.Tensor([0, 1, 2, 3]).requires_grad_()</span><br><span class="line">y = torch.Tensor([4, 5, 6, 7]).requires_grad_()</span><br><span class="line">w = torch.Tensor([1, 2, 3, 4]).requires_grad_()</span><br><span class="line">z = x + y</span><br><span class="line"></span><br><span class="line"># ===================</span><br><span class="line">z.register_hook(lambda x: 2*x)</span><br><span class="line">z.register_hook(lambda x: print(x))</span><br><span class="line"># ===================</span><br><span class="line"></span><br><span class="line">o = w.matmul(z)</span><br><span class="line"></span><br><span class="line">print(&#x27;=====Start backprop=====&#x27;)</span><br><span class="line">o.backward()</span><br><span class="line">print(&#x27;=====End backprop=====&#x27;)</span><br><span class="line"></span><br><span class="line">print(&#x27;x.grad:&#x27;, x.grad)</span><br><span class="line">print(&#x27;y.grad:&#x27;, y.grad)</span><br><span class="line">print(&#x27;w.grad:&#x27;, w.grad)</span><br><span class="line">print(&#x27;z.grad:&#x27;, z.grad)</span><br></pre></td></tr></table></figure>
+<p>运行结果和上面的代码相同，我们发现一个变量可以绑定多个 hook_fn，反向传播时，它们按绑定顺序依次执行。例如上面的代码中，第一个绑定的 hook_fn把 z的梯度乘以2，第二个绑定的 hook_fn打印z的梯度。因此反向传播时，也是按照这个顺序执行的，打印出来的 z的梯度值，是其原本梯度值的两倍。</p>
+<p>特征图打印应用：直接利用pytorch已有的resnet18进行特征图打印，只打印卷积层的特征图，</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">import torch</span><br><span class="line">from torchvision.models import resnet18</span><br><span class="line">import torch.nn as nn</span><br><span class="line">from torchvision import transforms</span><br><span class="line"></span><br><span class="line">import matplotlib.pyplot as plt</span><br><span class="line"></span><br><span class="line">def viz(module, input):</span><br><span class="line">    x = input[0][0]</span><br><span class="line">    #最多显示4张图</span><br><span class="line">    min_num = np.minimum(4, x.size()[0])</span><br><span class="line">    for i in range(min_num):</span><br><span class="line">        plt.subplot(1, 4, i+1)</span><br><span class="line">        plt.imshow(x[i].cpu())</span><br><span class="line">    plt.show()</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">import cv2</span><br><span class="line">import numpy as np</span><br><span class="line">def main():</span><br><span class="line">    t = transforms.Compose([transforms.ToPILImage(),</span><br><span class="line">                            transforms.Resize((224, 224)),</span><br><span class="line">                            transforms.ToTensor(),</span><br><span class="line">                            transforms.Normalize(mean=[0.485, 0.456, 0.406],</span><br><span class="line">                                                 std=[0.229, 0.224, 0.225])</span><br><span class="line">                            ])</span><br><span class="line"></span><br><span class="line">    device = torch.device(&quot;cuda:0&quot; if torch.cuda.is_available() else &quot;cpu&quot;)</span><br><span class="line"></span><br><span class="line">    model = resnet18(pretrained=True).to(device)</span><br><span class="line">    for name, m in model.named_modules():</span><br><span class="line">        # if not isinstance(m, torch.nn.ModuleList) and \</span><br><span class="line">        #         not isinstance(m, torch.nn.Sequential) and \</span><br><span class="line">        #         type(m) in torch.nn.__dict__.values():</span><br><span class="line">        # 这里只对卷积层的feature map进行显示</span><br><span class="line">        if isinstance(m, torch.nn.Conv2d):</span><br><span class="line">            m.register_forward_pre_hook(viz)</span><br><span class="line">    img = cv2.imread(&#x27;./cat.jpeg&#x27;)</span><br><span class="line">    img = t(img).unsqueeze(0).to(device)</span><br><span class="line">    with torch.no_grad():</span><br><span class="line">        model(img)</span><br><span class="line"></span><br><span class="line">if __name__ == &#x27;__main__&#x27;:</span><br><span class="line">    main()</span><br></pre></td></tr></table></figure>
+<p> 第一层卷积层输入<br> <img src="/img/2020/0512/conv1.jpg" alt="&quot;conv1&quot;"></p>
+<p>第四层卷积层的输入<br>  <img src="/img/2020/0512/conv2.jpg" alt="&quot;conv2&quot;"></p>
+<p>模型大小，算力计算, 同样的用法，可以直接参考<a target="_blank" rel="noopener" href="https://github.com/sksq96/pytorch-summary">pytorch-summary</a>这个项目。</p>
+<h2 id="Hook-for-Modules"><a href="#Hook-for-Modules" class="headerlink" title="Hook for Modules"></a>Hook for Modules</h2><p>网络模块 module 不像上一节中的 Tensor，拥有显式的变量名可以直接访问，而是被封装在神经网络中间。我们通常只能获得网络整体的输入和输出，对于夹在网络中间的模块，我们不但很难得知它输入/输出的梯度，甚至连它输入输出的数值都无法获得。除非设计网络时，在 forward 函数的返回值中包含中间 module 的输出，或者用很麻烦的办法，把网络按照 module 的名称拆分再组合，让中间层提取的 feature 暴露出来。</p>
+<p>为了解决这个麻烦，PyTorch 设计了两种 hook：register_forward_hook 和 register_backward_hook，分别用来获取正/反向传播时，中间层模块输入和输出的 feature/gradient，大大降低了获取模型内部信息流的难度。具体用法参考<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/75054200">半小时学会 PyTorch Hook</a>。</p>
+<p>参考：<br><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/73868323">https://zhuanlan.zhihu.com/p/73868323</a><br><a target="_blank" rel="noopener" href="https://github.com/sksq96/pytorch-summary">https://github.com/sksq96/pytorch-summary</a><br><a target="_blank" rel="noopener" href="https://oldpan.me/archives/pytorch-autograd-hook">https://oldpan.me/archives/pytorch-autograd-hook</a><br><a target="_blank" rel="noopener" href="https://pytorch.org/docs/stable/search.html?q=hook&amp;check_keywords=yes&amp;area=default">https://pytorch.org/docs/stable/search.html?q=hook&amp;check_keywords=yes&amp;area=default</a></p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="http://huangzhiyuan.github.io/2020/05/12/hook-in-pytorch/" title="PyTorch Hook用法解析" target="_blank" rel="external">http://huangzhiyuan.github.io/2020/05/12/hook-in-pytorch/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/cofess" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/photo.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/cofess" target="_blank"><span class="text-dark">黄志远</span><small class="ml-1x">研发攻城狮</small></a></h3>
+        <div>靡不有初 鲜克有终</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2020/05/18/atomic-operations/" title="Atomic Operations in CUDA"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2020/05/07/cpu-threads-affinity-hyperthreadign/" title="CPU threads affinity hyperthreading"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipay.jpg" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开支付宝扫一扫，即可进行扫码打赏哦</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpay.jpg" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开微信扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/huangzhiyuan" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/u/7041265015" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://www.zhihu.com/people/justforfun099/activitie" target="_blank" title="Zhihu" data-toggle=tooltip data-placement=top><i class="icon icon-zhihu"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        &copy; 2022 黄志远
+        
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

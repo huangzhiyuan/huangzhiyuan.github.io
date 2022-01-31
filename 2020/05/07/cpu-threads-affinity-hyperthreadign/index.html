@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>CPU threads affinity hyperthreading | Blog</title>
+  <meta name="description" content="This post is not a tutorial on C++11 threads, but it uses them as the main threading mechanism to demonstrate its points. It starts with a basic example but then quickly veers off into the specialized">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CPU threads affinity hyperthreading">
+<meta property="og:url" content="http://huangzhiyuan.github.io/2020/05/07/cpu-threads-affinity-hyperthreadign/index.html">
+<meta property="og:site_name" content="靡不有初 鲜克有终">
+<meta property="og:description" content="This post is not a tutorial on C++11 threads, but it uses them as the main threading mechanism to demonstrate its points. It starts with a basic example but then quickly veers off into the specialized">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-05-07T06:37:52.000Z">
+<meta property="article:modified_time" content="2020-05-07T07:23:28.000Z">
+<meta property="article:author" content="黄志远">
+<meta property="article:tag" content="affinity">
+<meta property="article:tag" content="hyperthreading">
+<meta property="article:tag" content="NUMA">
+<meta name="twitter:card" content="summary">
+  <!-- Canonical links -->
+  <link rel="canonical" href="http://huangzhiyuan.github.io/2020/05/07/cpu-threads-affinity-hyperthreadign/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="靡不有初 鲜克有终" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/cofess" target="_blank">
+          <img class="img-circle img-rotate" src="/images/photo.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">黄志远</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">研发攻城狮</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Shanghai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/huangzhiyuan" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/u/7041265015" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://www.zhihu.com/people/justforfun099/activitie" target="_blank" title="Zhihu" data-toggle=tooltip data-placement=top><i class="icon icon-zhihu"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验，广告位招租中~</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/CUDA/">CUDA</a><span class="category-list-count">10</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/GPU/">GPU</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Hexo/">Hexo</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Linux/">Linux</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/python/">python</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a><span class="category-list-count">15</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93/">技术总结</a><span class="category-list-count">47</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a><span class="category-list-count">22</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a><span class="category-list-count">14</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%94%B5%E5%BD%B1/">电影</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%AF%BB%E4%B9%A6/">读书</a><span class="category-list-count">8</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/AI/" rel="tag">AI</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AWK/" rel="tag">AWK</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/BP%E7%AE%97%E6%B3%95/" rel="tag">BP算法</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/" rel="tag">C++</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CNN/" rel="tag">CNN</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CPU-cache/" rel="tag">CPU-cache</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Optimization/" rel="tag">Code Optimization</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DL-Framwork/" rel="tag">DL Framwork</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DNNL/" rel="tag">DNNL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/" rel="tag">Docker</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GPU/" rel="tag">GPU</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Horovod/" rel="tag">Horovod</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java-memory/" rel="tag">Java memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java-%E9%9B%86%E5%90%88%E6%A1%86%E6%9E%B6/" rel="tag">Java 集合框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/KNN/" rel="tag">KNN</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LSTM/" rel="tag">LSTM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux/" rel="tag">Linux</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MLPerf/" rel="tag">MLPerf</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Memory/" rel="tag">Memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NUMA/" rel="tag">NUMA</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenMP/" rel="tag">OpenMP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RNN/" rel="tag">RNN</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SYCL/" rel="tag">SYCL</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TCP-IP/" rel="tag">TCP/IP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TVM/" rel="tag">TVM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/VIM/" rel="tag">VIM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Vtune/" rel="tag">Vtune</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/affinity/" rel="tag">affinity</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/batch-size/" rel="tag">batch-size</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/compiler/" rel="tag">compiler</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/conda-pip/" rel="tag">conda/pip</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cpu/" rel="tag">cpu</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cs179/" rel="tag">cs179</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cuda/" rel="tag">cuda</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/diff/" rel="tag">diff</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/embedding/" rel="tag">embedding</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gdb/" rel="tag">gdb</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/geohash/" rel="tag">geohash</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hash/" rel="tag">hash</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/" rel="tag">hexo</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hook/" rel="tag">hook</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hyperthreading/" rel="tag">hyperthreading</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/leetcode/" rel="tag">leetcode</a><span class="tag-list-count">18</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/license/" rel="tag">license</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mAP/" rel="tag">mAP</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/markdown/" rel="tag">markdown</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/memory/" rel="tag">memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ml2014/" rel="tag">ml2014</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pytorch/" rel="tag">pytorch</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/quantization/" rel="tag">quantization</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/stream-event/" rel="tag">stream/event</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tensorboard/" rel="tag">tensorboard</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tensoriterator/" rel="tag">tensoriterator</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/topk/" rel="tag">topk</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/volatile/" rel="tag">volatile</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vscode/" rel="tag">vscode</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webchat/" rel="tag">webchat</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/zero-copy/" rel="tag">zero-copy</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%B7%E5%80%BC%E8%A7%82/" rel="tag">价值观</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BD%93%E8%82%B2/" rel="tag">体育</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%81%A5%E8%BA%AB/" rel="tag">健身</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="tag">分布式</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%89%91%E6%8C%87offer/" rel="tag">剑指offer</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%89%AF%E4%B8%9A/" rel="tag">副业</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A0%E5%AF%86/" rel="tag">加密</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%A4%A7%E7%89%9B/" rel="tag">大牛</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%BD%B1%E8%AF%84/" rel="tag">影评</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%8A%A2%E7%BA%A2%E5%8C%85/" rel="tag">抢红包</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%91%98%E6%8A%84/" rel="tag">摘抄</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%96%B0%E9%97%BB/" rel="tag">新闻</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/" rel="tag">深入理解计算机系统</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E6%A1%86%E6%9E%B6/" rel="tag">深度学习框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%94%9F%E6%B4%BB/" rel="tag">生活</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%94%B5%E5%BD%B1/" rel="tag">电影</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1/" rel="tag">知识图谱</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E5%85%BB/" rel="tag">程序员的自我修养</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%81%8C%E4%B8%9A/" rel="tag">职业</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AF%BB%E4%B9%A6/" rel="tag">读书</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag">随笔</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9D%A2%E8%AF%95/" rel="tag">面试</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/" rel="tag">高并发</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/AI/" style="font-size: 13.13px;">AI</a> <a href="/tags/AWK/" style="font-size: 13px;">AWK</a> <a href="/tags/BP%E7%AE%97%E6%B3%95/" style="font-size: 13px;">BP算法</a> <a href="/tags/C/" style="font-size: 13.13px;">C++</a> <a href="/tags/CNN/" style="font-size: 13.13px;">CNN</a> <a href="/tags/CPU-cache/" style="font-size: 13px;">CPU-cache</a> <a href="/tags/Code-Optimization/" style="font-size: 13px;">Code Optimization</a> <a href="/tags/DL-Framwork/" style="font-size: 13px;">DL Framwork</a> <a href="/tags/DNNL/" style="font-size: 13px;">DNNL</a> <a href="/tags/Docker/" style="font-size: 13px;">Docker</a> <a href="/tags/GPU/" style="font-size: 13.5px;">GPU</a> <a href="/tags/Horovod/" style="font-size: 13px;">Horovod</a> <a href="/tags/Java-memory/" style="font-size: 13px;">Java memory</a> <a href="/tags/Java-%E9%9B%86%E5%90%88%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">Java 集合框架</a> <a href="/tags/KNN/" style="font-size: 13px;">KNN</a> <a href="/tags/LSTM/" style="font-size: 13px;">LSTM</a> <a href="/tags/Linux/" style="font-size: 13.5px;">Linux</a> <a href="/tags/MLPerf/" style="font-size: 13px;">MLPerf</a> <a href="/tags/Memory/" style="font-size: 13px;">Memory</a> <a href="/tags/NUMA/" style="font-size: 13px;">NUMA</a> <a href="/tags/OpenMP/" style="font-size: 13px;">OpenMP</a> <a href="/tags/RNN/" style="font-size: 13px;">RNN</a> <a href="/tags/SYCL/" style="font-size: 13.38px;">SYCL</a> <a href="/tags/TCP-IP/" style="font-size: 13px;">TCP/IP</a> <a href="/tags/TVM/" style="font-size: 13px;">TVM</a> <a href="/tags/VIM/" style="font-size: 13px;">VIM</a> <a href="/tags/Vtune/" style="font-size: 13px;">Vtune</a> <a href="/tags/affinity/" style="font-size: 13px;">affinity</a> <a href="/tags/atomic/" style="font-size: 13px;">atomic</a> <a href="/tags/batch-size/" style="font-size: 13px;">batch-size</a> <a href="/tags/compiler/" style="font-size: 13px;">compiler</a> <a href="/tags/conda-pip/" style="font-size: 13px;">conda/pip</a> <a href="/tags/cpu/" style="font-size: 13.13px;">cpu</a> <a href="/tags/cs179/" style="font-size: 13.63px;">cs179</a> <a href="/tags/cuda/" style="font-size: 13.88px;">cuda</a> <a href="/tags/diff/" style="font-size: 13px;">diff</a> <a href="/tags/embedding/" style="font-size: 13px;">embedding</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/gdb/" style="font-size: 13px;">gdb</a> <a href="/tags/geohash/" style="font-size: 13px;">geohash</a> <a href="/tags/git/" style="font-size: 13.13px;">git</a> <a href="/tags/hash/" style="font-size: 13px;">hash</a> <a href="/tags/hexo/" style="font-size: 13px;">hexo</a> <a href="/tags/hook/" style="font-size: 13px;">hook</a> <a href="/tags/hyperthreading/" style="font-size: 13px;">hyperthreading</a> <a href="/tags/leetcode/" style="font-size: 14px;">leetcode</a> <a href="/tags/license/" style="font-size: 13px;">license</a> <a href="/tags/mAP/" style="font-size: 13.13px;">mAP</a> <a href="/tags/markdown/" style="font-size: 13.13px;">markdown</a> <a href="/tags/memory/" style="font-size: 13px;">memory</a> <a href="/tags/ml2014/" style="font-size: 13px;">ml2014</a> <a href="/tags/pytorch/" style="font-size: 13.75px;">pytorch</a> <a href="/tags/quantization/" style="font-size: 13px;">quantization</a> <a href="/tags/stream-event/" style="font-size: 13px;">stream/event</a> <a href="/tags/tensorboard/" style="font-size: 13px;">tensorboard</a> <a href="/tags/tensoriterator/" style="font-size: 13px;">tensoriterator</a> <a href="/tags/topk/" style="font-size: 13px;">topk</a> <a href="/tags/volatile/" style="font-size: 13px;">volatile</a> <a href="/tags/vscode/" style="font-size: 13px;">vscode</a> <a href="/tags/webchat/" style="font-size: 13px;">webchat</a> <a href="/tags/zero-copy/" style="font-size: 13px;">zero-copy</a> <a href="/tags/%E4%BB%B7%E5%80%BC%E8%A7%82/" style="font-size: 13px;">价值观</a> <a href="/tags/%E4%BD%93%E8%82%B2/" style="font-size: 13px;">体育</a> <a href="/tags/%E5%81%A5%E8%BA%AB/" style="font-size: 13px;">健身</a> <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" style="font-size: 13px;">分布式</a> <a href="/tags/%E5%89%91%E6%8C%87offer/" style="font-size: 13px;">剑指offer</a> <a href="/tags/%E5%89%AF%E4%B8%9A/" style="font-size: 13px;">副业</a> <a href="/tags/%E5%8A%A0%E5%AF%86/" style="font-size: 13px;">加密</a> <a href="/tags/%E5%A4%A7%E7%89%9B/" style="font-size: 13px;">大牛</a> <a href="/tags/%E5%BD%B1%E8%AF%84/" style="font-size: 13.13px;">影评</a> <a href="/tags/%E6%8A%A2%E7%BA%A2%E5%8C%85/" style="font-size: 13px;">抢红包</a> <a href="/tags/%E6%91%98%E6%8A%84/" style="font-size: 13.25px;">摘抄</a> <a href="/tags/%E6%96%B0%E9%97%BB/" style="font-size: 13.75px;">新闻</a> <a href="/tags/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/" style="font-size: 13px;">深入理解计算机系统</a> <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">深度学习框架</a> <a href="/tags/%E7%94%9F%E6%B4%BB/" style="font-size: 13.13px;">生活</a> <a href="/tags/%E7%94%B5%E5%BD%B1/" style="font-size: 13.13px;">电影</a> <a href="/tags/%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1/" style="font-size: 13px;">知识图谱</a> <a href="/tags/%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E5%85%BB/" style="font-size: 13.13px;">程序员的自我修养</a> <a href="/tags/%E8%81%8C%E4%B8%9A/" style="font-size: 13px;">职业</a> <a href="/tags/%E8%AF%BB%E4%B9%A6/" style="font-size: 13.25px;">读书</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 13px;">随笔</a> <a href="/tags/%E9%9D%A2%E8%AF%95/" style="font-size: 13px;">面试</a> <a href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/" style="font-size: 13px;">高并发</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">八月 2020</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/07/">七月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/06/">六月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/05/">五月 2020</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">10</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">39</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/02/">二月 2020</a><span class="archive-list-count">32</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">十月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/12/">十二月 2017</a><span class="archive-list-count">9</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/11/">十一月 2017</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/07/">七月 2017</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">六月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/05/">五月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/03/">三月 2017</a><span class="archive-list-count">7</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/02/">二月 2016</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-CPU/" class="title">Linux性能优化实战之CPU性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-IO/" class="title">Linux性能优化实战之IO性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-Memory/" class="title">Linux性能优化实战之内存性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-Network/" class="title">Linux性能优化实战之网络性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat/" class="title">Linux性能优化实战</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-cpu-threads-affinity-hyperthreadign" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      CPU threads affinity hyperthreading
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2020/05/07/cpu-threads-affinity-hyperthreadign/" class="article-date">
+	  <time datetime="2020-05-07T06:37:52.000Z" itemprop="datePublished">2020-05-07</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93/">技术总结</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/NUMA/" rel="tag">NUMA</a>, <a class="article-tag-link-link" href="/tags/affinity/" rel="tag">affinity</a>, <a class="article-tag-link-link" href="/tags/hyperthreading/" rel="tag">hyperthreading</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2020/05/07/cpu-threads-affinity-hyperthreadign/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <p>This post is not a tutorial on C++11 threads, but it uses them as the main threading mechanism to demonstrate its points. It starts with a basic example but then quickly veers off into the specialized area of thread affinities, hardware topologies and performance implications of hyperthreading. It does as much as feasible in portable C++, clearly marking the deviations into platform-specific calls for the really specialized stuff.</p>
+<span id="more"></span>
+
+<p><strong>CPU Socket</strong>: refers to a physical connector on a motherboard that accepts a single physical chip. It is commonplace for modern CPUs to provide multiple physical cores which are exposed to the operating system as logical CPUs that can perform parallel execution streams. This document refers to a socket and physical CPU synonymously. See Also: <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/CPU_socket">CPU Socket</a><br><strong>NUMA</strong>: Non-niform Memory Access, refers to the commonplace architecture in which machines with multiple CPU sockets divide the memory banks of RAM into nodes on a per-socket basis. Access to memory on a socket’s “local” memory node is faster than accessing memory on a remote node tied to a different socket. See Also: <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Non-uniform_memory_access">Numa</a><br><strong>CPU Core</strong>: Contemporary CPUs are likely to run multiple cores which are exposed to the underlying OS as a CPU. See Also: <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Non-uniform_memory_access">Multi-core processing</a><br><strong>Hyper-threading</strong>: Intel technology to make a single core appear logically as multiple cores on the same chip to improve the performance<br><strong>Logical CPU</strong>: What the operating system sees as a CPU. The number of CPUs available to the OS is <code>num sockets</code> * <code>cores per socket</code> * <code>hyper threads per core</code>.<br><strong>Processor Affinity</strong>: Refers to the act of restricting the set of logical CPUs on which a particular program thread can execute.</p>
+<p><strong>Benefits of thread affinitization</strong><br>Pinning a thread to a particular CPU ensures that the OS won’t reschedule the thread to another core and incur a context switch that would force the thread to reload its working state from main memory which results in jitter. When all critical threads in the processing pipeline are pinned to their own CPU and busy spinning, the OS scheduler is less likely to schedule another thread onto that core, keeping the threads’ processor caches hot.</p>
+<h2 id="Logical-CPUs-cores-and-threads"><a href="#Logical-CPUs-cores-and-threads" class="headerlink" title="Logical CPUs, cores and threads"></a>Logical CPUs, cores and threads</h2><p>Most modern machines are multi-CPU. Whether these CPUs are divided into sockets and hardware cores depends on the machine, of course, but the OS sees a number of “logical” CPUs that can execute tasks concurrently.</p>
+<p>The easiest way to get this information on Linux is to cat /proc/cpuinfo, which lists the system’s CPUs in order, providing some infromation about each (such as current frequency, cache size, etc). On my (8-CPU) machine:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">$ cat /proc/cpuinfo</span><br><span class="line">processor   : 0</span><br><span class="line">vendor_id   : GenuineIntel</span><br><span class="line">cpu family  : 6</span><br><span class="line">model               : 60</span><br><span class="line">model name  : Intel(R) Core(TM) i7-4771 CPU @ 3.50GHz</span><br><span class="line">[...]</span><br><span class="line">stepping    : 3</span><br><span class="line">microcode   : 0x7</span><br><span class="line">cpu MHz             : 3501.000</span><br><span class="line">cache size  : 8192 KB</span><br><span class="line">physical id : 0</span><br><span class="line">siblings    : 8</span><br><span class="line">core id             : 0</span><br><span class="line">cpu cores   : 4</span><br><span class="line">apicid              : 0</span><br><span class="line">[...]</span><br><span class="line"></span><br><span class="line">processor   : 1</span><br><span class="line">vendor_id   : GenuineIntel</span><br><span class="line">cpu family  : 6</span><br><span class="line">[...]</span><br><span class="line"></span><br><span class="line">[...]</span><br><span class="line">processor   : 7</span><br><span class="line">vendor_id   : GenuineIntel</span><br><span class="line">cpu family  : 6</span><br></pre></td></tr></table></figure>
+
+<p>A summary output can be obtained from lscpu:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">$ lscpu</span><br><span class="line">Architecture:          x86_64</span><br><span class="line">CPU op-mode(s):        32-bit, 64-bit</span><br><span class="line">Byte Order:            Little Endian</span><br><span class="line">CPU(s):                8</span><br><span class="line">On-line CPU(s) list:   0-7</span><br><span class="line">Thread(s) per core:    2</span><br><span class="line">Core(s) per socket:    4</span><br><span class="line">Socket(s):             1</span><br><span class="line">NUMA node(s):          1</span><br><span class="line">Vendor ID:             GenuineIntel</span><br><span class="line">CPU family:            6</span><br><span class="line">Model:                 60</span><br><span class="line">Stepping:              3</span><br><span class="line">CPU MHz:               3501.000</span><br><span class="line">BogoMIPS:              6984.09</span><br><span class="line">Virtualization:        VT-x</span><br><span class="line">L1d cache:             32K</span><br><span class="line">L1i cache:             32K</span><br><span class="line">L2 cache:              256K</span><br><span class="line">L3 cache:              8192K</span><br><span class="line">NUMA node0 CPU(s):     0-7</span><br></pre></td></tr></table></figure>
+<p>Here it’s also very easy to see that the machine has 4 cores, each having two HW threads (see hyperthreading). And yet the OS sees them as 8 “CPUs” numbered 0-7.</p>
+<h2 id="Launching-a-thread-per-CPU"><a href="#Launching-a-thread-per-CPU" class="headerlink" title="Launching a thread per CPU"></a>Launching a thread per CPU</h2><p>The C++11 threading library gracefully made available a utility function that we can use to find out how many CPUs the machine has, so that we could plan our parallelism strategy. The function is called hardware_concurrency, and here is a complete example that uses it to launch an appropriate number of threads. The following is just a code snippet; full code samples for this post, along with a Makefile for Linux can be found in this <a target="_blank" rel="noopener" href="https://github.com/eliben/code-for-blog/tree/master/2016/threads-affinity">repository</a>.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">int main(int argc, const char** argv) &#123;</span><br><span class="line">  unsigned num_cpus = std::thread::hardware_concurrency();</span><br><span class="line">  std::cout &lt;&lt; &quot;Launching &quot; &lt;&lt; num_cpus &lt;&lt; &quot; threads\n&quot;;</span><br><span class="line"></span><br><span class="line">  // A mutex ensures orderly access to std::cout from multiple threads.</span><br><span class="line">  std::mutex iomutex;</span><br><span class="line">  std::vector&lt;std::thread&gt; threads(num_cpus);</span><br><span class="line">  for (unsigned i = 0; i &lt; num_cpus; ++i) &#123;</span><br><span class="line">    threads[i] = std::thread([&amp;iomutex, i] &#123;</span><br><span class="line">      &#123;</span><br><span class="line">        // Use a lexical scope and lock_guard to safely lock the mutex only for</span><br><span class="line">        // the duration of std::cout usage.</span><br><span class="line">        std::lock_guard&lt;std::mutex&gt; iolock(iomutex);</span><br><span class="line">        std::cout &lt;&lt; &quot;Thread #&quot; &lt;&lt; i &lt;&lt; &quot; is running\n&quot;;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      // Simulate important work done by the tread by sleeping for a bit...</span><br><span class="line">      std::this_thread::sleep_for(std::chrono::milliseconds(200));</span><br><span class="line"></span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  for (auto&amp; t : threads) &#123;</span><br><span class="line">    t.join();</span><br><span class="line">  &#125;</span><br><span class="line">  return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>A std::thread is a thin wrapper around a platform-specific thread object; this is something we’ll use to our advantage shortly. So when we launch a std::thread, and actual OS thread is launched. This is fairly low-level thread control, but in this article I won’t detour into higher-level constructs like task-based parallelism, leaving this to some future post.</p>
+<h2 id="Thread-affinity"><a href="#Thread-affinity" class="headerlink" title="Thread affinity"></a>Thread affinity</h2><p>So we know how to query the system for the number of CPUs it has, and how to launch any number of threads. Now let’s do something a bit more advanced.</p>
+<p>All modern OSes support setting CPU affinity per thread. Affinity means that instead of being free to run the thread on any CPU it feels like, the OS scheduler is asked to only schedule a given thread to a single CPU or a pre-defined set of CPUs. By default, the affinity covers all logical CPUs in the system, so the OS can pick any of them for any thread, based on its scheduling considerations. In addition, the OS will sometimes migrate threads between CPUs if it makes sense to the scheduler (though it should try to miminize migrations because of the loss of warm caches on the core from which the thread was migrated). Let’s observe this in action with another code sample:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">int main(int argc, const char** argv) &#123;</span><br><span class="line">  constexpr unsigned num_threads = 4;</span><br><span class="line">  // A mutex ensures orderly access to std::cout from multiple threads.</span><br><span class="line">  std::mutex iomutex;</span><br><span class="line">  std::vector&lt;std::thread&gt; threads(num_threads);</span><br><span class="line">  for (unsigned i = 0; i &lt; num_threads; ++i) &#123;</span><br><span class="line">    threads[i] = std::thread([&amp;iomutex, i] &#123;</span><br><span class="line">      while (1) &#123;</span><br><span class="line">        &#123;</span><br><span class="line">          // Use a lexical scope and lock_guard to safely lock the mutex only</span><br><span class="line">          // for the duration of std::cout usage.</span><br><span class="line">          std::lock_guard&lt;std::mutex&gt; iolock(iomutex);</span><br><span class="line">          std::cout &lt;&lt; &quot;Thread #&quot; &lt;&lt; i &lt;&lt; &quot;: on CPU &quot; &lt;&lt; sched_getcpu() &lt;&lt; &quot;\n&quot;;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        // Simulate important work done by the tread by sleeping for a bit...</span><br><span class="line">        std::this_thread::sleep_for(std::chrono::milliseconds(900));</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  for (auto&amp; t : threads) &#123;</span><br><span class="line">    t.join();</span><br><span class="line">  &#125;</span><br><span class="line">  return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>This sample launches four threads that loop infinitely, sleeping and reporting which CPU they run on. The reporting is done via the <code>sched_getcpu</code> function (glibc specific - other platforms will have other APIs with similar functionality). Here’s a sample run:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">$ ./launch-threads-report-cpu</span><br><span class="line">Thread #0: on CPU 5</span><br><span class="line">Thread #1: on CPU 5</span><br><span class="line">Thread #2: on CPU 2</span><br><span class="line">Thread #3: on CPU 5</span><br><span class="line">Thread #0: on CPU 2</span><br><span class="line">Thread #1: on CPU 5</span><br><span class="line">Thread #2: on CPU 3</span><br><span class="line">Thread #3: on CPU 5</span><br><span class="line">Thread #0: on CPU 3</span><br><span class="line">Thread #2: on CPU 7</span><br><span class="line">Thread #1: on CPU 5</span><br><span class="line">Thread #3: on CPU 0</span><br><span class="line">Thread #0: on CPU 3</span><br><span class="line">Thread #2: on CPU 7</span><br><span class="line">Thread #1: on CPU 5</span><br><span class="line">Thread #3: on CPU 0</span><br><span class="line">Thread #0: on CPU 3</span><br><span class="line">Thread #2: on CPU 7</span><br><span class="line">Thread #1: on CPU 5</span><br><span class="line">Thread #3: on CPU 0</span><br><span class="line">^C</span><br></pre></td></tr></table></figure>
+<p>Some observations: the threads are sometimes scheduled onto the same CPU, and sometimes onto different CPUs. Also, there’s quite a bit of migration going on. Eventually, the scheduler managed to place each thread onto a different CPU, and keep it there. Different constraints (such as system load) could result in a different scheduling, of course.</p>
+<p>Now let’s rerun the same sample, but this time using <code>taskset</code> to restrict the affinity of the process to only two CPUs - 5 and 6:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">$ taskset -c 5,6 ./launch-threads-report-cpu</span><br><span class="line">Thread #0: on CPU 5</span><br><span class="line">Thread #2: on CPU 6</span><br><span class="line">Thread #1: on CPU 5</span><br><span class="line">Thread #3: on CPU 6</span><br><span class="line">Thread #0: on CPU 5</span><br><span class="line">Thread #2: on CPU 6</span><br><span class="line">Thread #1: on CPU 5</span><br><span class="line">Thread #3: on CPU 6</span><br><span class="line">Thread #0: on CPU 5</span><br><span class="line">Thread #1: on CPU 5</span><br><span class="line">Thread #2: on CPU 6</span><br><span class="line">Thread #3: on CPU 6</span><br><span class="line">Thread #0: on CPU 5</span><br><span class="line">Thread #1: on CPU 6</span><br><span class="line">Thread #2: on CPU 6</span><br><span class="line">Thread #3: on CPU 6</span><br><span class="line">^C</span><br></pre></td></tr></table></figure>
+<p>As expected, though there’s some migration happening here, all threads remain faithfully locked to CPUs 5 and 6, as instructed.</p>
+<h2 id="Setting-CPU-affinity-programatically"><a href="#Setting-CPU-affinity-programatically" class="headerlink" title="Setting CPU affinity programatically"></a>Setting CPU affinity programatically</h2><p>As we’ve seen earlier, command-line tools like taskset let us control the CPU affinity of a whole process. Sometimes, however, we’d like to do something more fine-grained and set the affinities of specific threads from within the program. How do we do that?</p>
+<p>On Linux, we can use the pthread-specific <a target="_blank" rel="noopener" href="http://man7.org/linux/man-pages/man3/pthread_setaffinity_np.3.html">pthread_setaffinity_np function</a>. Here’s an example that reproduces what we did before, but this time from inside the program. In fact, let’s go a bit more fancy and pin each thread to a single known CPU by setting its affinity:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">int main(int argc, const char** argv) &#123;</span><br><span class="line">  constexpr unsigned num_threads = 4;</span><br><span class="line">  // A mutex ensures orderly access to std::cout from multiple threads.</span><br><span class="line">  std::mutex iomutex;</span><br><span class="line">  std::vector&lt;std::thread&gt; threads(num_threads);</span><br><span class="line">  for (unsigned i = 0; i &lt; num_threads; ++i) &#123;</span><br><span class="line">    threads[i] = std::thread([&amp;iomutex, i] &#123;</span><br><span class="line">      std::this_thread::sleep_for(std::chrono::milliseconds(20));</span><br><span class="line">      while (1) &#123;</span><br><span class="line">        &#123;</span><br><span class="line">          // Use a lexical scope and lock_guard to safely lock the mutex only</span><br><span class="line">          // for the duration of std::cout usage.</span><br><span class="line">          std::lock_guard&lt;std::mutex&gt; iolock(iomutex);</span><br><span class="line">          std::cout &lt;&lt; &quot;Thread #&quot; &lt;&lt; i &lt;&lt; &quot;: on CPU &quot; &lt;&lt; sched_getcpu() &lt;&lt; &quot;\n&quot;;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        // Simulate important work done by the tread by sleeping for a bit...</span><br><span class="line">        std::this_thread::sleep_for(std::chrono::milliseconds(900));</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    // Create a cpu_set_t object representing a set of CPUs. Clear it and mark</span><br><span class="line">    // only CPU i as set.</span><br><span class="line">    cpu_set_t cpuset;</span><br><span class="line">    CPU_ZERO(&amp;cpuset);</span><br><span class="line">    CPU_SET(i, &amp;cpuset);</span><br><span class="line">    int rc = pthread_setaffinity_np(threads[i].native_handle(),</span><br><span class="line">                                    sizeof(cpu_set_t), &amp;cpuset);</span><br><span class="line">    if (rc != 0) &#123;</span><br><span class="line">      std::cerr &lt;&lt; &quot;Error calling pthread_setaffinity_np: &quot; &lt;&lt; rc &lt;&lt; &quot;\n&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  for (auto&amp; t : threads) &#123;</span><br><span class="line">    t.join();</span><br><span class="line">  &#125;</span><br><span class="line">  return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Note how we use the native_handle method discussed earlier in order to pass the underlying native handle to the pthread call (it takes a pthread_t ID as its first argument). The output of this program on my machine is:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">$ ./set-affinity</span><br><span class="line">Thread #0: on CPU 0</span><br><span class="line">Thread #1: on CPU 1</span><br><span class="line">Thread #2: on CPU 2</span><br><span class="line">Thread #3: on CPU 3</span><br><span class="line">Thread #0: on CPU 0</span><br><span class="line">Thread #1: on CPU 1</span><br><span class="line">Thread #2: on CPU 2</span><br><span class="line">Thread #3: on CPU 3</span><br><span class="line">Thread #0: on CPU 0</span><br><span class="line">Thread #1: on CPU 1</span><br><span class="line">Thread #2: on CPU 2</span><br><span class="line">Thread #3: on CPU 3</span><br><span class="line">^C</span><br></pre></td></tr></table></figure>
+<p>The threads get pinned to single CPUs exactly as requested.</p>
+<p>refers:<br><a target="_blank" rel="noopener" href="https://pages.tacc.utexas.edu/~eijkhout/pcse/html/omp-affinity.html#Threadbinding">https://pages.tacc.utexas.edu/~eijkhout/pcse/html/omp-affinity.html#Threadbinding</a><br><a target="_blank" rel="noopener" href="https://docs.neeveresearch.com/display/TALONDOC/Tuning+Thread+Affinitization+and+NUMA">https://docs.neeveresearch.com/display/TALONDOC/Tuning+Thread+Affinitization+and+NUMA</a><br><a target="_blank" rel="noopener" href="https://eli.thegreenplace.net/2016/c11-threads-affinity-and-hyperthreading/">https://eli.thegreenplace.net/2016/c11-threads-affinity-and-hyperthreading/</a></p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="http://huangzhiyuan.github.io/2020/05/07/cpu-threads-affinity-hyperthreadign/" title="CPU threads affinity hyperthreading" target="_blank" rel="external">http://huangzhiyuan.github.io/2020/05/07/cpu-threads-affinity-hyperthreadign/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/cofess" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/photo.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/cofess" target="_blank"><span class="text-dark">黄志远</span><small class="ml-1x">研发攻城狮</small></a></h3>
+        <div>靡不有初 鲜克有终</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2020/05/12/hook-in-pytorch/" title="PyTorch Hook用法解析"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2020/04/29/deep-learning-compiler-survery/" title="deep learning compiler调研报告"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipay.jpg" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开支付宝扫一扫，即可进行扫码打赏哦</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpay.jpg" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开微信扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/huangzhiyuan" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/u/7041265015" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://www.zhihu.com/people/justforfun099/activitie" target="_blank" title="Zhihu" data-toggle=tooltip data-placement=top><i class="icon icon-zhihu"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        &copy; 2022 黄志远
+        
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

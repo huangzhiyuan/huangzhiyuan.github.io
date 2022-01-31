@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>深度学习面试常见问题集锦 | Blog</title>
+  <meta name="description" content="这篇文章用来记录总结深度学习领域常见面试题。题目来源于各大门户网站和招聘网站。一来用于了解当前面试常考热点问题，二来在工作闭门造车的同时，弥补下自己深度学习理论方面的不足。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深度学习面试常见问题集锦">
+<meta property="og:url" content="http://huangzhiyuan.github.io/2020/04/14/ML-interview/index.html">
+<meta property="og:site_name" content="靡不有初 鲜克有终">
+<meta property="og:description" content="这篇文章用来记录总结深度学习领域常见面试题。题目来源于各大门户网站和招聘网站。一来用于了解当前面试常考热点问题，二来在工作闭门造车的同时，弥补下自己深度学习理论方面的不足。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0414/1.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0414/2.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0414/3.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0414/4.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0414/5.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0414/6.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0414/1.png">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0421/1.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0421/2.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0421/3.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0421/4.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0421/5.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0420/2.png">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0414/7.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0421/8.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0421/9.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0420/grad.png">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0420/equation.svg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0420/sigmoid.png">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0420/1.svg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0420/derivative.png">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0420/1.png">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0423/cnn.png">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0423/launch.png">
+<meta property="article:published_time" content="2020-04-14T13:30:56.000Z">
+<meta property="article:modified_time" content="2020-04-24T05:52:36.000Z">
+<meta property="article:author" content="黄志远">
+<meta property="article:tag" content="面试">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://huangzhiyuan.github.io/img/2020/0414/1.jpg">
+  <!-- Canonical links -->
+  <link rel="canonical" href="http://huangzhiyuan.github.io/2020/04/14/ML-interview/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="靡不有初 鲜克有终" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/cofess" target="_blank">
+          <img class="img-circle img-rotate" src="/images/photo.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">黄志远</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">研发攻城狮</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Shanghai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/huangzhiyuan" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/u/7041265015" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://www.zhihu.com/people/justforfun099/activitie" target="_blank" title="Zhihu" data-toggle=tooltip data-placement=top><i class="icon icon-zhihu"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验，广告位招租中~</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/CUDA/">CUDA</a><span class="category-list-count">10</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/GPU/">GPU</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Hexo/">Hexo</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Linux/">Linux</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/python/">python</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a><span class="category-list-count">15</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93/">技术总结</a><span class="category-list-count">47</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a><span class="category-list-count">22</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a><span class="category-list-count">14</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%94%B5%E5%BD%B1/">电影</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%AF%BB%E4%B9%A6/">读书</a><span class="category-list-count">8</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/AI/" rel="tag">AI</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AWK/" rel="tag">AWK</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/BP%E7%AE%97%E6%B3%95/" rel="tag">BP算法</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/" rel="tag">C++</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CNN/" rel="tag">CNN</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CPU-cache/" rel="tag">CPU-cache</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Optimization/" rel="tag">Code Optimization</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DL-Framwork/" rel="tag">DL Framwork</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DNNL/" rel="tag">DNNL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/" rel="tag">Docker</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GPU/" rel="tag">GPU</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Horovod/" rel="tag">Horovod</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java-memory/" rel="tag">Java memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java-%E9%9B%86%E5%90%88%E6%A1%86%E6%9E%B6/" rel="tag">Java 集合框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/KNN/" rel="tag">KNN</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LSTM/" rel="tag">LSTM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux/" rel="tag">Linux</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MLPerf/" rel="tag">MLPerf</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Memory/" rel="tag">Memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NUMA/" rel="tag">NUMA</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenMP/" rel="tag">OpenMP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RNN/" rel="tag">RNN</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SYCL/" rel="tag">SYCL</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TCP-IP/" rel="tag">TCP/IP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TVM/" rel="tag">TVM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/VIM/" rel="tag">VIM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Vtune/" rel="tag">Vtune</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/affinity/" rel="tag">affinity</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/batch-size/" rel="tag">batch-size</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/compiler/" rel="tag">compiler</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/conda-pip/" rel="tag">conda/pip</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cpu/" rel="tag">cpu</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cs179/" rel="tag">cs179</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cuda/" rel="tag">cuda</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/diff/" rel="tag">diff</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/embedding/" rel="tag">embedding</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gdb/" rel="tag">gdb</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/geohash/" rel="tag">geohash</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hash/" rel="tag">hash</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/" rel="tag">hexo</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hook/" rel="tag">hook</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hyperthreading/" rel="tag">hyperthreading</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/leetcode/" rel="tag">leetcode</a><span class="tag-list-count">18</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/license/" rel="tag">license</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mAP/" rel="tag">mAP</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/markdown/" rel="tag">markdown</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/memory/" rel="tag">memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ml2014/" rel="tag">ml2014</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pytorch/" rel="tag">pytorch</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/quantization/" rel="tag">quantization</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/stream-event/" rel="tag">stream/event</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tensorboard/" rel="tag">tensorboard</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tensoriterator/" rel="tag">tensoriterator</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/topk/" rel="tag">topk</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/volatile/" rel="tag">volatile</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vscode/" rel="tag">vscode</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webchat/" rel="tag">webchat</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/zero-copy/" rel="tag">zero-copy</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%B7%E5%80%BC%E8%A7%82/" rel="tag">价值观</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BD%93%E8%82%B2/" rel="tag">体育</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%81%A5%E8%BA%AB/" rel="tag">健身</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="tag">分布式</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%89%91%E6%8C%87offer/" rel="tag">剑指offer</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%89%AF%E4%B8%9A/" rel="tag">副业</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A0%E5%AF%86/" rel="tag">加密</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%A4%A7%E7%89%9B/" rel="tag">大牛</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%BD%B1%E8%AF%84/" rel="tag">影评</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%8A%A2%E7%BA%A2%E5%8C%85/" rel="tag">抢红包</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%91%98%E6%8A%84/" rel="tag">摘抄</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%96%B0%E9%97%BB/" rel="tag">新闻</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/" rel="tag">深入理解计算机系统</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E6%A1%86%E6%9E%B6/" rel="tag">深度学习框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%94%9F%E6%B4%BB/" rel="tag">生活</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%94%B5%E5%BD%B1/" rel="tag">电影</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1/" rel="tag">知识图谱</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E5%85%BB/" rel="tag">程序员的自我修养</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%81%8C%E4%B8%9A/" rel="tag">职业</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AF%BB%E4%B9%A6/" rel="tag">读书</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag">随笔</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9D%A2%E8%AF%95/" rel="tag">面试</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/" rel="tag">高并发</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/AI/" style="font-size: 13.13px;">AI</a> <a href="/tags/AWK/" style="font-size: 13px;">AWK</a> <a href="/tags/BP%E7%AE%97%E6%B3%95/" style="font-size: 13px;">BP算法</a> <a href="/tags/C/" style="font-size: 13.13px;">C++</a> <a href="/tags/CNN/" style="font-size: 13.13px;">CNN</a> <a href="/tags/CPU-cache/" style="font-size: 13px;">CPU-cache</a> <a href="/tags/Code-Optimization/" style="font-size: 13px;">Code Optimization</a> <a href="/tags/DL-Framwork/" style="font-size: 13px;">DL Framwork</a> <a href="/tags/DNNL/" style="font-size: 13px;">DNNL</a> <a href="/tags/Docker/" style="font-size: 13px;">Docker</a> <a href="/tags/GPU/" style="font-size: 13.5px;">GPU</a> <a href="/tags/Horovod/" style="font-size: 13px;">Horovod</a> <a href="/tags/Java-memory/" style="font-size: 13px;">Java memory</a> <a href="/tags/Java-%E9%9B%86%E5%90%88%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">Java 集合框架</a> <a href="/tags/KNN/" style="font-size: 13px;">KNN</a> <a href="/tags/LSTM/" style="font-size: 13px;">LSTM</a> <a href="/tags/Linux/" style="font-size: 13.5px;">Linux</a> <a href="/tags/MLPerf/" style="font-size: 13px;">MLPerf</a> <a href="/tags/Memory/" style="font-size: 13px;">Memory</a> <a href="/tags/NUMA/" style="font-size: 13px;">NUMA</a> <a href="/tags/OpenMP/" style="font-size: 13px;">OpenMP</a> <a href="/tags/RNN/" style="font-size: 13px;">RNN</a> <a href="/tags/SYCL/" style="font-size: 13.38px;">SYCL</a> <a href="/tags/TCP-IP/" style="font-size: 13px;">TCP/IP</a> <a href="/tags/TVM/" style="font-size: 13px;">TVM</a> <a href="/tags/VIM/" style="font-size: 13px;">VIM</a> <a href="/tags/Vtune/" style="font-size: 13px;">Vtune</a> <a href="/tags/affinity/" style="font-size: 13px;">affinity</a> <a href="/tags/atomic/" style="font-size: 13px;">atomic</a> <a href="/tags/batch-size/" style="font-size: 13px;">batch-size</a> <a href="/tags/compiler/" style="font-size: 13px;">compiler</a> <a href="/tags/conda-pip/" style="font-size: 13px;">conda/pip</a> <a href="/tags/cpu/" style="font-size: 13.13px;">cpu</a> <a href="/tags/cs179/" style="font-size: 13.63px;">cs179</a> <a href="/tags/cuda/" style="font-size: 13.88px;">cuda</a> <a href="/tags/diff/" style="font-size: 13px;">diff</a> <a href="/tags/embedding/" style="font-size: 13px;">embedding</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/gdb/" style="font-size: 13px;">gdb</a> <a href="/tags/geohash/" style="font-size: 13px;">geohash</a> <a href="/tags/git/" style="font-size: 13.13px;">git</a> <a href="/tags/hash/" style="font-size: 13px;">hash</a> <a href="/tags/hexo/" style="font-size: 13px;">hexo</a> <a href="/tags/hook/" style="font-size: 13px;">hook</a> <a href="/tags/hyperthreading/" style="font-size: 13px;">hyperthreading</a> <a href="/tags/leetcode/" style="font-size: 14px;">leetcode</a> <a href="/tags/license/" style="font-size: 13px;">license</a> <a href="/tags/mAP/" style="font-size: 13.13px;">mAP</a> <a href="/tags/markdown/" style="font-size: 13.13px;">markdown</a> <a href="/tags/memory/" style="font-size: 13px;">memory</a> <a href="/tags/ml2014/" style="font-size: 13px;">ml2014</a> <a href="/tags/pytorch/" style="font-size: 13.75px;">pytorch</a> <a href="/tags/quantization/" style="font-size: 13px;">quantization</a> <a href="/tags/stream-event/" style="font-size: 13px;">stream/event</a> <a href="/tags/tensorboard/" style="font-size: 13px;">tensorboard</a> <a href="/tags/tensoriterator/" style="font-size: 13px;">tensoriterator</a> <a href="/tags/topk/" style="font-size: 13px;">topk</a> <a href="/tags/volatile/" style="font-size: 13px;">volatile</a> <a href="/tags/vscode/" style="font-size: 13px;">vscode</a> <a href="/tags/webchat/" style="font-size: 13px;">webchat</a> <a href="/tags/zero-copy/" style="font-size: 13px;">zero-copy</a> <a href="/tags/%E4%BB%B7%E5%80%BC%E8%A7%82/" style="font-size: 13px;">价值观</a> <a href="/tags/%E4%BD%93%E8%82%B2/" style="font-size: 13px;">体育</a> <a href="/tags/%E5%81%A5%E8%BA%AB/" style="font-size: 13px;">健身</a> <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" style="font-size: 13px;">分布式</a> <a href="/tags/%E5%89%91%E6%8C%87offer/" style="font-size: 13px;">剑指offer</a> <a href="/tags/%E5%89%AF%E4%B8%9A/" style="font-size: 13px;">副业</a> <a href="/tags/%E5%8A%A0%E5%AF%86/" style="font-size: 13px;">加密</a> <a href="/tags/%E5%A4%A7%E7%89%9B/" style="font-size: 13px;">大牛</a> <a href="/tags/%E5%BD%B1%E8%AF%84/" style="font-size: 13.13px;">影评</a> <a href="/tags/%E6%8A%A2%E7%BA%A2%E5%8C%85/" style="font-size: 13px;">抢红包</a> <a href="/tags/%E6%91%98%E6%8A%84/" style="font-size: 13.25px;">摘抄</a> <a href="/tags/%E6%96%B0%E9%97%BB/" style="font-size: 13.75px;">新闻</a> <a href="/tags/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/" style="font-size: 13px;">深入理解计算机系统</a> <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">深度学习框架</a> <a href="/tags/%E7%94%9F%E6%B4%BB/" style="font-size: 13.13px;">生活</a> <a href="/tags/%E7%94%B5%E5%BD%B1/" style="font-size: 13.13px;">电影</a> <a href="/tags/%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1/" style="font-size: 13px;">知识图谱</a> <a href="/tags/%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E5%85%BB/" style="font-size: 13.13px;">程序员的自我修养</a> <a href="/tags/%E8%81%8C%E4%B8%9A/" style="font-size: 13px;">职业</a> <a href="/tags/%E8%AF%BB%E4%B9%A6/" style="font-size: 13.25px;">读书</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 13px;">随笔</a> <a href="/tags/%E9%9D%A2%E8%AF%95/" style="font-size: 13px;">面试</a> <a href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/" style="font-size: 13px;">高并发</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">八月 2020</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/07/">七月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/06/">六月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/05/">五月 2020</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">10</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">39</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/02/">二月 2020</a><span class="archive-list-count">32</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">十月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/12/">十二月 2017</a><span class="archive-list-count">9</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/11/">十一月 2017</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/07/">七月 2017</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">六月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/05/">五月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/03/">三月 2017</a><span class="archive-list-count">7</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/02/">二月 2016</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-CPU/" class="title">Linux性能优化实战之CPU性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-IO/" class="title">Linux性能优化实战之IO性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-Memory/" class="title">Linux性能优化实战之内存性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-Network/" class="title">Linux性能优化实战之网络性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat/" class="title">Linux性能优化实战</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-ML-interview" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      深度学习面试常见问题集锦
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2020/04/14/ML-interview/" class="article-date">
+	  <time datetime="2020-04-14T13:30:56.000Z" itemprop="datePublished">2020-04-14</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/%E9%9D%A2%E8%AF%95/" rel="tag">面试</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2020/04/14/ML-interview/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <p>这篇文章用来记录总结深度学习领域常见面试题。题目来源于各大门户网站和招聘网站。一来用于了解当前面试常考热点问题，二来在工作闭门造车的同时，弥补下自己深度学习理论方面的不足。</p>
+<span id="more"></span>
+
+<h2 id="深度学习模型中参数量的计算？"><a href="#深度学习模型中参数量的计算？" class="headerlink" title="深度学习模型中参数量的计算？"></a>深度学习模型中参数量的计算？</h2><h3 id="全连接层"><a href="#全连接层" class="headerlink" title="全连接层"></a>全连接层</h3><p>假设输入层大小i，隐藏层h，输出层o：</p>
+<p>则参数量为各层之间的参数+每层的偏差=(i<em>h+h</em>o)+(h+o)</p>
+<p>例如输入大小3，隐藏层大小5，输出大小2：</p>
+<p><img src="/img/2020/0414/1.jpg" alt="&quot;1&quot;"></p>
+<p>则参数个数为：（3×5 + 5×2）+（5 + 2） = 32</p>
+<h3 id="对于rnn网络"><a href="#对于rnn网络" class="headerlink" title="对于rnn网络"></a>对于rnn网络</h3><p>首先我们定义三个参数：g:门的数量(RNN有1个门，GRU有3个，LSTM有4个)h:隐藏单元大小  ，i:输出层大小每个门中的权重实际上是一个输入大小(h + i)（解释:上一个时刻的隐状态和当前输入的拼接）和输出大小为h（解释：当前时刻的隐状态）的FFNN。所以每个门都有h（h + i）+ h个参数。即在RNN中参数数量为：<strong>g × [ h（h + i）+ h ]</strong><br><strong>注意：输出我们只关心h，不关心其上层的全连接或者softmax，因为这已经不是当前rnn的参数了。</strong><br>举例：具有2个隐藏单元和输入尺寸3的LSTM：</p>
+<p><img src="/img/2020/0414/2.jpg" alt="&quot;2&quot;"></p>
+<p>则参数量为：g ×[ h（h + i）+ h ]= 4 ×[2（2 + 3）+ 2] = 48</p>
+<p>具有5个隐藏单元和输入大小为8的堆叠双向GRU +具有50个隐藏单元的LSTM的参数数量为：</p>
+<p><img src="/img/2020/0414/3.jpg" alt="&quot;3&quot;"></p>
+<p>第一层参数：2 × g ×[ h(h + i)+ h ] = 2 ×3×[5(5 + 8)+ 5] = 420<br>第二层参数： g ×[ h(h + i)+ h ]= 4×[50(50 + 10)+ 50] = 12200<br>则总参数量为： 420 + 12200 = 12620</p>
+<h3 id="对于CNN网络"><a href="#对于CNN网络" class="headerlink" title="对于CNN网络"></a>对于CNN网络</h3><p>首先我们定义三个参数：i:输入尺寸，f:卷积核的大小，o:输出大小</p>
+<p>则每个滤波器对应的输出映射参数为：num_params =权重+偏差= [ i×(f×f)×o ] + o</p>
+<p>例如带有1 × 1滤波器的灰度图像，输出3个通道<br><img src="/img/2020/0414/4.jpg" alt="&quot;4&quot;"></p>
+<p>参数数量为： [ i×(f×f)×o ] + o= [1 ×(2 × 2)× 3] + 3= 15</p>
+<p>例如具有2×2滤波器的RGB图像，1通道的输出。则每个输入像素通道都有1个滤波器。产生的卷积按元素叠加，并且向每个元素添加偏差项。<br><img src="/img/2020/0414/5.jpg" alt="&quot;5&quot;"></p>
+<p>最终得到参数数量为： [ i×(f×f)×o ] + o= [3 ×(2×2)×1] + 1 = 13</p>
+<h2 id="卷积神经网络在max-pooling处怎么反向传播误差"><a href="#卷积神经网络在max-pooling处怎么反向传播误差" class="headerlink" title="卷积神经网络在max pooling处怎么反向传播误差"></a>卷积神经网络在max pooling处怎么反向传播误差</h2><p>无论max pooling还是mean pooling，都没有需要学习的参数。因此，在卷积神经网络的训练中，Pooling层需要做的仅仅是将误差项传递到上一层，而没有梯度的计算。<br>（1）max pooling层：对于max pooling，下一层的误差项的值会原封不动的传递到上一层对应区块中的最大值所对应的神经元，而其他神经元的误差项的值都是0；<br>（2）mean pooling层：对于mean pooling，下一层的误差项的值会平均分配到上一层对应区块中的所有神经元。</p>
+<h2 id="怎么防止模型过拟合？"><a href="#怎么防止模型过拟合？" class="headerlink" title="怎么防止模型过拟合？"></a>怎么防止模型过拟合？</h2><p>包括但不限于以下：</p>
+<ul>
+<li>提前终止（当验证集上的效果变差的时候）</li>
+<li>正则化（Regularization）<br>L1正则化<br>L2正则化</li>
+<li>数据集扩增（Data augmentation）</li>
+<li>Dropout</li>
+</ul>
+<h2 id="GN，BN，LN和IN的区别？"><a href="#GN，BN，LN和IN的区别？" class="headerlink" title="GN，BN，LN和IN的区别？"></a>GN，BN，LN和IN的区别？</h2><p><img src="/img/2020/0414/6.jpg" alt="&quot;6&quot;"></p>
+<ul>
+<li>BN是在batch上，对N，H，W做归一化，对小batchsize效果不好，应优先考虑</li>
+<li>LN在通道方向上，对C，H，W做归一化，主要用于RNN</li>
+<li>IN在图像像素上，对H， W做归一化，主要用于风格迁移， GAN</li>
+<li>GN将通道分组，然后归一化，适合mini-batch很小的情况</li>
+<li>SN将BN，LN，IN结合，赋予权重，让网络自适应归一化层</li>
+</ul>
+<p>基于机器学习领域的一个重要的假设：iidiidiid假设，即假设训练数据和测试数据是满足相同的分布的，这是通过训练数据集获得的模型能够在测试集上获得好的效果的一个基本保障。</p>
+<h3 id="Batch-Normalization"><a href="#Batch-Normalization" class="headerlink" title="Batch Normalization"></a>Batch Normalization</h3><p>那么BN，简单的说，就是在深度神经网络训练过程中使得每一层神经网络的输入保持相同的分布。<br><img src="/img/2020/0414/1.png" alt="&quot;1&quot;"></p>
+<p>但是也有不少问题：</p>
+<ul>
+<li>如果batch size太小，则BN效果明显下降</li>
+<li>对于有些像素级图片生成任务，效果不佳</li>
+<li>不适合RNN等动态网络，不方便且效果不佳</li>
+<li>训练时和推理时统计量不一致</li>
+</ul>
+<h3 id="Layer-Normalization"><a href="#Layer-Normalization" class="headerlink" title="Layer Normalization"></a>Layer Normalization</h3><p>为了能够在只有当前一个训练实例下，找到一个合理的统计范围，一个直接的想法是：把同一个卷积层作为集合，求均值和方差；对于RNN，就是把同层隐层神经元的响应值（不同时刻）作为集合，再求均值和方差。</p>
+<h3 id="Instance-Normalization"><a href="#Instance-Normalization" class="headerlink" title="Instance Normalization"></a>Instance Normalization</h3><p>LN是对所有的通道，那对一个通道做归一化是怎样呢！IN就是这么做的，单个通道的feature map作为集合，并在此集合上求均值和方差，这种像素级上的操作，使得IN对于一些图片生成类的任务效果明显优于BN，比如图片风格转换。</p>
+<h3 id="Group-Normalization"><a href="#Group-Normalization" class="headerlink" title="Group Normalization"></a>Group Normalization</h3><p>LN是对于所有的通道，IN是对于单个通道，如果把所有通道分组，再各个组上做归一化又会怎样呢？这就是GN啦。通道分组也是CNN常用的优化技巧。GN在mini-batch比较小的场景或者物体检测、视频分类等场景下效果优于BN。</p>
+<h3 id="Switchable-Normalization"><a href="#Switchable-Normalization" class="headerlink" title="Switchable Normalization"></a>Switchable Normalization</h3><p>归一化，虽能提高模型的泛化能力，但BN，LN， IN， GN都是人工设计的，是否可以放开手脚，让网络自适应呢！这是个更加generic的做法。</p>
+<h2 id="python浅拷贝和深拷贝的区别"><a href="#python浅拷贝和深拷贝的区别" class="headerlink" title="python浅拷贝和深拷贝的区别"></a>python浅拷贝和深拷贝的区别</h2><p>在python中，对象赋值实际上是对象的引用。当创建一个对象，然后把它赋给另一个变量的时候，python并没有拷贝这个对象，而只是拷贝了这个对象的引用。<br>一般有3种方法：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">alist=[1,2,3,[&quot;a&quot;,&quot;b&quot;]]</span><br></pre></td></tr></table></figure>
+<p>（1）直接赋值,默认浅拷贝传递对象的引用而已,原始列表改变，被赋值的b也会做相同的改变</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt;&gt; b=alist</span><br><span class="line">&gt;&gt;&gt; print b</span><br><span class="line">[1, 2, 3, [&#x27;a&#x27;, &#x27;b&#x27;]]</span><br><span class="line">&gt;&gt;&gt; alist.append(5)</span><br><span class="line">&gt;&gt;&gt; print alist;print b</span><br><span class="line">[1, 2, 3, [&#x27;a&#x27;, &#x27;b&#x27;], 5]</span><br><span class="line">[1, 2, 3, [&#x27;a&#x27;, &#x27;b&#x27;], 5]</span><br></pre></td></tr></table></figure>
+<p>（2）copy浅拷贝，没有拷贝子对象，所以原始数据改变，子对象会改变</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt;&gt; import copy</span><br><span class="line"></span><br><span class="line">&gt;&gt;&gt; c=copy.copy(alist)</span><br><span class="line">&gt;&gt;&gt; print alist;print c</span><br><span class="line">[1, 2, 3, [&#x27;a&#x27;, &#x27;b&#x27;]]</span><br><span class="line">[1, 2, 3, [&#x27;a&#x27;, &#x27;b&#x27;]]</span><br><span class="line">&gt;&gt;&gt; alist.append(5)</span><br><span class="line">&gt;&gt;&gt; print alist;print c</span><br><span class="line">[1, 2, 3, [&#x27;a&#x27;, &#x27;b&#x27;], 5]</span><br><span class="line">[1, 2, 3, [&#x27;a&#x27;, &#x27;b&#x27;]]</span><br><span class="line"></span><br><span class="line">&gt;&gt;&gt; alist[3]</span><br><span class="line">[&#x27;a&#x27;, &#x27;b&#x27;]</span><br><span class="line">&gt;&gt;&gt; alist[3].append(&#x27;cccc&#x27;)</span><br><span class="line">&gt;&gt;&gt; print alist;print c</span><br><span class="line">[1, 2, 3, [&#x27;a&#x27;, &#x27;b&#x27;, &#x27;cccc&#x27;], 5]</span><br><span class="line">[1, 2, 3, [&#x27;a&#x27;, &#x27;b&#x27;, &#x27;cccc&#x27;]] 里面的子对象被改变了</span><br></pre></td></tr></table></figure>
+
+<p>（3）深拷贝，包含对象里面的自对象的拷贝，所以原始对象的改变不会造成深拷贝里任何子元素的改变</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt;&gt; import copy</span><br><span class="line"></span><br><span class="line">&gt;&gt;&gt; d=copy.deepcopy(alist)</span><br><span class="line">&gt;&gt;&gt; print alist;print d</span><br><span class="line">[1, 2, 3, [&#x27;a&#x27;, &#x27;b&#x27;]]</span><br><span class="line">[1, 2, 3, [&#x27;a&#x27;, &#x27;b&#x27;]]始终没有改变</span><br><span class="line">&gt;&gt;&gt; alist.append(5)</span><br><span class="line">&gt;&gt;&gt; print alist;print d</span><br><span class="line">[1, 2, 3, [&#x27;a&#x27;, &#x27;b&#x27;], 5]</span><br><span class="line">[1, 2, 3, [&#x27;a&#x27;, &#x27;b&#x27;]]始终没有改变</span><br><span class="line">&gt;&gt;&gt; alist[3]</span><br><span class="line">[&#x27;a&#x27;, &#x27;b&#x27;]</span><br><span class="line">&gt;&gt;&gt; alist[3].append(&quot;ccccc&quot;)</span><br><span class="line">&gt;&gt;&gt; print alist;print d</span><br><span class="line">[1, 2, 3, [&#x27;a&#x27;, &#x27;b&#x27;, &#x27;ccccc&#x27;], 5]</span><br><span class="line">[1, 2, 3, [&#x27;a&#x27;, &#x27;b&#x27;]]  始终没有改变</span><br></pre></td></tr></table></figure>
+
+<h2 id="为什么2个3-3跟1个5-5感受野相同？"><a href="#为什么2个3-3跟1个5-5感受野相同？" class="headerlink" title="为什么2个3 * 3跟1个5 * 5感受野相同？"></a>为什么2个3 * 3跟1个5 * 5感受野相同？</h2><p>我们假设图片是28 * 28的，我们使用5 * 5的卷积核对其卷积，步长为1，得到的结果是:(28-5)/1+1=24，然后我们使用2个卷积核为3 * 3的，这里的两个是指2层：第一层3 * 3：得到的结果是(28-3)/1+1=26，第二层3 * 3：，得到的结果是(26-3)/1+1=24，所以我们的最终结果和5 * 5的卷积核是一样。</p>
+<h2 id="请解释为什么两层3x3的卷积核感受野为5x5，三层3x3的卷积核感受野为7x7呢？"><a href="#请解释为什么两层3x3的卷积核感受野为5x5，三层3x3的卷积核感受野为7x7呢？" class="headerlink" title="请解释为什么两层3x3的卷积核感受野为5x5，三层3x3的卷积核感受野为7x7呢？"></a>请解释为什么两层3x3的卷积核感受野为5x5，三层3x3的卷积核感受野为7x7呢？</h2><p>角度一：在stride=1,padding=0的情况下，两层3x3的卷积核感受野为5x5，如下<br><img src="/img/2020/0421/1.jpg" alt="&quot;1&quot;"></p>
+<p>三层3x3的卷积核感受野为7x7，如下<br><img src="/img/2020/0421/2.jpg" alt="&quot;2&quot;"></p>
+<p>角度二：我们假设图片是28 * 28的，我们使用5 * 5的卷积核对其卷积，步长为1，得到的结果是:(28-5)/1+1=24。然后我们使用2个卷积核为3 * 3的，这里的两个是指2层：第一层3 * 3：得到的结果是(28-3)/1+1=26，第二层3 * 3：得到的结果是(26-3)/1+1=24，所以我们的最终结果和5 * 5的卷积核是一样的；其他同理。</p>
+<p>图片直观感受法：10x10的图片使用3x3的卷积核卷积，默认stride=1，padding=0</p>
+<p><img src="/img/2020/0421/3.jpg" alt="&quot;3&quot;"><br><img src="/img/2020/0421/4.jpg" alt="&quot;4&quot;"><br>2层3x3卷积核——output2中1x1的像素已经可以感受原图中的5x5区域了<br><img src="/img/2020/0421/5.jpg" alt="&quot;5&quot;"><br>3层3x3卷积核——output3中1x1的像素已经可以感受原图中的7x7区域了</p>
+<h2 id="为什么使用3x3的卷积核？"><a href="#为什么使用3x3的卷积核？" class="headerlink" title="为什么使用3x3的卷积核？"></a>为什么使用3x3的卷积核？</h2><p>(1)3x3是最小的能够捕获像素八邻域信息的尺寸。<br>(2)两个3x3的堆叠卷基层的有限感受野是5x5；三个3x3的堆叠卷基层的感受野是7x7，故可以通过小尺寸卷积层的堆叠替代大尺寸卷积层，并且感受野大小不变。<br>(3)多个3x3的卷基层比一个大尺寸filter卷基层有更多的非线性（更多层的非线性函数，使用了3个非线性激活函数）。<br>(4)多个3x3的卷积层比一个大尺寸的filter有更少的参数，如三个3x3的卷积层参数个数3x((3x3xC)xC)=27C2；一个（7x7xC）xC的卷积层参数为49C2。唯一的不足是，在进行反向传播时，中间的卷积层可能会导致占用更多的内存；</p>
+<h2 id="batch-normalization的均值和方差怎么更新的？"><a href="#batch-normalization的均值和方差怎么更新的？" class="headerlink" title="batch normalization的均值和方差怎么更新的？"></a>batch normalization的均值和方差怎么更新的？</h2><p>Batchnorm是归一化的一种手段，极限来说，这种方式会减小图像之间的绝对差异，突出相对差异，加快训练速度，如果我们每一个batch输入的数据都具有不同的分布，显然会给网络的训练带来困难。另一方面，数据经过一层层网络计算后，其数据分布也在发生着变化，会给下一层的网络学习带来困难。batchnorm就是为了解决这个分布变化问题。BatchNorm就是对神经网络的每一层进行归一化，假设将每一层输出后的数据都归一化到0均值，1方差，满足正太分布，但是，此时有一个问题，每一层的数据分布都是标准正太分布，导致其完全学习不到输入数据的特征，因为，费劲心思学习到的特征分布被归一化了，因此，直接对每一层做归一化显然是不合理的。但是如果稍作修改，加入可训练的参数做归一化，那就是BatchNorm实现的了<br><img src="/img/2020/0420/2.png" alt="&quot;2&quot;"><br>之前也说过如果直接做归一化不做其他处理，神经网络是学不到任何东西的，但是加入这两个参数后，事情就不一样了，先考虑特殊情况下，如果γ和β分别等于此batch的标准差和均值，那么  不就还原到归一化前的x了吗，也即是缩放平移到了归一化前的分布，相当于batchnorm没有起作用，β和γ分别称之为 平移参数和缩放参数 。这样就保证了每一次数据经过归一化后还保留的有学习来的特征，同时又能完成归一化这个操作，加速训练。batchnorm是在输入值和激活函数之间进行的，每次训练给一个批量，然后计算批量的均值方差，但是在测试的时候可不是这样，测试的时候每次只输入一张图片，这怎么计算批量的均值和方差，于是，在训练的时候实现计算好mean var测试的时候直接拿来用就可以了，不用计算均值和方差</p>
+<h2 id="ResNet旁路跟卷积后的结果相加具体是怎么做的？"><a href="#ResNet旁路跟卷积后的结果相加具体是怎么做的？" class="headerlink" title="ResNet旁路跟卷积后的结果相加具体是怎么做的？"></a>ResNet旁路跟卷积后的结果相加具体是怎么做的？</h2><h2 id="1-1的卷积核有什么用"><a href="#1-1的卷积核有什么用" class="headerlink" title="1*1的卷积核有什么用"></a>1*1的卷积核有什么用</h2><p>1×1卷积核用于升维、降维：如果卷积的输入、输出都仅有一个平面，那么1×1卷积核并没有啥意义。它完全不考虑像素与其周围像素之间的关系！但通常卷积的输入、输出都是立方体（多通道的），此时1×1卷积核实际上是对每个像素点在不同通道（channels）上线性组合（信息整合），且保留了图片的原有平面结构，仅仅是改变channels的数量，进而达到升维和降维的功能！</p>
+<p><img src="/img/2020/0414/7.jpg" alt="&quot;7&quot;"></p>
+<p>上左图显示了1×1卷积核用于降维。输入为4×4的平面，共3个通道。用两个1×1的卷积核（卷积层）作用之后，变为4×4的平面，共2通道。同理，上右图展示了升维的操作。</p>
+<p>若卷积核数量如果与输入保持相同，则单纯地向网络增加非线性。</p>
+<p>1、降维（通道数）　　<br>通过控制卷积核的数量达到通道数大小的放缩。而池化层只能改变高度和宽度，无法改变通道数。<br>2、增加非线性　　<br>如上所述，1×1卷积核的卷积过程相当于全连接层的计算过程，并且还加入了非线性激活函数，从而可以增加网络的非线性，使得网络可以表达更加复杂的特征。<br>3、减少卷积核参数，运算的复杂度　　<br>在Inception Network中，由于需要进行较多的卷积运算，计算量很大，可以通过引入1×1确保效果的同时减少计算量。具体可以通过下面例子量化比较。</p>
+<p>未引入1×1卷积的卷积操作：<br><img src="/img/2020/0421/8.jpg" alt="&quot;8&quot;"><br>卷积核参数：5x5x32x192<br>引入1×1卷积的卷积操作：<br><img src="/img/2020/0421/9.jpg" alt="&quot;9&quot;"><br>卷积核参数为1×1×192×16+5×5×16×32</p>
+<h2 id="深度学习中压缩模型的方法？"><a href="#深度学习中压缩模型的方法？" class="headerlink" title="深度学习中压缩模型的方法？"></a>深度学习中压缩模型的方法？</h2><p>（1）设计轻量级的模型（SqueezeNet，MobileNet，ShuffleNet等）：不需要压缩；<br>（2）模型结构/内存优化：剪枝、权值量化等；<br>（3）模型蒸馏</p>
+<h2 id="softmax与交叉熵-Cross-Entropy-的区别与联系"><a href="#softmax与交叉熵-Cross-Entropy-的区别与联系" class="headerlink" title="softmax与交叉熵(Cross Entropy)的区别与联系"></a>softmax与交叉熵(Cross Entropy)的区别与联系</h2><p>参考：<a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_42423701/article/details/90553196">https://blog.csdn.net/weixin_42423701/article/details/90553196</a></p>
+<h2 id="随机森林-过拟合？"><a href="#随机森林-过拟合？" class="headerlink" title="随机森林+过拟合？"></a>随机森林+过拟合？</h2><p>相对于单个的Decision Tree，Random Forest不太容易over-fitting。Over-fitting的主要原因是因为模型学习了太多样本中的<strong>随机误差</strong>。因为Random Forest随机选择了样本和特征，并且将很多这样的随机树进行了平均，这些随机误差也随之被平均，乃至相互抵消了。但是这不代表它不会很多人说Random Forest不会over-fitting。相信很多人也亲身经历过，我自己也见识过过RandomForest over-fitting了。防止RandomFroest过拟合，一个方法是控制每个树的深度，深的树有可能会过拟合；另外一个是对模型进行交叉验证。</p>
+<h2 id="可迭代对象、迭代器、生成器、装饰器："><a href="#可迭代对象、迭代器、生成器、装饰器：" class="headerlink" title="可迭代对象、迭代器、生成器、装饰器："></a>可迭代对象、迭代器、生成器、装饰器：</h2><ul>
+<li>容器是一系列元素的集合，str、list、set、dict、file、sockets对象都可以看作是容器，容器都可以被迭代（用在for，while等语句中），因此他们被称为可迭代对象。</li>
+<li>可迭代对象实现了__iter__方法，该方法返回一个迭代器对象。</li>
+<li>迭代器持有一个内部状态的字段，用于记录下次迭代返回值，它实现了__next__和__iter__方法，迭代器不会一次性把所有元素加载到内存，而是需要的时候才生成返回结果。</li>
+<li>生成器是一种特殊的迭代器，它的返回值不是通过return而是用yield。</li>
+<li>装饰器可以让已有的函数不做任何改动的情况下增加功能。</li>
+</ul>
+<h2 id="数据不均衡如何处理？"><a href="#数据不均衡如何处理？" class="headerlink" title="数据不均衡如何处理？"></a>数据不均衡如何处理？</h2><ul>
+<li>对较多的那个类别进行**欠采样(under-sampling)**，舍弃一部分数据，使其与较少类别的数据相当；（注释：已经改变了数据的分布，浪费了部分数据）</li>
+<li>对较少的类别进行**过采样(over-sampling)**，重复使用一部分数据，使其与较多类别的数据相当；（注释：已经改变了分布，数据重复生成，容易过拟合）</li>
+<li><strong>阈值调整（threshold moving）</strong>，将原本默认为0.5的阈值调整到 较少类别/（较少类别+较多类别）即可或者使用现有的集成学习分类器，如随机森林或者xgboost，并调整分类阈值。（推荐这种）</li>
+</ul>
+<h2 id="有1千万条短信，有重复，以文本文件的形式保存，一行一条，有重复。请用5分钟时间，找出重复出现最多的前10？"><a href="#有1千万条短信，有重复，以文本文件的形式保存，一行一条，有重复。请用5分钟时间，找出重复出现最多的前10？" class="headerlink" title="有1千万条短信，有重复，以文本文件的形式保存，一行一条，有重复。请用5分钟时间，找出重复出现最多的前10？"></a>有1千万条短信，有重复，以文本文件的形式保存，一行一条，有重复。请用5分钟时间，找出重复出现最多的前10？</h2><ul>
+<li><p><strong>方法1：</strong>可以用哈希表的方法对1千万条短信分成若干组进行边扫描边建散列表。第一次扫描，取首字节，尾字节，中间随便两字节作为Hash Code，插入到hash table中。并记录其地址和信息长度和重复次数，1千万条信息，记录这几个信息还放得下。同Hash Code且等长就疑似相同，比较一下。相同记录只加1次进hash table，但将重复次数加1。一次扫描以后，已经记录各自的重复次数，进行第二次hash table的处理。用线性时间选择可在O（n）的级别上完成前10条的寻找。分组后每份中的top10必须保证各不相同，可hash来保证，也可直接按hash值的大小来分类。</p>
+</li>
+<li><p><strong>方法2：</strong>可以采用从小到大排序的方法，根据经验，除非是群发的过节短信，否则字数越少的短信出现重复的几率越高。建议从字数少的短信开始找起，比如一开始搜一个字的短信，找出重复出现的top10并分别记录出现次数，然后搜两个字的，依次类推。对于对相同字数的比较常的短信的搜索，除了hash之类的算法外，可以选择只抽取头、中和尾等几个位置的字符进行粗判，因为此种判断方式是为了加快查找速度但未能得到真正期望的top10，因此需要做标记；如此搜索一遍后，可以从各次top10结果中找到备选的top10，如果这top10中有刚才做过标记的，则对其对应字数的所有短信进行精确搜索以找到真正的top10并再次比较。</p>
+</li>
+<li><p><strong>方法3：</strong>可以采用内存映射的办法，首先1千万条短信按现在的短信长度将不会超过1G空间，使用内存映射文件比较合适。可以一次映射（当然如果更大的数据量的话，可以采用分段映射），由于不需要频繁使用文件I/O和频繁分配小内存，这将大大提高数据的加载速度。其次，对每条短信的第i（i从0到70）个字母按ASCII嘛进行分组，其实也就是创建树。i是树的深度，也是短信第i个字母。</p>
+</li>
+</ul>
+<h2 id="为什么正则化能阻止overfiting？"><a href="#为什么正则化能阻止overfiting？" class="headerlink" title="为什么正则化能阻止overfiting？"></a>为什么正则化能阻止overfiting？</h2><p>过拟合是由于高方差引起的，高方差是由于参数太多，特征值过于敏感导致的，正则化能够减少参数数量，降低特征值敏感度，所以能阻止过拟合。</p>
+<h2 id="神经网络训练中的梯度消失与梯度爆炸"><a href="#神经网络训练中的梯度消失与梯度爆炸" class="headerlink" title="神经网络训练中的梯度消失与梯度爆炸"></a>神经网络训练中的梯度消失与梯度爆炸</h2><p>层数比较多的神经网络模型在训练时也是会出现一些问题的，其中就包括梯度消失问题（gradient vanishing problem）和梯度爆炸问题（gradient exploding problem）。梯度消失问题和梯度爆炸问题一般随着网络层数的增加会变得越来越明显。<br>例如，对于下图所示的含有3个隐藏层的神经网络，梯度消失问题发生时，接近于输出层的hidden layer 3等的权值更新相对正常，但前面的hidden layer 1的权值更新会变得很慢，导致前面的层权值几乎不变，仍接近于初始化的权值，这就导致hidden layer 1相当于只是一个映射层，对所有的输入做了一个同一映射，这是此深层网络的学习就等价于只有后几层的浅层网络的学习了。</p>
+<p><img src="/img/2020/0420/grad.png" alt="&quot;grad&quot;"></p>
+<p>而这种问题为何会产生呢？以下图的反向传播为例（假设每一层只有一个神经元且对于每一层<br><img src="/img/2020/0420/equation.svg" alt="&quot;equation&quot;"><br><img src="/img/2020/0420/sigmoid.png" alt="&quot;sigmoid&quot;"><br>可以推导出:<br><img src="/img/2020/0420/1.svg" alt="&quot;1&quot;"></p>
+<p>而sigmoid的导数如下图:<br><img src="/img/2020/0420/derivative.png" alt="&quot;derivative&quot;"></p>
+<p><img src="/img/2020/0420/1.png" alt="&quot;1&quot;"><br>其实梯度爆炸和梯度消失问题都是因为网络太深，网络权值更新不稳定造成的，本质上是因为梯度反向传播中的连乘效应。对于更普遍的梯度消失问题，可以考虑用ReLU激活函数取代sigmoid激活函数。另外，LSTM的结构设计也可以改善RNN中的梯度消失问题。</p>
+<p>参考：<a target="_blank" rel="noopener" href="https://ziyubiti.github.io/2016/11/06/gradvanish/">神经网络训练中的梯度消失与梯度爆炸</a></p>
+<h2 id="传统机器学习考察点："><a href="#传统机器学习考察点：" class="headerlink" title="传统机器学习考察点："></a>传统机器学习考察点：</h2><p>1、bias与variance的含义，并结合ensemble method问哪种方法降低bias，哪种方法降低variance<br>2、lr与svm的区别与联系<br>3、gbdt与adaboost的区别与联系<br>4、手推svm，svm麻雀虽小五脏俱全<br>5、pca与lda的区别与联系，并推导<br>6、白化的原理与作用<br>7、给一个算法，例如lr，问这个算法的model、evaluate、optimization分别是啥</p>
+<h2 id="深度学习考察点"><a href="#深度学习考察点" class="headerlink" title="深度学习考察点"></a>深度学习考察点</h2><p>1、<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/3162330">手推bp</a><br>2、梯度消失/爆炸原因，以及解决方法<br>3、bn的原理，与白化的联系<br>4、防止过拟合有哪些方法<br>5、dnn、cnn、rnn的区别与联系<br>6、机器学习与深度学习的联系<br>7、batch size大小会怎么影响收敛速度</p>
+<h2 id="CNN最成功的应用是在CV，那为什么NLP和Speech的很多问题也可以用CNN解出来？为什么AlphaGo里也用了CNN？这几个不相关的问题的相似性在哪里？CNN通过什么手段抓住了这个共性？"><a href="#CNN最成功的应用是在CV，那为什么NLP和Speech的很多问题也可以用CNN解出来？为什么AlphaGo里也用了CNN？这几个不相关的问题的相似性在哪里？CNN通过什么手段抓住了这个共性？" class="headerlink" title="CNN最成功的应用是在CV，那为什么NLP和Speech的很多问题也可以用CNN解出来？为什么AlphaGo里也用了CNN？这几个不相关的问题的相似性在哪里？CNN通过什么手段抓住了这个共性？"></a>CNN最成功的应用是在CV，那为什么NLP和Speech的很多问题也可以用CNN解出来？为什么AlphaGo里也用了CNN？这几个不相关的问题的相似性在哪里？CNN通过什么手段抓住了这个共性？</h2><p>以上几个不相关问题的相关性在于，都<strong>存在局部与整体的关系</strong>，由低层次的特征经过组合，组成高层次的特征，并且得到不同特征之间的空间相关性。如下图：低层次的直线／曲线等特征，组合成为不同的形状，最后得到汽车的表示。<br><img src="/img/2020/0423/cnn.png" alt="&quot;cnn&quot;"><br>CNN抓住此共性的手段主要有四个：<strong>局部连接／权值共享／池化操作／多层次结构</strong>。<br>局部连接使网络可以提取数据的局部特征；权值共享大大降低了网络的训练难度，一个Filter只提取一个特征，在整个图片（或者语音／文本） 中进行卷积；池化操作与多层次结构一起，实现了数据的降维，将低层次的局部特征组合成为较高层次的特征，从而对整个图片进行表示。</p>
+<h2 id="对所有优化问题来说-有没有可能找到比現在已知算法更好的算法"><a href="#对所有优化问题来说-有没有可能找到比現在已知算法更好的算法" class="headerlink" title="对所有优化问题来说, 有没有可能找到比現在已知算法更好的算法?"></a>对所有优化问题来说, 有没有可能找到比現在已知算法更好的算法?</h2><p><strong>没有免费的午餐定理</strong><br><img src="/img/2020/0423/launch.png" alt="&quot;launch&quot;"></p>
+<ul>
+<li>对于训练样本（黑点），不同的算法A/B在不同的测试样本（白点）中有不同的表现，这表示：对于一个学习算法A，若它在某些问题上比学习算法 B更好，则必然存在一些问题，在那里B比A好。</li>
+<li>也就是说：对于所有问题，无论学习算法A多聪明，学习算法 B多笨拙，它们的期望性能相同。</li>
+<li>但是：没有免费午餐定力假设所有问题出现几率相同，实际应用中，不同的场景，会有不同的问题分布，所以，在<strong>优化算法时，针对具体问题进行分析，是算法优化的核心所在</strong>。</li>
+</ul>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="http://huangzhiyuan.github.io/2020/04/14/ML-interview/" title="深度学习面试常见问题集锦" target="_blank" rel="external">http://huangzhiyuan.github.io/2020/04/14/ML-interview/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/cofess" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/photo.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/cofess" target="_blank"><span class="text-dark">黄志远</span><small class="ml-1x">研发攻城狮</small></a></h3>
+        <div>靡不有初 鲜克有终</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2020/04/15/programming-gpus-with-sycl/" title="Programming GPUs with SYCL"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2020/04/13/2020-reading-notes/" title="2020读书笔记"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipay.jpg" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开支付宝扫一扫，即可进行扫码打赏哦</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpay.jpg" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开微信扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/huangzhiyuan" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/u/7041265015" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://www.zhihu.com/people/justforfun099/activitie" target="_blank" title="Zhihu" data-toggle=tooltip data-placement=top><i class="icon icon-zhihu"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        &copy; 2022 黄志远
+        
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

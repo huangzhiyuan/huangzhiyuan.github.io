@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>PyTorch中的量化总结 | Blog</title>
+  <meta name="description" content="背景：在深度学习中，量化指的是使用更少的bit来存储原本以浮点数存储的tensor，以及使用更少的bit来完成原本以浮点数完成的计算。这么做的好处主要有如下几点：  更少的模型体积，接近4倍的减少； 可以更快的计算，由于更少的内存访问和更快的int8计算，可以快2~4倍。一个量化后的模型，其部分或者全部的tensor操作会使用int类型来计算，而不是使用量化之前的float类型。当然，量化还需要底">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PyTorch中的量化总结">
+<meta property="og:url" content="http://huangzhiyuan.github.io/2021/01/10/quantization-in-pytorch/index.html">
+<meta property="og:site_name" content="靡不有初 鲜克有终">
+<meta property="og:description" content="背景：在深度学习中，量化指的是使用更少的bit来存储原本以浮点数存储的tensor，以及使用更少的bit来完成原本以浮点数完成的计算。这么做的好处主要有如下几点：  更少的模型体积，接近4倍的减少； 可以更快的计算，由于更少的内存访问和更快的int8计算，可以快2~4倍。一个量化后的模型，其部分或者全部的tensor操作会使用int类型来计算，而不是使用量化之前的float类型。当然，量化还需要底">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2021/0110/6.jpg">
+<meta property="article:published_time" content="2021-01-10T12:04:42.000Z">
+<meta property="article:modified_time" content="2021-01-10T13:07:16.000Z">
+<meta property="article:author" content="黄志远">
+<meta property="article:tag" content="pytorch">
+<meta property="article:tag" content="quantization">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://huangzhiyuan.github.io/img/2021/0110/6.jpg">
+  <!-- Canonical links -->
+  <link rel="canonical" href="http://huangzhiyuan.github.io/2021/01/10/quantization-in-pytorch/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="靡不有初 鲜克有终" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/cofess" target="_blank">
+          <img class="img-circle img-rotate" src="/images/photo.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">黄志远</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">研发攻城狮</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Shanghai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/huangzhiyuan" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/u/7041265015" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://www.zhihu.com/people/justforfun099/activitie" target="_blank" title="Zhihu" data-toggle=tooltip data-placement=top><i class="icon icon-zhihu"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验，广告位招租中~</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/CUDA/">CUDA</a><span class="category-list-count">10</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/GPU/">GPU</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Hexo/">Hexo</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Linux/">Linux</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/python/">python</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a><span class="category-list-count">15</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93/">技术总结</a><span class="category-list-count">47</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a><span class="category-list-count">22</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a><span class="category-list-count">14</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%94%B5%E5%BD%B1/">电影</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%AF%BB%E4%B9%A6/">读书</a><span class="category-list-count">8</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/AI/" rel="tag">AI</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AWK/" rel="tag">AWK</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/BP%E7%AE%97%E6%B3%95/" rel="tag">BP算法</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/" rel="tag">C++</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CNN/" rel="tag">CNN</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CPU-cache/" rel="tag">CPU-cache</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Optimization/" rel="tag">Code Optimization</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DL-Framwork/" rel="tag">DL Framwork</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DNNL/" rel="tag">DNNL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/" rel="tag">Docker</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GPU/" rel="tag">GPU</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Horovod/" rel="tag">Horovod</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java-memory/" rel="tag">Java memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java-%E9%9B%86%E5%90%88%E6%A1%86%E6%9E%B6/" rel="tag">Java 集合框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/KNN/" rel="tag">KNN</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LSTM/" rel="tag">LSTM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux/" rel="tag">Linux</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MLPerf/" rel="tag">MLPerf</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Memory/" rel="tag">Memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NUMA/" rel="tag">NUMA</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenMP/" rel="tag">OpenMP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RNN/" rel="tag">RNN</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SYCL/" rel="tag">SYCL</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TCP-IP/" rel="tag">TCP/IP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TVM/" rel="tag">TVM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/VIM/" rel="tag">VIM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Vtune/" rel="tag">Vtune</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/affinity/" rel="tag">affinity</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/batch-size/" rel="tag">batch-size</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/compiler/" rel="tag">compiler</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/conda-pip/" rel="tag">conda/pip</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cpu/" rel="tag">cpu</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cs179/" rel="tag">cs179</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cuda/" rel="tag">cuda</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/diff/" rel="tag">diff</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/embedding/" rel="tag">embedding</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gdb/" rel="tag">gdb</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/geohash/" rel="tag">geohash</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hash/" rel="tag">hash</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/" rel="tag">hexo</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hook/" rel="tag">hook</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hyperthreading/" rel="tag">hyperthreading</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/leetcode/" rel="tag">leetcode</a><span class="tag-list-count">18</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/license/" rel="tag">license</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mAP/" rel="tag">mAP</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/markdown/" rel="tag">markdown</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/memory/" rel="tag">memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ml2014/" rel="tag">ml2014</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pytorch/" rel="tag">pytorch</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/quantization/" rel="tag">quantization</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/stream-event/" rel="tag">stream/event</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tensorboard/" rel="tag">tensorboard</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tensoriterator/" rel="tag">tensoriterator</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/topk/" rel="tag">topk</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/volatile/" rel="tag">volatile</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vscode/" rel="tag">vscode</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webchat/" rel="tag">webchat</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/zero-copy/" rel="tag">zero-copy</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%B7%E5%80%BC%E8%A7%82/" rel="tag">价值观</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BD%93%E8%82%B2/" rel="tag">体育</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%81%A5%E8%BA%AB/" rel="tag">健身</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="tag">分布式</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%89%91%E6%8C%87offer/" rel="tag">剑指offer</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%89%AF%E4%B8%9A/" rel="tag">副业</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A0%E5%AF%86/" rel="tag">加密</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%A4%A7%E7%89%9B/" rel="tag">大牛</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%BD%B1%E8%AF%84/" rel="tag">影评</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%8A%A2%E7%BA%A2%E5%8C%85/" rel="tag">抢红包</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%91%98%E6%8A%84/" rel="tag">摘抄</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%96%B0%E9%97%BB/" rel="tag">新闻</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/" rel="tag">深入理解计算机系统</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E6%A1%86%E6%9E%B6/" rel="tag">深度学习框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%94%9F%E6%B4%BB/" rel="tag">生活</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%94%B5%E5%BD%B1/" rel="tag">电影</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1/" rel="tag">知识图谱</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E5%85%BB/" rel="tag">程序员的自我修养</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%81%8C%E4%B8%9A/" rel="tag">职业</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AF%BB%E4%B9%A6/" rel="tag">读书</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag">随笔</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9D%A2%E8%AF%95/" rel="tag">面试</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/" rel="tag">高并发</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/AI/" style="font-size: 13.13px;">AI</a> <a href="/tags/AWK/" style="font-size: 13px;">AWK</a> <a href="/tags/BP%E7%AE%97%E6%B3%95/" style="font-size: 13px;">BP算法</a> <a href="/tags/C/" style="font-size: 13.13px;">C++</a> <a href="/tags/CNN/" style="font-size: 13.13px;">CNN</a> <a href="/tags/CPU-cache/" style="font-size: 13px;">CPU-cache</a> <a href="/tags/Code-Optimization/" style="font-size: 13px;">Code Optimization</a> <a href="/tags/DL-Framwork/" style="font-size: 13px;">DL Framwork</a> <a href="/tags/DNNL/" style="font-size: 13px;">DNNL</a> <a href="/tags/Docker/" style="font-size: 13px;">Docker</a> <a href="/tags/GPU/" style="font-size: 13.5px;">GPU</a> <a href="/tags/Horovod/" style="font-size: 13px;">Horovod</a> <a href="/tags/Java-memory/" style="font-size: 13px;">Java memory</a> <a href="/tags/Java-%E9%9B%86%E5%90%88%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">Java 集合框架</a> <a href="/tags/KNN/" style="font-size: 13px;">KNN</a> <a href="/tags/LSTM/" style="font-size: 13px;">LSTM</a> <a href="/tags/Linux/" style="font-size: 13.5px;">Linux</a> <a href="/tags/MLPerf/" style="font-size: 13px;">MLPerf</a> <a href="/tags/Memory/" style="font-size: 13px;">Memory</a> <a href="/tags/NUMA/" style="font-size: 13px;">NUMA</a> <a href="/tags/OpenMP/" style="font-size: 13px;">OpenMP</a> <a href="/tags/RNN/" style="font-size: 13px;">RNN</a> <a href="/tags/SYCL/" style="font-size: 13.38px;">SYCL</a> <a href="/tags/TCP-IP/" style="font-size: 13px;">TCP/IP</a> <a href="/tags/TVM/" style="font-size: 13px;">TVM</a> <a href="/tags/VIM/" style="font-size: 13px;">VIM</a> <a href="/tags/Vtune/" style="font-size: 13px;">Vtune</a> <a href="/tags/affinity/" style="font-size: 13px;">affinity</a> <a href="/tags/atomic/" style="font-size: 13px;">atomic</a> <a href="/tags/batch-size/" style="font-size: 13px;">batch-size</a> <a href="/tags/compiler/" style="font-size: 13px;">compiler</a> <a href="/tags/conda-pip/" style="font-size: 13px;">conda/pip</a> <a href="/tags/cpu/" style="font-size: 13.13px;">cpu</a> <a href="/tags/cs179/" style="font-size: 13.63px;">cs179</a> <a href="/tags/cuda/" style="font-size: 13.88px;">cuda</a> <a href="/tags/diff/" style="font-size: 13px;">diff</a> <a href="/tags/embedding/" style="font-size: 13px;">embedding</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/gdb/" style="font-size: 13px;">gdb</a> <a href="/tags/geohash/" style="font-size: 13px;">geohash</a> <a href="/tags/git/" style="font-size: 13.13px;">git</a> <a href="/tags/hash/" style="font-size: 13px;">hash</a> <a href="/tags/hexo/" style="font-size: 13px;">hexo</a> <a href="/tags/hook/" style="font-size: 13px;">hook</a> <a href="/tags/hyperthreading/" style="font-size: 13px;">hyperthreading</a> <a href="/tags/leetcode/" style="font-size: 14px;">leetcode</a> <a href="/tags/license/" style="font-size: 13px;">license</a> <a href="/tags/mAP/" style="font-size: 13.13px;">mAP</a> <a href="/tags/markdown/" style="font-size: 13.13px;">markdown</a> <a href="/tags/memory/" style="font-size: 13px;">memory</a> <a href="/tags/ml2014/" style="font-size: 13px;">ml2014</a> <a href="/tags/pytorch/" style="font-size: 13.75px;">pytorch</a> <a href="/tags/quantization/" style="font-size: 13px;">quantization</a> <a href="/tags/stream-event/" style="font-size: 13px;">stream/event</a> <a href="/tags/tensorboard/" style="font-size: 13px;">tensorboard</a> <a href="/tags/tensoriterator/" style="font-size: 13px;">tensoriterator</a> <a href="/tags/topk/" style="font-size: 13px;">topk</a> <a href="/tags/volatile/" style="font-size: 13px;">volatile</a> <a href="/tags/vscode/" style="font-size: 13px;">vscode</a> <a href="/tags/webchat/" style="font-size: 13px;">webchat</a> <a href="/tags/zero-copy/" style="font-size: 13px;">zero-copy</a> <a href="/tags/%E4%BB%B7%E5%80%BC%E8%A7%82/" style="font-size: 13px;">价值观</a> <a href="/tags/%E4%BD%93%E8%82%B2/" style="font-size: 13px;">体育</a> <a href="/tags/%E5%81%A5%E8%BA%AB/" style="font-size: 13px;">健身</a> <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" style="font-size: 13px;">分布式</a> <a href="/tags/%E5%89%91%E6%8C%87offer/" style="font-size: 13px;">剑指offer</a> <a href="/tags/%E5%89%AF%E4%B8%9A/" style="font-size: 13px;">副业</a> <a href="/tags/%E5%8A%A0%E5%AF%86/" style="font-size: 13px;">加密</a> <a href="/tags/%E5%A4%A7%E7%89%9B/" style="font-size: 13px;">大牛</a> <a href="/tags/%E5%BD%B1%E8%AF%84/" style="font-size: 13.13px;">影评</a> <a href="/tags/%E6%8A%A2%E7%BA%A2%E5%8C%85/" style="font-size: 13px;">抢红包</a> <a href="/tags/%E6%91%98%E6%8A%84/" style="font-size: 13.25px;">摘抄</a> <a href="/tags/%E6%96%B0%E9%97%BB/" style="font-size: 13.75px;">新闻</a> <a href="/tags/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/" style="font-size: 13px;">深入理解计算机系统</a> <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">深度学习框架</a> <a href="/tags/%E7%94%9F%E6%B4%BB/" style="font-size: 13.13px;">生活</a> <a href="/tags/%E7%94%B5%E5%BD%B1/" style="font-size: 13.13px;">电影</a> <a href="/tags/%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1/" style="font-size: 13px;">知识图谱</a> <a href="/tags/%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E5%85%BB/" style="font-size: 13.13px;">程序员的自我修养</a> <a href="/tags/%E8%81%8C%E4%B8%9A/" style="font-size: 13px;">职业</a> <a href="/tags/%E8%AF%BB%E4%B9%A6/" style="font-size: 13.25px;">读书</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 13px;">随笔</a> <a href="/tags/%E9%9D%A2%E8%AF%95/" style="font-size: 13px;">面试</a> <a href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/" style="font-size: 13px;">高并发</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">八月 2020</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/07/">七月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/06/">六月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/05/">五月 2020</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">10</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">39</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/02/">二月 2020</a><span class="archive-list-count">32</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">十月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/12/">十二月 2017</a><span class="archive-list-count">9</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/11/">十一月 2017</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/07/">七月 2017</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">六月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/05/">五月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/03/">三月 2017</a><span class="archive-list-count">7</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/02/">二月 2016</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-CPU/" class="title">Linux性能优化实战之CPU性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-IO/" class="title">Linux性能优化实战之IO性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-Memory/" class="title">Linux性能优化实战之内存性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-Network/" class="title">Linux性能优化实战之网络性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat/" class="title">Linux性能优化实战</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-quantization-in-pytorch" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      PyTorch中的量化总结
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2021/01/10/quantization-in-pytorch/" class="article-date">
+	  <time datetime="2021-01-10T12:04:42.000Z" itemprop="datePublished">2021-01-10</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93/">技术总结</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/pytorch/" rel="tag">pytorch</a>, <a class="article-tag-link-link" href="/tags/quantization/" rel="tag">quantization</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2021/01/10/quantization-in-pytorch/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <p><strong>背景：</strong><br>在深度学习中，量化指的是使用更少的bit来存储原本以浮点数存储的tensor，以及使用更少的bit来完成原本以浮点数完成的计算。这么做的好处主要有如下几点：</p>
+<ul>
+<li>更少的模型体积，接近4倍的减少；</li>
+<li>可以更快的计算，由于更少的内存访问和更快的int8计算，可以快2~4倍。<br>一个量化后的模型，其部分或者全部的tensor操作会使用int类型来计算，而不是使用量化之前的float类型。当然，量化还需要底层硬件支持，x86 CPU（支持AVX2）、ARM CPU、Google TPU、Nvidia Volta/Turing/Ampere、Qualcomm DSP这些主流硬件都对量化提供了支持。<span id="more"></span></li>
+</ul>
+<p>PyTorch 1.1的时候开始添加torch.qint8 dtype、torch.quantize_linear转换函数来开始对量化提供有限的实验性支持。PyTorch 1.3开始正式支持量化，在可量化的Tensor之外，PyTorch开始支持CNN中最常见的operator的量化操作，包括：</p>
+<ul>
+<li>Tensor上的函数: view, clone, resize, slice, add, multiply, cat, mean, max, sort, topk；</li>
+<li>常见的模块（在torch.nn.quantized中）：Conv2d, Linear, Avgpool2d, AdaptiveAvgpool2d, MaxPool2d, AdaptiveMaxPool2d, Interpolate, Upsample；</li>
+<li>为了量化后还维持更高准确率的合并操作（在torch.nn.intrinsic中）：ConvReLU2d, ConvBnReLU2d, ConvBn2d，LinearReLU，add_relu。</li>
+</ul>
+<p>在PyTorch 1.4的时候，PyTorch添加了nn.quantized.Conv3d，与此同时，torchvision 0.5开始提供量化版本的 ResNet、ResNext、MobileNetV2、GoogleNet、InceptionV3和ShuffleNetV2。到PyTorch 1.5的时候，QNNPACK添加了对dynamic quantization的支持，也就为量化版的LSTM在手机平台上使用提供了支撑——也就是添加了对PyTorch mobile的dynamic quantization的支持；增加了量化版本的sigmoid、leaky relu、batch_norm、BatchNorm2d、 Avgpool3d、quantized_hardtanh、quantized ELU activation、quantized Upsample3d、quantized batch_norm3d、 batch_norm3d + relu operators的fused、quantized hardsigmoid。</p>
+<p>在PyTorch 1.6的时候，添加了quantized Conv1d、quantized hardswish、quantized layernorm、quantized groupnorm、quantized instancenorm、quantized reflection_pad1d、quantized adaptive avgpool、quantized channel shuffle op、Quantized Threshold；添加ConvBn3d, ConvBnReLU3d, BNReLU2d, BNReLU3d；per-channel的量化得到增强；添加对LSTMCell、RNNCell、GRUCell的Dynamic quantization支持； 在nn.DataParallel 和 nn.DistributedDataParallel中可以使用Quantization aware training；支持CUDA上的quantized tensor。</p>
+<p>到目前的最新版本的PyTorch 1.7，又添加了Embedding 和EmbeddingBag quantization、aten::repeat、aten::apend、tensor的stack、tensor的fill_、per channel affine quantized tensor的clone、1D batch normalization、N-Dimensional constant padding、CELU operator、FP16 quantization的支持。</p>
+<p><strong>PyTorch对量化的支持目前有如下三种方式：</strong></p>
+<ul>
+<li><strong>Post Training Dynamic Quantization，模型训练完毕后的动态量化；</strong></li>
+<li><strong>Post Training Static Quantization，模型训练完毕后的静态量化；</strong></li>
+<li><strong>QAT（Quantization Aware Training），模型训练中开启量化。</strong></li>
+</ul>
+<p>在开始这三部分之前，Gemfield先介绍下最基础的Tensor的量化。</p>
+<h2 id="Tensor的量化"><a href="#Tensor的量化" class="headerlink" title="Tensor的量化"></a>Tensor的量化</h2><p>PyTorch为了实现量化，首先就得需要具备能够表示量化数据的Tensor，这就是从PyTorch 1.1之后引入的Quantized Tensor。 Quantized Tensor可以存储 int8/uint8/int32类型的数据，并携带有scale、zero_point这些参数。把一个标准的float Tensor转换为量化Tensor的步骤如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt;&gt; x = torch.rand(2,3, dtype=torch.float32)</span><br><span class="line">&gt;&gt;&gt; x</span><br><span class="line">tensor([[0.6839, 0.4741, 0.7451],</span><br><span class="line">        [0.9301, 0.1742, 0.6835]])</span><br><span class="line"></span><br><span class="line">&gt;&gt;&gt; xq = torch.quantize_per_tensor(x, scale = 0.5, zero_point = 8, dtype=torch.quint8)</span><br><span class="line">tensor([[0.5000, 0.5000, 0.5000],</span><br><span class="line">        [1.0000, 0.0000, 0.5000]], size=(2, 3), dtype=torch.quint8,</span><br><span class="line">       quantization_scheme=torch.per_tensor_affine, scale=0.5, zero_point=8)</span><br><span class="line"></span><br><span class="line">&gt;&gt;&gt; xq.int_repr()</span><br><span class="line">tensor([[ 9,  9,  9],</span><br><span class="line">        [10,  8,  9]], dtype=torch.uint8)</span><br></pre></td></tr></table></figure>
+<p>quantize_per_tensor函数就是使用给定的scale和zp来把一个float tensor转化为quantized tensor，后文你还会遇到这个函数。通过上面这几个数的变化，你可以感受到，量化tensor，也就是xq，和fp32 tensor的关系大概就是:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xq = round(x / scale + zero_point)</span><br></pre></td></tr></table></figure>
+<p>scale这个缩放因子和zero_point是两个参数，建立起了fp32 tensor到量化tensor的映射关系。scale体现了映射中的比例关系，而zero_point则是零基准，也就是fp32中的零在量化tensor中的值。因为当x为零的时候，上述xq就变成了：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xq = round(zero_point) = zero_point</span><br></pre></td></tr></table></figure>
+<p>现在xq已经是一个量化tensor了，我们可以把xq在反量化回来，如下所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># xq is a quantized tensor with data represented as quint8</span><br><span class="line">&gt;&gt;&gt; xdq = xq.dequantize()</span><br><span class="line">&gt;&gt;&gt; xdq</span><br><span class="line">tensor([[0.5000, 0.5000, 0.5000],</span><br><span class="line">        [1.0000, 0.0000, 0.5000]])</span><br></pre></td></tr></table></figure>
+<p>dequantize函数就是quantize_per_tensor的反义词，把一个量化tensor转换为float tensor。也就是：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xdq = (xq - zero_point) * scale</span><br></pre></td></tr></table></figure>
+<p>xdq和x的值已经出现了偏差的事实告诉了我们两个道理：</p>
+<ul>
+<li>量化会有精度损失；</li>
+<li>我们这里随便选取的scale和zp太烂，选择合适的scale和zp可以有效降低精度损失。不信你把scale和zp分别换成scale = 0.0036, zero_point = 0试试。</li>
+</ul>
+<p>而在PyTorch中，选择合适的scale和zp的工作就由各种observer来完成。</p>
+<p>Tensor的量化支持两种模式：per tensor 和 per channel。Per tensor 是说一个tensor里的所有value按照同一种方式去scale和offset； per channel是对于tensor的某一个维度（通常是channel的维度）上的值按照一种方式去scale和offset，也就是一个tensor里有多种不同的scale和offset的方式（组成一个vector），如此以来，在量化的时候相比per tensor的方式会引入更少的错误。PyTorch目前支持conv2d()、conv3d()、linear()的per channel量化。</p>
+<h3 id="Post-Training-Dynamic-Quantization"><a href="#Post-Training-Dynamic-Quantization" class="headerlink" title="Post Training Dynamic Quantization"></a>Post Training Dynamic Quantization</h3><p>这种量化方式经常缩略前面的两个单词从而称之为Dynamic Quantization，中文为动态量化。这是什么意思呢？你看到全称中的两个关键字了吗：<code>Post</code>、<code>Dynamic</code>：</p>
+<ul>
+<li><p>Post：也就是训练完成后再量化模型的权重参数；</p>
+</li>
+<li><p>Dynamic：也就是网络在前向推理的时候动态的量化float32类型的输入。<br>Dynamic Quantization使用下面的API来完成模型的量化：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">torch.quantization.quantize_dynamic(model, qconfig_spec=None, dtype=torch.qint8, mapping=None, inplace=False)</span><br></pre></td></tr></table></figure>
+<p>quantize_dynamic这个API把一个float model转换为dynamic quantized model，也就是只有权重被量化的model，dtype参数可以取值 float16 或者 qint8。当对整个模型进行转换时，默认只对以下的op进行转换：</p>
+</li>
+<li><p>Linear</p>
+</li>
+<li><p>LSTM</p>
+</li>
+<li><p>LSTMCell</p>
+</li>
+<li><p>RNNCell</p>
+</li>
+<li><p>GRUCell</p>
+</li>
+<li><p>为啥呢？因为dynamic quantization只是把权重参数进行量化，而这些layer一般参数数量很大，在整个模型中参数量占比极高，因此边际效益高。对其它layer进行dynamic quantization几乎没有实际的意义。<br>再来说说这个API的第二个参数：qconfig_spec：</p>
+</li>
+<li><p>qconfig_spec指定了一组qconfig，具体就是哪个op对应哪个qconfig ；</p>
+</li>
+<li><p>每个qconfig是QConfig类的实例，封装了两个observer；</p>
+</li>
+<li><p>这两个observer分别是activation的observer和weight的observer；</p>
+</li>
+<li><p>但是动态量化使用的是QConfig子类QConfigDynamic的实例，该实例实际上只封装了weight的observer；</p>
+</li>
+<li><p>activate就是post process，就是op forward之后的后处理，但在动态量化中不包含；</p>
+</li>
+<li><p>observer用来根据四元组（min_val，max_val，qmin, qmax）来计算2个量化的参数：scale和zero_point；</p>
+</li>
+<li><p>qmin、qmax是算法提前确定好的，min_val和max_val是从输入数据中观察到的，所以起名叫observer。</p>
+</li>
+</ul>
+<p>当qconfig_spec为None的时候就是默认行为，如果想要改变默认行为，则可以：</p>
+<ul>
+<li>qconfig_spec赋值为一个set，比如：{nn.LSTM, nn.Linear}，意思是指定当前模型中的哪些layer要被dynamic quantization；</li>
+<li>qconfig_spec赋值为一个dict，key为submodule的name或type，value为QConfigDynamic实例（其包含了特定的Observer，比如MinMaxObserver、MovingAverageMinMaxObserver、PerChannelMinMaxObserver、MovingAveragePerChannelMinMaxObserver、HistogramObserver）。</li>
+</ul>
+<p>事实上，当qconfig_spec为None的时候，quantize_dynamic API就会使用如下的默认值：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">qconfig_spec = &#123;</span><br><span class="line">               nn.Linear : default_dynamic_qconfig,</span><br><span class="line">               nn.LSTM : default_dynamic_qconfig,</span><br><span class="line">               nn.GRU : default_dynamic_qconfig,</span><br><span class="line">               nn.LSTMCell : default_dynamic_qconfig,</span><br><span class="line">               nn.RNNCell : default_dynamic_qconfig,</span><br><span class="line">               nn.GRUCell : default_dynamic_qconfig,</span><br><span class="line">           &#125;</span><br></pre></td></tr></table></figure>
+<p>这就是Gemfield刚才提到的动态量化只量化Linear和RNN变种的真相。而default_dynamic_qconfig是QConfigDynamic的一个实例，使用如下的参数进行构造：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">default_dynamic_qconfig = QConfigDynamic(activation=default_dynamic_quant_observer, weight=default_weight_observer)</span><br><span class="line">default_dynamic_quant_observer = PlaceholderObserver.with_args(dtype=torch.float, compute_dtype=torch.quint8)</span><br><span class="line">default_weight_observer = MinMaxObserver.with_args(dtype=torch.qint8, qscheme=torch.per_tensor_symmetric)</span><br></pre></td></tr></table></figure>
+<p>其中，用于activation的PlaceholderObserver 就是个占位符，啥也不做；而用于weight的MinMaxObserver就是记录输入tensor中的最大值和最小值，用来计算scale和zp。</p>
+<p>对于一个默认行为下的quantize_dynamic调用，你的模型会经历什么变化呢？Gemfield使用一个小网络来演示下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">class CivilNet(nn.Module):</span><br><span class="line">    def __init__(self):</span><br><span class="line">        super(CivilNet, self).__init__()</span><br><span class="line">        gemfieldin = 1</span><br><span class="line">        gemfieldout = 1</span><br><span class="line">        self.conv = nn.Conv2d(gemfieldin, gemfieldout, kernel_size=1, stride=1, padding=0, groups=1, bias=False)</span><br><span class="line">        self.fc = nn.Linear(3, 2,bias=False)</span><br><span class="line">        self.relu = nn.ReLU(inplace=False)</span><br><span class="line"></span><br><span class="line">    def forward(self, x):</span><br><span class="line">        x = self.conv(x)</span><br><span class="line">        x = self.fc(x)</span><br><span class="line">        x = self.relu(x)</span><br><span class="line">        return x</span><br></pre></td></tr></table></figure>
+<p>原始网络和动态量化后的网络如下所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">#原始网络</span><br><span class="line">CivilNet(</span><br><span class="line">  (conv): Conv2d(1, 1, kernel_size=(1, 1), stride=(1, 1), bias=False)</span><br><span class="line">  (fc): Linear(in_features=3, out_features=2, bias=False)</span><br><span class="line">  (relu): ReLU()</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">#quantize_dynamic后</span><br><span class="line">CivilNet(</span><br><span class="line">  (conv): Conv2d(1, 1, kernel_size=(1, 1), stride=(1, 1), bias=False)</span><br><span class="line">  (fc): DynamicQuantizedLinear(in_features=3, out_features=2, dtype=torch.qint8, qscheme=torch.per_tensor_affine)</span><br><span class="line">  (relu): ReLU()</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p>可以看到，除了Linear，其它op都没有变动。而Linear被转换成了DynamicQuantizedLinear，DynamicQuantizedLinear就是torch.nn.quantized.dynamic.modules.linear.Linear类。没错，quantize_dynamic API的本质就是检索模型中op的type，如果某个op的type属于字典DEFAULT_DYNAMIC_QUANT_MODULE_MAPPINGS的key，那么，这个op将被替换为key对应的value：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># Default map for swapping dynamic modules</span><br><span class="line">DEFAULT_DYNAMIC_QUANT_MODULE_MAPPINGS = &#123;</span><br><span class="line">    nn.GRUCell: nnqd.GRUCell,</span><br><span class="line">    nn.Linear: nnqd.Linear,</span><br><span class="line">    nn.LSTM: nnqd.LSTM,</span><br><span class="line">    nn.LSTMCell: nnqd.LSTMCell,</span><br><span class="line">    nn.RNNCell: nnqd.RNNCell,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里，nnqd.Linear就是DynamicQuantizedLinear就是torch.nn.quantized.dynamic.modules.linear.Linear。 但是，type从key换为value，那这个新的type如何实例化呢？更重要的是，实例化新的type一定是要用之前的权重参数的呀。没错，以Linear为例，该逻辑定义在 nnqd.Linear的from_float()方法中，通过如下方式实例化：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">new_mod = mapping[type(mod)].from_float(mod)</span><br></pre></td></tr></table></figure>
+<p>from_float做的事情主要就是：</p>
+<ul>
+<li>使用MinMaxObserver计算模型中op权重参数中tensor的最大值最小值（这个例子中只有Linear op），缩小量化时原始值的取值范围，提高量化的精度；</li>
+<li>通过上述步骤中得到四元组中的min_val和max_val，再结合算法确定的qmin, qmax计算出scale和zp，参考前文“Tensor的量化”小节，计算得到量化后的weight，这个量化过程有torch.quantize_per_tensor和torch.quantize_per_channel两种，默认是前者（因为qchema默认是torch.per_tensor_affine）；</li>
+<li>实例化nnqd.Linear，然后使用qlinear.set_weight_bias将量化后的weight和原始的bias设置到新的layer上。其中最后一步还涉及到weight和bias的打包，在源代码中是这样的：</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">#ifdef USE_FBGEMM</span><br><span class="line">    if (ctx.qEngine() == at::QEngine::FBGEMM) &#123;</span><br><span class="line">      return PackedLinearWeight::prepack(std::move(weight), std::move(bias));</span><br><span class="line">    &#125;</span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line">#ifdef USE_PYTORCH_QNNPACK</span><br><span class="line">    if (ctx.qEngine() == at::QEngine::QNNPACK) &#123;</span><br><span class="line">      return PackedLinearWeightsQnnp::prepack(std::move(weight), std::move(bias));</span><br><span class="line">    &#125;</span><br><span class="line">#endif</span><br><span class="line">    TORCH_CHECK(false,&quot;Didn&#x27;t find engine for operation quantized::linear_prepack &quot;,toString(ctx.qEngine()));</span><br></pre></td></tr></table></figure>
+<p>也就是说依赖FBGEMM、QNNPACK这些backend。量化完后的模型在推理的时候有什么不一样的呢？在原始网络中，从输入到最终输出是这么计算的：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">#input</span><br><span class="line">torch.Tensor([[[[-1,-2,-3],[1,2,3]]]])</span><br><span class="line"></span><br><span class="line">#经过卷积后（权重为torch.Tensor([[[[-0.7867]]]])）</span><br><span class="line">torch.Tensor([[[[ 0.7867,  1.5734,  2.3601],[-0.7867, -1.5734, -2.3601]]]])</span><br><span class="line"></span><br><span class="line">#经过fc后（权重为torch.Tensor([[ 0.4097, -0.2896, -0.4931], [-0.3738, -0.5541,  0.3243]]) )</span><br><span class="line">torch.Tensor([[[[-1.2972, -0.4004], [1.2972,  0.4004]]]])</span><br><span class="line"></span><br><span class="line">#经过relu后</span><br><span class="line">torch.Tensor([[[[0.0000, 0.0000],[1.2972, 0.4004]]]])</span><br></pre></td></tr></table></figure>
+<p>而在动态量化模型中，上述过程就变成了：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">#input</span><br><span class="line">torch.Tensor([[[[-1,-2,-3],[1,2,3]]]])</span><br><span class="line"></span><br><span class="line">#经过卷积后（权重为torch.Tensor([[[[-0.7867]]]])）</span><br><span class="line">torch.Tensor([[[[ 0.7867,  1.5734,  2.3601],[-0.7867, -1.5734, -2.3601]]]])</span><br><span class="line"></span><br><span class="line">#经过fc后（权重为torch.Tensor([[ 0.4085, -0.2912, -0.4911],[-0.3737, -0.5563,  0.3259]], dtype=torch.qint8,scale=0.0043458822183310986,zero_point=0) )</span><br><span class="line">torch.Tensor([[[[-1.3038, -0.3847], [1.2856,  0.3969]]]])</span><br><span class="line"></span><br><span class="line">#经过relu后</span><br><span class="line">torch.Tensor([[[[0.0000, 0.0000], [1.2856, 0.3969]]]])</span><br></pre></td></tr></table></figure>
+<p>所以关键点就是这里的Linear op了，因为其它op和量化之前是一模一样的。你可以看到Linear权重的scale为0.0043458822183310986，zero_point为0。scale和zero_point怎么来的呢？由其使用的observer计算得到的，具体来说就是默认的MinMaxObserver，它是怎么工作的呢？还记得前面说过的observer负责根据四元组来计算scale和zp吧：</p>
+<p><strong>在各种observer中，计算权重的scale和zp离不开这四个变量：min_val，max_val，qmin, qmax，分别代表op权重数据/input tensor数据分布的最小值和最大值，以及量化后的取值范围的最小、最大值。</strong>qmin和qmax的值好确定，基本就是8个bit能表示的范围，这里取的分别是-128和127（更详细的计算方式将会在下文的“静态量化”章节中描述）；Linear op的权重为torch.Tensor([[ 0.4097, -0.2896, -0.4931], [-0.3738, -0.5541, 0.3243]])，因此其min_val和max_val分别为-0.5541 和 0.4097，在这个上下文中，max_val将进一步取这俩绝对值的最大值。由此我们就可以得到：</p>
+<ul>
+<li>scale = max_val / (float(qmax - qmin) / 2) = 0.5541 / ((127 + 128) / 2) = 0.004345882…</li>
+<li>zp = 0</li>
+</ul>
+<p>scale和zp的计算细节还会在下文的“静态量化”章节中更详细的描述。从上面我们可以得知，权重部分的量化是“静态”的，是提前就转换完毕的，而之所以叫做“动态”量化，就在于前向推理的时候动态的把input的float tensor转换为量化tensor。</p>
+<p>在forward的时候，nnqd.Linear会调用torch.ops.quantized.linear_dynamic函数，输入正是上面（pack好后的）量化后的权重和float的bias，而torch.ops.quantized.linear_dynamic函数最终会被PyTorch分发到C++中的apply_dynamic_impl函数，在这里，或者使用FBGEMM的实现（x86-64设备），或者使用QNNPACK的实现（ARM设备上）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">#ifdef USE_FBGEMM</span><br><span class="line">at::Tensor PackedLinearWeight::apply_dynamic_impl(at::Tensor input, bool reduce_range) &#123;</span><br><span class="line">  ...</span><br><span class="line">  fbgemm::xxxx</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line">#endif // USE_FBGEMM</span><br><span class="line"></span><br><span class="line">#ifdef USE_PYTORCH_QNNPACK</span><br><span class="line">at::Tensor PackedLinearWeightsQnnp::apply_dynamic_impl(at::Tensor input) &#123;</span><br><span class="line">  ...</span><br><span class="line">  qnnpack::qnnpackLinearDynamic(xxxx)</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line">#endif // USE_PYTORCH_QNNPACK</span><br></pre></td></tr></table></figure>
+<p>等等，input还是float32的啊，这怎么运算嘛。别急，在上述的apply_dynamic_impl函数中，会使用下面的逻辑对输入进行量化：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Tensor q_input = at::quantize_per_tensor(input_contig, q_params.scale, q_params.zero_point, c10::kQUInt8);</span><br></pre></td></tr></table></figure>
+<p>也就是说，动态量化的本质就藏身于此：基于运行时对数据范围的观察，来动态确定对输入进行量化时的scale值。这就确保 input tensor的scale因子能够基于输入数据进行优化，从而获得颗粒度更细的信息。</p>
+<p>而模型的参数则是提前就转换为了INT8的格式（在使用quantize_dynamic API的时候）。这样，当输入也被量化后，网络中的运算就使用向量化的INT8指令来完成。 而在当前layer输出的时候，我们还需要把结果再重新转换为float32——re-quantization的scale值是依据input、 weight和output scale来确定的，定义如下：<br><strong>requant_scale = input_scale_fp32 * weight_scale_fp32 / output_scale_fp32</strong><br>实际上，在apply_dynamic_impl函数中，requant_scales就是这么实现的：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">auto output_scale = 1.f</span><br><span class="line">auto inverse_output_scale = 1.f /output_scale;</span><br><span class="line">requant_scales[i] = (weight_scales_data[i] * input_scale) * inverse_output_scale;</span><br></pre></td></tr></table></figure>
+<p>这就是为什么在前面Gemfield提到过，经过量化版的fc的输出为torch.Tensor([[[[-1.3038, -0.3847], [1.2856, 0.3969]]]])，已经变回正常的float tensor了。所以动态量化模型的前向推理过程可以概括如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">#原始的模型，所有的tensor和计算都是浮点型</span><br><span class="line">previous_layer_fp32 -- linear_fp32 -- activation_fp32 -- next_layer_fp32</span><br><span class="line">                 /</span><br><span class="line">linear_weight_fp32</span><br><span class="line"></span><br><span class="line">#动态量化后的模型，Linear和LSTM的权重是int8</span><br><span class="line">previous_layer_fp32 -- linear_int8_w_fp32_inp -- activation_fp32 -- next_layer_fp32</span><br><span class="line">                     /</span><br><span class="line">   linear_weight_int8</span><br></pre></td></tr></table></figure>
+<p>总结下来，我们可以这么说：Post Training Dynamic Quantization，简称为Dynamic Quantization，也就是动态量化，或者叫作Weight-only的量化，是提前把模型中某些op的参数量化为INT8，然后在运行的时候动态的把输入量化为INT8，然后在当前op输出的时候再把结果requantization回到float32类型。动态量化默认只适用于Linear以及RNN的变种。</p>
+<h3 id="Post-Training-Static-Quantization"><a href="#Post-Training-Static-Quantization" class="headerlink" title="Post Training Static Quantization"></a>Post Training Static Quantization</h3><p>与其介绍post training static quantization是什么，我们不如先来说明下它和dynamic quantization的相同点和区别是什么。相同点就是，都是把网络的权重参数转从float32转换为int8；不同点是，需要把训练集或者和训练集分布类似的数据喂给模型（注意没有反向传播），然后通过每个op输入的分布特点来计算activation的量化参数（scale和zp）——称之为Calibrate（定标）。是的，静态量化包含有activation了，也就是post process，也就是op forward之后的后处理。为什么静态量化需要activation呢？因为静态量化的前向推理过程自(始+1)至(终-1)都是INT计算，activation需要确保一个op的输入符合下一个op的输入。</p>
+<p>PyTorch会使用五部曲来完成模型的静态量化：</p>
+<p><strong>1，fuse_model</strong><br>合并一些可以合并的layer。这一步的目的是为了提高速度和准确度：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fuse_modules(model, modules_to_fuse, inplace=False, fuser_func=fuse_known_modules, fuse_custom_config_dict=None)</span><br></pre></td></tr></table></figure>
+<p>比如给fuse_modules传递下面的参数就会合并网络中的conv1、bn1、relu1：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">torch.quantization.fuse_modules(gemfield_model, [[&#x27;conv1&#x27;, &#x27;bn1&#x27;, &#x27;relu1&#x27;]], inplace=True)</span><br></pre></td></tr></table></figure>
+<p>一旦合并成功，那么原始网络中的conv1就会被替换为新的合并后的module（因为其是list中的第一个元素），而bn1、relu1（list中剩余的元素）会被替换为nn.Identity()，这个模块是个占位符，直接输出输入。举个例子，对于下面的一个小网络：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">class CivilNet(nn.Module):</span><br><span class="line">    def __init__(self):</span><br><span class="line">        super(CivilNet, self).__init__()</span><br><span class="line">        syszuxin = 1</span><br><span class="line">        syszuxout = 1</span><br><span class="line">        self.conv = nn.Conv2d(syszuxin, syszuxout, kernel_size=1, stride=1, padding=0, groups=1, bias=False)</span><br><span class="line">        self.fc = nn.Linear(3, 2,bias=False)</span><br><span class="line">        self.relu = nn.ReLU(inplace=False)</span><br><span class="line"></span><br><span class="line">    def forward(self, x):</span><br><span class="line">        x = self.conv(x)</span><br><span class="line">        x = self.fc(x)</span><br><span class="line">        x = self.relu(x)</span><br><span class="line">        return x</span><br></pre></td></tr></table></figure>
+<p>网络结构如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">CivilNet(</span><br><span class="line">  (conv): Conv2d(1, 1, kernel_size=(1, 1), stride=(1, 1), bias=False)</span><br><span class="line">  (fc): Linear(in_features=3, out_features=2, bias=False)</span><br><span class="line">  (relu): ReLU()</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p>经过torch.quantization.fuse_modules(c, [[‘fc’, ‘relu’]], inplace=True)后，网络变成了：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">CivilNet(</span><br><span class="line">  (conv): Conv2d(1, 1, kernel_size=(1, 1), stride=(1, 1), bias=False)</span><br><span class="line">  (fc): LinearReLU(</span><br><span class="line">    (0): Linear(in_features=3, out_features=2, bias=False)</span><br><span class="line">    (1): ReLU()</span><br><span class="line">  )</span><br><span class="line">  (relu): Identity()</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p>modules_to_fuse参数的list可以包含多个item list，或者是submodule的op list也可以，比如：[ [‘conv1’, ‘bn1’, ‘relu1’], [‘submodule.conv’, ‘submodule.relu’]]。有的人会说了，我要fuse的module被Sequential封装起来了，如何传参？参考下面的代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">torch.quantization.fuse_modules(a_sequential_module, [&#x27;0&#x27;, &#x27;1&#x27;, &#x27;2&#x27;], inplace=True)</span><br></pre></td></tr></table></figure>
+<p>不是什么类型的op都可以参与合并，也不是什么样的顺序都可以参与合并。就目前来说，截止到pytorch 1.7.1，只有如下的op和顺序才可以：</p>
+<ul>
+<li>Convolution, Batch normalization</li>
+<li>Convolution, Batch normalization, Relu</li>
+<li>Convolution, Relu</li>
+<li>Linear, Relu</li>
+<li>Batch normalization, Relu</li>
+</ul>
+<p>实际上，这个mapping关系就定义在DEFAULT_OP_LIST_TO_FUSER_METHOD中：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">DEFAULT_OP_LIST_TO_FUSER_METHOD : Dict[Tuple, Union[nn.Sequential, Callable]] = &#123;</span><br><span class="line">    (nn.Conv1d, nn.BatchNorm1d): fuse_conv_bn,</span><br><span class="line">    (nn.Conv1d, nn.BatchNorm1d, nn.ReLU): fuse_conv_bn_relu,</span><br><span class="line">    (nn.Conv2d, nn.BatchNorm2d): fuse_conv_bn,</span><br><span class="line">    (nn.Conv2d, nn.BatchNorm2d, nn.ReLU): fuse_conv_bn_relu,</span><br><span class="line">    (nn.Conv3d, nn.BatchNorm3d): fuse_conv_bn,</span><br><span class="line">    (nn.Conv3d, nn.BatchNorm3d, nn.ReLU): fuse_conv_bn_relu,</span><br><span class="line">    (nn.Conv1d, nn.ReLU): nni.ConvReLU1d,</span><br><span class="line">    (nn.Conv2d, nn.ReLU): nni.ConvReLU2d,</span><br><span class="line">    (nn.Conv3d, nn.ReLU): nni.ConvReLU3d,</span><br><span class="line">    (nn.Linear, nn.ReLU): nni.LinearReLU,</span><br><span class="line">    (nn.BatchNorm2d, nn.ReLU): nni.BNReLU2d,</span><br><span class="line">    (nn.BatchNorm3d, nn.ReLU): nni.BNReLU3d,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>2，设置qconfig</strong><br>qconfig是要设置到模型或者模型的子module上的。前文Gemfield就已经说过，qconfig是QConfig的一个实例，QConfig这个类就是维护了两个observer，一个是activation所使用的observer，一个是op权重所使用的observer。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">#如果要部署在x86 server上</span><br><span class="line">gemfield_model.qconfig = torch.quantization.get_default_qconfig(&#x27;fbgemm&#x27;)</span><br><span class="line"></span><br><span class="line">#如果要部署在ARM上</span><br><span class="line">gemfield_model.qconfig = torch.quantization.get_default_qconfig(&#x27;qnnpack&#x27;)</span><br></pre></td></tr></table></figure>
+<p>如果是x86和arm之外呢？抱歉，目前不支持。实际上，这里的get_default_qconfig函数的实现如下所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">def get_default_qconfig(backend=&#x27;fbgemm&#x27;):</span><br><span class="line">    if backend == &#x27;fbgemm&#x27;:</span><br><span class="line">        qconfig = QConfig(activation=HistogramObserver.with_args(reduce_range=True),weight=default_per_channel_weight_observer)</span><br><span class="line">    elif backend == &#x27;qnnpack&#x27;:</span><br><span class="line">        qconfig = QConfig(activation=HistogramObserver.with_args(reduce_range=False),weight=default_weight_observer)</span><br><span class="line">    else:</span><br><span class="line">        qconfig = default_qconfig</span><br><span class="line">    return qconfig</span><br></pre></td></tr></table></figure>
+<p>default_qconfig实际上是QConfig(activation=default_observer, weight=default_weight_observer)，所以gemfield这里总结了一个表格：</p>
+<table>
+<thead>
+<tr>
+<th>量化的backend</th>
+<th>activation</th>
+<th>weight</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>fbgemm</td>
+<td>HistogramObserver (reduce_range=True)</td>
+<td>PerChannelMinMaxObserver (default_per_channel_weight_observer)</td>
+</tr>
+<tr>
+<td>qnnpack</td>
+<td>HistogramObserver (reduce_range=False)</td>
+<td>MinMaxObserver (default_weight_observer)</td>
+</tr>
+<tr>
+<td>默认（非fbgemm和qnnpack）</td>
+<td>MinMaxObserver (default_observer)</td>
+<td>MinMaxObserver (default_weight_observer)</td>
+</tr>
+</tbody></table>
+<p><strong>3，prepare</strong><br>prepare调用是通过如下API完成的：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gemfield_model_prepared = torch.quantization.prepare(gemfield_model)</span><br></pre></td></tr></table></figure>
+<p>prepare用来给每个子module插入Observer，用来收集和定标数据。以activation的observer为例，就是期望其观察输入数据得到四元组中的min_val和max_val，至少观察个几百个迭代的数据吧，然后由这四元组得到scale和zp这两个参数的值。</p>
+<p>module上安插activation的observer是怎么实现的呢？还记得<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/53927068%E4%B8%80%E6%96%87%E4%B8%AD%E8%AF%B4%E8%BF%87%E7%9A%84%E2%80%9C_forward_hooks%E6%98%AF%E9%80%9A%E8%BF%87register_forward_hook%E6%9D%A5%E5%AE%8C%E6%88%90%E6%B3%A8%E5%86%8C%E7%9A%84%E3%80%82%E8%BF%99%E4%BA%9Bhooks%E6%98%AF%E5%9C%A8forward%E5%AE%8C%E4%B9%8B%E5%90%8E%E8%A2%AB%E8%B0%83%E7%94%A8%E7%9A%84......%E2%80%9D%E5%90%97%EF%BC%9F%E6%B2%A1%E9%94%99%EF%BC%8CCivilNet%E6%A8%A1%E5%9E%8B%E4%B8%AD%E7%9A%84Conv2d%E3%80%81Linear%E3%80%81ReLU%E3%80%81QuantStub%E8%BF%99%E4%BA%9Bmodule%E7%9A%84_forward_hooks%E4%B8%8A%E9%83%BD%E8%A2%AB%E6%8F%92%E5%85%A5%E4%BA%86activation%E7%9A%84HistogramObserver%EF%BC%8C%E5%BD%93%E8%BF%99%E4%BA%9B%E5%AD%90module%E8%AE%A1%E7%AE%97%E5%AE%8C%E6%AF%95%E5%90%8E%EF%BC%8C%E7%BB%93%E6%9E%9C%E4%BC%9A%E8%A2%AB%E7%AB%8B%E5%88%BB%E9%80%81%E5%88%B0%E5%85%B6_forward_hooks%E4%B8%AD%E7%9A%84HistogramObserver%E8%BF%9B%E8%A1%8C%E8%A7%82%E5%AF%9F%E3%80%82">https://zhuanlan.zhihu.com/p/53927068一文中说过的“_forward_hooks是通过register_forward_hook来完成注册的。这些hooks是在forward完之后被调用的......”吗？没错，CivilNet模型中的Conv2d、Linear、ReLU、QuantStub这些module的_forward_hooks上都被插入了activation的HistogramObserver，当这些子module计算完毕后，结果会被立刻送到其_forward_hooks中的HistogramObserver进行观察。</a></p>
+<p>这一步完成后，CivilNet网络就被改造成了：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">CivilNet(</span><br><span class="line">  (conv): Conv2d(</span><br><span class="line">    1, 1, kernel_size=(1, 1), stride=(1, 1), bias=False</span><br><span class="line">    (activation_post_process): HistogramObserver()</span><br><span class="line">  )</span><br><span class="line">  (fc): Linear(</span><br><span class="line">    in_features=3, out_features=2, bias=False</span><br><span class="line">    (activation_post_process): HistogramObserver()</span><br><span class="line">  )</span><br><span class="line">  (relu): ReLU(</span><br><span class="line">    (activation_post_process): HistogramObserver()</span><br><span class="line">  )</span><br><span class="line">  (quant): QuantStub(</span><br><span class="line">    (activation_post_process): HistogramObserver()</span><br><span class="line">  )</span><br><span class="line">  (dequant): DeQuantStub()</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<p><strong>4，喂数据</strong><br>这一步不是训练。是为了获取数据的分布特点，来更好的计算activation的scale和zp。至少要喂上几百个迭代的数据。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#至少观察个几百迭代</span><br><span class="line">for data in data_loader:</span><br><span class="line">    gemfield_model_prepared(data)</span><br></pre></td></tr></table></figure>
+
+<p><strong>5，转换模型</strong><br>第四步完成后，各个op权重的四元组（min_val，max_val，qmin, qmax）中的min_val，max_val已经有了，各个op activation的四元组（min_val，max_val，qmin, qmax）中的min_val，max_val也已经观察出来了。那么在这一步我们将调用convert API：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gemfield_model_prepared_int8 = torch.quantization.convert(gemfield_model_prepared)</span><br></pre></td></tr></table></figure>
+<p>这个过程和dynamic量化类似，本质就是检索模型中op的type，如果某个op的type属于字典DEFAULT_STATIC_QUANT_MODULE_MAPPINGS的key（注意字典和动态量化的不一样了），那么，这个op将被替换为key对应的value：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line">DEFAULT_STATIC_QUANT_MODULE_MAPPINGS = &#123;</span><br><span class="line">    QuantStub: nnq.Quantize,</span><br><span class="line">    DeQuantStub: nnq.DeQuantize,</span><br><span class="line">    nn.BatchNorm2d: nnq.BatchNorm2d,</span><br><span class="line">    nn.BatchNorm3d: nnq.BatchNorm3d,</span><br><span class="line">    nn.Conv1d: nnq.Conv1d,</span><br><span class="line">    nn.Conv2d: nnq.Conv2d,</span><br><span class="line">    nn.Conv3d: nnq.Conv3d,</span><br><span class="line">    nn.ConvTranspose1d: nnq.ConvTranspose1d,</span><br><span class="line">    nn.ConvTranspose2d: nnq.ConvTranspose2d,</span><br><span class="line">    nn.ELU: nnq.ELU,</span><br><span class="line">    nn.Embedding: nnq.Embedding,</span><br><span class="line">    nn.EmbeddingBag: nnq.EmbeddingBag,</span><br><span class="line">    nn.GroupNorm: nnq.GroupNorm,</span><br><span class="line">    nn.Hardswish: nnq.Hardswish,</span><br><span class="line">    nn.InstanceNorm1d: nnq.InstanceNorm1d,</span><br><span class="line">    nn.InstanceNorm2d: nnq.InstanceNorm2d,</span><br><span class="line">    nn.InstanceNorm3d: nnq.InstanceNorm3d,</span><br><span class="line">    nn.LayerNorm: nnq.LayerNorm,</span><br><span class="line">    nn.LeakyReLU: nnq.LeakyReLU,</span><br><span class="line">    nn.Linear: nnq.Linear,</span><br><span class="line">    nn.ReLU6: nnq.ReLU6,</span><br><span class="line">    # Wrapper Modules:</span><br><span class="line">    nnq.FloatFunctional: nnq.QFunctional,</span><br><span class="line">    # Intrinsic modules:</span><br><span class="line">    nni.BNReLU2d: nniq.BNReLU2d,</span><br><span class="line">    nni.BNReLU3d: nniq.BNReLU3d,</span><br><span class="line">    nni.ConvReLU1d: nniq.ConvReLU1d,</span><br><span class="line">    nni.ConvReLU2d: nniq.ConvReLU2d,</span><br><span class="line">    nni.ConvReLU3d: nniq.ConvReLU3d,</span><br><span class="line">    nni.LinearReLU: nniq.LinearReLU,</span><br><span class="line">    nniqat.ConvBn1d: nnq.Conv1d,</span><br><span class="line">    nniqat.ConvBn2d: nnq.Conv2d,</span><br><span class="line">    nniqat.ConvBnReLU1d: nniq.ConvReLU1d,</span><br><span class="line">    nniqat.ConvBnReLU2d: nniq.ConvReLU2d,</span><br><span class="line">    nniqat.ConvReLU2d: nniq.ConvReLU2d,</span><br><span class="line">    nniqat.LinearReLU: nniq.LinearReLU,</span><br><span class="line">    # QAT modules:</span><br><span class="line">    nnqat.Linear: nnq.Linear,</span><br><span class="line">    nnqat.Conv2d: nnq.Conv2d,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>替换的过程也和dynamic一样，使用from_float() API，这个API会使用前面的四元组信息计算出op权重和op activation的scale和zp，然后用于量化。动态量化”章节时Gemfield说过要再详细介绍下scale和zp的计算过程，好了，就在这里。这个计算过程覆盖了如下的几个问题：</p>
+<ul>
+<li>QuantStub的scale和zp是怎么来的（静态量化需要插入QuantStub，后文有说明）？</li>
+<li>conv activation的scale和zp是怎么来的？</li>
+<li>conv weight的scale和zp是怎么来的？</li>
+<li>fc activation的scale和zp是怎么来的？</li>
+<li>fc weight的scale和zp是怎么来的？</li>
+<li>relu activation的scale和zp是怎么来的？</li>
+<li>relu weight的…等等，relu没有weight。</li>
+</ul>
+<p>我们就从conv来说起吧，还记得前面说过的Observer吗？分为activation和weight两种。以Gemfield这里使用的fbgemm后端为例，activation默认的observer是HistogramObserver、weight默认的observer是PerChannelMinMaxObserver。而计算scale和zp所需的四元组都是这些observer观察出来的呀（好吧，其中两个）。</p>
+<p>在convert API调用中，pytorch会将Conv2d op替换为对应的QuantizedConv2d，在这个替换的过程中会计算QuantizedConv2d activation的scale和zp以及QuantizedConv2d weight的scale和zp。在各种observer中，计算scale和zp离不开这四个变量：min_val，max_val，qmin, qmax，分别代表输入的数据/权重的数据分布的最小值和最大值，以及量化后的取值范围的最小、最大值。qmin和qmax的值好确定，基本就是8个bit能表示的范围，在pytorch中，qmin和qmax是使用如下方式确定的：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">if self.dtype == torch.qint8:</span><br><span class="line">    if self.reduce_range:</span><br><span class="line">        qmin, qmax = -64, 63</span><br><span class="line">    else:</span><br><span class="line">        qmin, qmax = -128, 127</span><br><span class="line">else:</span><br><span class="line">    if self.reduce_range:</span><br><span class="line">        qmin, qmax = 0, 127</span><br><span class="line">    else:</span><br><span class="line">        qmin, qmax = 0, 255</span><br></pre></td></tr></table></figure>
+
+<p>比如conv的activation的observer(quint8)是HistogramObserver，又是reduce_range的，因此其qmin,qmax = 0 ，127，而conv的weight(qint8)是PerChannelMinMaxObserver，不是reduce_range的，因此其qmin, qmax = -128, 127。那么min_val，max_val又是怎么确定的呢？对于HistogramObserver，其由输入数据 + 权重值根据L2Norm(An approximation for L2 error minimization)确定；对于PerChannelMinMaxObserver来说，其由输入数据的最小值和最大值确定，比如在上述的例子中，值就是-0.7898和-0.7898。既然现在conv weight的min_val，max_val，qmin, qmax 分别为 -0.7898、-0.7898、-128、 127，那如何得到scale和zp呢？PyTorch就是用下面的逻辑进行计算的：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">#qscheme 是 torch.per_tensor_symmetric 或者torch.per_channel_symmetric时</span><br><span class="line">max_val = torch.max(-min_val, max_val)</span><br><span class="line">scale = max_val / (float(qmax - qmin) / 2)</span><br><span class="line">scale = torch.max(scale, torch.tensor(self.eps, device=device, dtype=scale.dtype))</span><br><span class="line">if self.dtype == torch.quint8:</span><br><span class="line">    zero_point = zero_point.new_full(zero_point.size(), 128)</span><br><span class="line"></span><br><span class="line">#qscheme 是 torch.per_tensor_affine时</span><br><span class="line">scale = (max_val - min_val) / float(qmax - qmin)</span><br><span class="line">scale = torch.max(scale, torch.tensor(self.eps, device=device, dtype=scale.dtype))</span><br><span class="line">zero_point = qmin - torch.round(min_val / scale)</span><br><span class="line">zero_point = torch.max(zero_point, torch.tensor(qmin, device=device, dtype=zero_point.dtype))</span><br><span class="line">zero_point = torch.min(zero_point, torch.tensor(qmax, device=device, dtype=zero_point.dtype))</span><br></pre></td></tr></table></figure>
+
+<p>由此conv2d weight的谜团就被我们解开了：</p>
+<ul>
+<li><p>scale = 0.7898 / ((127 + 128)/2 ) = 0.0062</p>
+</li>
+<li><p>zp = 0<br>再说说QuantStub的scale和zp是如何计算的。QuantStub使用的是HistogramObserver，根据输入从[-3,3]的分布，HistogramObserver计算得到min_val、max_val分别是-3、2.9971，而qmin和qmax又分别是0、127，其schema为per_tensor_affine，因此套用上面的per_tensor_affine逻辑可得：</p>
+</li>
+<li><p>scale = (2.9971 + 3) / (127 - 0) = 0.0472</p>
+</li>
+<li><p>zp = 0 - round(-3 /0.0472) = 64</p>
+</li>
+</ul>
+<p>其它计算同理，不再赘述。有了scale和zp，就有了量化版本的module，上面那个CivilNet网络，经过静态量化后，网络的变化如下所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">#原始的CivilNet网络：</span><br><span class="line">CivilNet(</span><br><span class="line">  (conv): Conv2d(1, 1, kernel_size=(1, 1), stride=(1, 1), bias=False)</span><br><span class="line">  (fc): Linear(in_features=3, out_features=2, bias=False)</span><br><span class="line">  (relu): ReLU()</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">#静态量化后的CivilNet网络：</span><br><span class="line">CivilNet(</span><br><span class="line">  (conv): QuantizedConv2d(1, 1, kernel_size=(1, 1), stride=(1, 1), scale=0.0077941399067640305, zero_point=0, bias=False)</span><br><span class="line">  (fc): QuantizedLinear(in_features=3, out_features=2, scale=0.002811126410961151, zero_point=14, qscheme=torch.per_channel_affine)</span><br><span class="line">  (relu): QuantizedReLU()</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p><strong>静态量化模型如何推理？</strong><br>我们知道，在PyTorch的网络中，前向推理逻辑都是实现在了每个op的forward函数中（参考：Gemfield：详解Pytorch中的网络构造）。而在convert完成后，所有的op被替换成了量化版本的op，那么量化版本的op的forward会有什么不一样的呢？还记得吗？动态量化中可是只量化了op的权重哦，输入的量化所需的scale的值是在推理过程中动态计算出来的。而静态量化中，统统都是提前就计算好的。我们来看一个典型的静态量化模型的推理过程：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">import torch</span><br><span class="line">import torch.nn as nn</span><br><span class="line"></span><br><span class="line">class CivilNet(nn.Module):</span><br><span class="line">    def __init__(self):</span><br><span class="line">        super(CivilNet, self).__init__()</span><br><span class="line">        in_planes = 1</span><br><span class="line">        out_planes = 1</span><br><span class="line">        self.conv = nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=1, padding=0, groups=1, bias=False)</span><br><span class="line">        self.fc = nn.Linear(3, 2,bias=False)</span><br><span class="line">        self.relu = nn.ReLU(inplace=False)</span><br><span class="line">        self.quant = QuantStub()</span><br><span class="line">        self.dequant = DeQuantStub()</span><br><span class="line"></span><br><span class="line">    def forward(self, x):</span><br><span class="line">        x = self.quant(x)</span><br><span class="line">        x = self.conv(x)</span><br><span class="line">        x = self.fc(x)</span><br><span class="line">        x = self.relu(x)</span><br><span class="line">        x = self.dequant(x)</span><br><span class="line">        return x</span><br></pre></td></tr></table></figure>
+<p>网络forward的开始和结束还必须安插QuantStub和DeQuantStub，如上所示。否则运行时会报错：RuntimeError: Could not run ‘quantized::conv2d.new’ with arguments from the ‘CPU’ backend. ‘quantized::conv2d.new’ is only available for these backends: [QuantizedCPU]。</p>
+<p>QuantStub在observer阶段会记录参数值，DeQuantStub在prepare阶段相当于Identity；而在convert API调用过程中，会分别被替换为nnq.Quantize和nnq.DeQuantize。在这个章节要介绍的推理过程中，QuantStub，也就是nnq.Quantize在做什么工作呢？如下所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">def forward(self, X):</span><br><span class="line">    return torch.quantize_per_tensor(X, float(self.scale), int(self.zero_point), self.dtype)</span><br></pre></td></tr></table></figure>
+<p>是不是呼应了前文中的“tensor的量化”章节？这里的scale和zero_point的计算方式前文也刚介绍过。而nnq.DeQuantize做了什么呢？很简单，把量化tensor反量化回来。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">def forward(self, Xq):</span><br><span class="line">    return Xq.dequantize()</span><br></pre></td></tr></table></figure>
+<p>是不是又呼应了前文中的“tensor的量化”章节？我们就以上面的CivilNet网络为例，当在静态量化后的模型进行前向推理和原始的模型的区别是什么呢？假设网络的输入为torch.Tensor([[[[-1,-2,-3],[1,2,3]]]])：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">c = CivilNet()</span><br><span class="line">t = torch.Tensor([[[[-1,-2,-3],[1,2,3]]]])</span><br><span class="line">c(t)</span><br></pre></td></tr></table></figure>
+<p>假设conv的权重为torch.Tensor([[[[-0.7867]]]])，假设fc的权重为torch.Tensor([[ 0.4097, -0.2896, -0.4931], [-0.3738, -0.5541, 0.3243]])，那么在原始的CivilNet前向中，从输入到输出的过程依次为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">#input</span><br><span class="line">torch.Tensor([[[[-1,-2,-3],[1,2,3]]]])</span><br><span class="line"></span><br><span class="line">#经过卷积后（权重为torch.Tensor([[[[-0.7867]]]])）</span><br><span class="line">torch.Tensor([[[[ 0.7867,  1.5734,  2.3601],[-0.7867, -1.5734, -2.3601]]]])</span><br><span class="line"></span><br><span class="line">#经过fc后（权重为torch.Tensor([[ 0.4097, -0.2896, -0.4931], [-0.3738, -0.5541,  0.3243]]) )</span><br><span class="line">torch.Tensor([[[[-1.2972, -0.4004], [1.2972,  0.4004]]]])</span><br><span class="line"></span><br><span class="line">#经过relu后</span><br><span class="line">torch.Tensor([[[[0.0000, 0.0000],[1.2972, 0.4004]]]])</span><br></pre></td></tr></table></figure>
+<p>而在静态量化的模型前向中，总体情况如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">#input</span><br><span class="line">torch.Tensor([[[[-1,-2,-3],[1,2,3]]]])</span><br><span class="line"></span><br><span class="line">#QuantStub后 (scale=tensor([0.0472]), zero_point=tensor([64]))</span><br><span class="line">tensor([[[[-0.9916, -1.9833, -3.0221],[ 0.9916,  1.9833,  3.0221]]]],</span><br><span class="line">       dtype=torch.quint8, scale=0.04722102731466293, zero_point=64)</span><br><span class="line"></span><br><span class="line">#经过卷积后（权重为torch.Tensor([[[[-0.7898]]]], dtype=torch.qint8, scale=0.0062, zero_point=0))</span><br><span class="line">#conv activation（输入）的scale为0.03714831545948982，zp为64</span><br><span class="line">torch.Tensor([[[[ 0.7801,  1.5602,  2.3775],[-0.7801, -1.5602, -2.3775]]]], scale=0.03714831545948982, zero_point=64)</span><br><span class="line"></span><br><span class="line">#经过fc后（权重为torch.Tensor([[ 0.4100, -0.2901, -0.4951],[-0.3737, -0.5562,  0.3259]], dtype=torch.qint8, scale=tensor([0.0039, 0.0043]),zero_point=tensor([0, 0])) )</span><br><span class="line">#fc activation（输入）的scale为0.020418135449290276, zp为64</span><br><span class="line">torch.Tensor([[[[-1.3068, -0.3879],[ 1.3068,  0.3879]]]], dtype=torch.quint8, scale=0.020418135449290276, zero_point=64)</span><br><span class="line"></span><br><span class="line">#经过relu后</span><br><span class="line">torch.Tensor([[[[0.0000, 0.0000],[1.3068, 0.3879]]]], dtype=torch.quint8, scale=0.020418135449290276, zero_point=64)</span><br><span class="line"></span><br><span class="line">#经过DeQuantStub后</span><br><span class="line">torch.Tensor([[[[0.0000, 0.0000],[1.3068, 0.3879]]]])</span><br></pre></td></tr></table></figure>
+<p>Gemfield这里用原始的python语句来分步骤来介绍下。首先是QuantStub的工作：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">import torch</span><br><span class="line">import torch.nn.quantized as nnq</span><br><span class="line">#输入</span><br><span class="line">&gt;&gt;&gt; x = torch.Tensor([[[[-1,-2,-3],[1,2,3]]]])</span><br><span class="line">&gt;&gt;&gt; x</span><br><span class="line">tensor([[[[-1., -2., -3.],</span><br><span class="line">          [ 1.,  2.,  3.]]]])</span><br><span class="line"></span><br><span class="line">#经过QuantStub</span><br><span class="line">&gt;&gt;&gt; xq = torch.quantize_per_tensor(x, scale = 0.0472, zero_point = 64, dtype=torch.quint8)</span><br><span class="line">&gt;&gt;&gt; xq</span><br><span class="line">tensor([[[[-0.9912, -1.9824, -3.0208],</span><br><span class="line">          [ 0.9912,  1.9824,  3.0208]]]], size=(1, 1, 2, 3),</span><br><span class="line">       dtype=torch.quint8, quantization_scheme=torch.per_tensor_affine,</span><br><span class="line">       scale=0.0472, zero_point=64)</span><br><span class="line"></span><br><span class="line">&gt;&gt;&gt; xq.int_repr()</span><br><span class="line">tensor([[[[ 43,  22,   0],</span><br><span class="line">          [ 85, 106, 128]]]], dtype=torch.uint8)</span><br></pre></td></tr></table></figure>
+<p>我们特意在网络前面安插的QuantStub完成了自己的使命，其scale = 0.0472、zero_point = 64是静态量化完毕后就已经知道的，然后通过quantize_per_tensor调用把输入的float tensor转换为了量化tensor，然后送给接下来的<strong>Conv2d——量化版本的Conv2d</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt;&gt; c = nnq.Conv2d(1,1,1)</span><br><span class="line">&gt;&gt;&gt; weight = torch.Tensor([[[[-0.7898]]]])</span><br><span class="line">&gt;&gt;&gt; qweight = torch.quantize_per_channel(weight, scales=torch.Tensor([0.0062]).to(torch.double), zero_points = torch.Tensor([0]).to(torch.int64), axis=0, dtype=torch.qint8)</span><br><span class="line">&gt;&gt;&gt; c.set_weight_bias(qweight, None)</span><br><span class="line">&gt;&gt;&gt; c.scale = 0.03714831545948982</span><br><span class="line">&gt;&gt;&gt; c.zero_point = 64</span><br><span class="line">&gt;&gt;&gt; x = c(xq)</span><br><span class="line">&gt;&gt;&gt; x</span><br><span class="line">tensor([[[[ 0.7801,  1.5602,  2.3775],</span><br><span class="line">          [-0.7801, -1.5602, -2.3775]]]], size=(1, 1, 2, 3),</span><br><span class="line">       dtype=torch.quint8, quantization_scheme=torch.per_tensor_affine,</span><br><span class="line">       scale=0.03714831545948982, zero_point=64)</span><br></pre></td></tr></table></figure>
+<p>同理，Conv2d的权重的scale=0.0062、zero_points=0是静态量化完毕就已知的，其activation的scale = 0.03714831545948982、zero_point = 64也是量化完毕已知的。然后送给nnq.Conv2d的forward函数（参考：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/53927068%EF%BC%89%EF%BC%8C%E5%85%B6forward%E9%80%BB%E8%BE%91%E4%B8%BA%EF%BC%9A">https://zhuanlan.zhihu.com/p/53927068），其forward逻辑为：</a></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">def forward(self, input):</span><br><span class="line">    return ops.quantized.conv2d(input, self._packed_params, self.scale, self.zero_point)</span><br></pre></td></tr></table></figure>
+<p>Conv2d计算完了，我们停下来反省一下。如果是按照浮点数计算，那么-0.7898 * -0.9912 大约是0.7828，但这里使用int8的计算方式得到的值是0.7801，这说明已经在引入误差了（大约为0.34%的误差）。这也是前面gemfield说的使用fuse_modules可以提高精度的原因，因为每一层都会引入类似的误差。</p>
+<p>后面Linear的计算同理，其forward逻辑为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">def forward(self, x):</span><br><span class="line">    return torch.ops.quantized.linear(x, self._packed_params._packed_params, self.scale, self.zero_point)</span><br></pre></td></tr></table></figure>
+<p>可以看到，所有以量化方式计算完的值现在需要经过activation的计算。这是静态量化和动态量化的本质区别之一：op和op之间不再需要转换回到float tensor了。通过上面的分析，我们可以把静态量化模型的前向推理过程概括为如下的形式：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">#原始的模型，所有的tensor和计算都是浮点型</span><br><span class="line">previous_layer_fp32 -- linear_fp32 -- activation_fp32 -- next_layer_fp32</span><br><span class="line">                    /</span><br><span class="line">    linear_weight_fp32</span><br><span class="line"></span><br><span class="line">#静态量化的模型，权重和输入都是int8</span><br><span class="line">previous_layer_int8 -- linear_with_activation_int8 -- next_layer_int8</span><br><span class="line">                    /</span><br><span class="line">  linear_weight_int8</span><br></pre></td></tr></table></figure>
+<p>最后再来描述下动态量化和静态量化的最大区别：</p>
+<ul>
+<li>静态量化的float输入必经QuantStub变为int，此后到输出之前都是int；</li>
+<li>动态量化的float输入是经动态计算的scale和zp量化为int，op输出时转换回float。</li>
+</ul>
+<h3 id="QAT（Quantization-Aware-Training）"><a href="#QAT（Quantization-Aware-Training）" class="headerlink" title="QAT（Quantization Aware Training）"></a>QAT（Quantization Aware Training）</h3><p>前面两种量化方法都有一个post关键字，意思是模型训练完毕后所做的量化。而QAT则不一样，是指在训练过程中就开启了量化功能。</p>
+<p>QAT需要五部曲，说到这里，你可能想到了静态量化，那不妨对比着来看。<br><strong>1，设置qconfig</strong><br>在设置qconfig之前，模型首先设置为训练模式，这很容易理解，因为QAT的着力点就是T嘛：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cnet = CivilNet()</span><br><span class="line">cnet.train()</span><br></pre></td></tr></table></figure>
+<p>使用get_default_qat_qconfig API来给要QAT的网络设置qconfig：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cnet.qconfig = torch.quantization.get_default_qat_qconfig(&#x27;fbgemm&#x27;)</span><br></pre></td></tr></table></figure>
+<p>不过，这个qconfig和静态量化中的可不一样啊。前文说过qconfig维护了两个observer，activation的和权重的。QAT的qconfig中，activation和权重的observer都变成了FakeQuantize（和observer是has a的关系，也即包含一个observer），并且参数不一样（qmin、qmax、schema,dtype,qschema,reduce_range这些参数），如下所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">#activation的observer的参数</span><br><span class="line">FakeQuantize.with_args(observer=MovingAverageMinMaxObserver,quant_min=0,quant_max=255,reduce_range=True)</span><br><span class="line"></span><br><span class="line">#权重的observer的参数</span><br><span class="line">FakeQuantize.with_args(observer=MovingAveragePerChannelMinMaxObserver,</span><br><span class="line">                                                               quant_min=-128,</span><br><span class="line">                                                               quant_max=127,</span><br><span class="line">                                                               dtype=torch.qint8,</span><br><span class="line">                                                               qscheme=torch.per_channel_symmetric,</span><br><span class="line">                                                               reduce_range=False,</span><br><span class="line">                                                               ch_axis=0)</span><br></pre></td></tr></table></figure>
+<p>这里FakeQuantize包含的observer是MovingAverageMinMaxObserver，继承自前面提到过的MinMaxObserver，但是求最小值和最大值的方法有点区别，使用的是如下公式：</p>
+<p><img src="/img/2021/0110/6.jpg" alt="&quot;CPU Memory&quot;"></p>
+<ul>
+<li>Xmin、Xmax是当前运行中正在求解和最终求解的最小值、最大值；</li>
+<li>X是当前输入的tensor；</li>
+<li>c是一个常数，PyTorch中默认为0.01，也就是最新一次的极值由上一次贡献99%，当前的tensor贡献1%。</li>
+</ul>
+<p>MovingAverageMinMaxObserver在求min、max的方式和其基类MinMaxObserver有所区别之外，scale和zero_points的计算则是一致的。那么在包含了上述的observer之后，FakeQuantize的作用又是什么呢？看下面的步骤。</p>
+<p><strong>2，fuse_modules</strong><br>和静态量化一样，不再赘述。</p>
+<p><strong>3，prepare_qat</strong><br>在静态量化中，我们这一步使用的是prepare API，而在QAT这里使用的是prepare_qat API。最重要的区别有两点：</p>
+<ul>
+<li>prepare_qat要把qconfig安插到每个op上，qconfig的内容本身就不同，参考五部曲中的第一步；</li>
+<li>prepare_qat 中需要多做一步转换子module的工作，需要inplace的把模型中的一些子module替换了，替换的逻辑就是从DEFAULT_QAT_MODULE_MAPPINGS的key替换为value，这个字典的定义如下：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"># Default map for swapping float module to qat modules</span><br><span class="line">DEFAULT_QAT_MODULE_MAPPINGS : Dict[Callable, Any] = &#123;</span><br><span class="line">    nn.Conv2d: nnqat.Conv2d,</span><br><span class="line">    nn.Linear: nnqat.Linear,</span><br><span class="line">    # Intrinsic modules:</span><br><span class="line">    nni.ConvBn1d: nniqat.ConvBn1d,</span><br><span class="line">    nni.ConvBn2d: nniqat.ConvBn2d,</span><br><span class="line">    nni.ConvBnReLU1d: nniqat.ConvBnReLU1d,</span><br><span class="line">    nni.ConvBnReLU2d: nniqat.ConvBnReLU2d,</span><br><span class="line">    nni.ConvReLU2d: nniqat.ConvReLU2d,</span><br><span class="line">    nni.LinearReLU: nniqat.LinearReLU</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+因此，同静态量化的prepare相比，prepare_qat在多插入fake_quants、又替换了nn.Conv2d、nn.Linear之后，CivilNet网络就被改成了如下的样子：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">CivilNet(</span><br><span class="line">  (conv): QATConv2d(</span><br><span class="line">    1, 1, kernel_size=(1, 1), stride=(1, 1), bias=False</span><br><span class="line">    (activation_post_process): FakeQuantize(</span><br><span class="line">      fake_quant_enabled=tensor([1], dtype=torch.uint8), observer_enabled=tensor([1], dtype=torch.uint8),            scale=tensor([1.]), zero_point=tensor([0])</span><br><span class="line">      (activation_post_process): MovingAverageMinMaxObserver(min_val=tensor([]), max_val=tensor([]))</span><br><span class="line">    )</span><br><span class="line">    (weight_fake_quant): FakeQuantize(</span><br><span class="line">      fake_quant_enabled=tensor([1], dtype=torch.uint8), observer_enabled=tensor([1], dtype=torch.uint8),            scale=tensor([1.]), zero_point=tensor([0])</span><br><span class="line">      (activation_post_process): MovingAveragePerChannelMinMaxObserver(min_val=tensor([]), max_val=tensor([]))</span><br><span class="line">    )</span><br><span class="line">  )</span><br><span class="line">  (fc): QATLinear(</span><br><span class="line">    in_features=3, out_features=2, bias=False</span><br><span class="line">    (activation_post_process): FakeQuantize(</span><br><span class="line">      fake_quant_enabled=tensor([1], dtype=torch.uint8), observer_enabled=tensor([1], dtype=torch.uint8),            scale=tensor([1.]), zero_point=tensor([0])</span><br><span class="line">      (activation_post_process): MovingAverageMinMaxObserver(min_val=tensor([]), max_val=tensor([]))</span><br><span class="line">    )</span><br><span class="line">    (weight_fake_quant): FakeQuantize(</span><br><span class="line">      fake_quant_enabled=tensor([1], dtype=torch.uint8), observer_enabled=tensor([1], dtype=torch.uint8),            scale=tensor([1.]), zero_point=tensor([0])</span><br><span class="line">      (activation_post_process): MovingAveragePerChannelMinMaxObserver(min_val=tensor([]), max_val=tensor([]))</span><br><span class="line">    )</span><br><span class="line">  )</span><br><span class="line">  (relu): ReLU(</span><br><span class="line">    (activation_post_process): FakeQuantize(</span><br><span class="line">      fake_quant_enabled=tensor([1], dtype=torch.uint8), observer_enabled=tensor([1], dtype=torch.uint8),            scale=tensor([1.]), zero_point=tensor([0])</span><br><span class="line">      (activation_post_process): MovingAverageMinMaxObserver(min_val=tensor([]), max_val=tensor([]))</span><br><span class="line">    )</span><br><span class="line">  )</span><br><span class="line">  (quant): QuantStub(</span><br><span class="line">    (activation_post_process): FakeQuantize(</span><br><span class="line">      fake_quant_enabled=tensor([1], dtype=torch.uint8), observer_enabled=tensor([1], dtype=torch.uint8),            scale=tensor([1.]), zero_point=tensor([0])</span><br><span class="line">      (activation_post_process): MovingAverageMinMaxObserver(min_val=tensor([]), max_val=tensor([]))</span><br><span class="line">    )</span><br><span class="line">  )</span><br><span class="line">  (dequant): DeQuantStub()</span><br><span class="line">)</span><br></pre></td></tr></table></figure></li>
+</ul>
+<p><strong>4，喂数据</strong><br>和静态量化完全不同，在QAT中这一步是用来训练的。我们知道，在PyTorch的网络中，前向推理逻辑都是实现在了每个op的forward函数中（参考：Gemfield：详解Pytorch中的网络构造）。而在prepare_qat中，所有的op被替换成了QAT版本的op，那么这些op的forward函数有什么特别的地方呢？</p>
+<p>Conv2d被替换为了QATConv2d：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">def forward(self, input):</span><br><span class="line">   return self.activation_post_process(self._conv_forward(input, self.weight_fake_quant(self.weight)))</span><br></pre></td></tr></table></figure>
+<p>Linear被替换为了QATLinear:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">def forward(self, input):</span><br><span class="line">    return self.activation_post_process(F.linear(input, self.weight_fake_quant(self.weight), self.bias))</span><br></pre></td></tr></table></figure>
+<p>ReLU还是那个ReLU，不说了。总之，你可以看出来，每个op的输入都需要经过self.weight_fake_quant来处理下，输出又都需要经过self.activation_post_process来处理下，这两个都是FakeQuantize的实例，只是里面包含的observer不一样。以Conv2d为例：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">#conv2d</span><br><span class="line">weight=functools.partial(&lt;class &#x27;torch.quantization.fake_quantize.FakeQuantize&#x27;&gt;,</span><br><span class="line">           observer=&lt;class &#x27;torch.quantization.observer.MovingAveragePerChannelMinMaxObserver&#x27;&gt;,</span><br><span class="line">           quant_min=-128, quant_max=127, dtype=torch.qint8,</span><br><span class="line">           qscheme=torch.per_channel_symmetric, reduce_range=False, ch_axis=0))</span><br><span class="line"></span><br><span class="line">activation=functools.partial(&lt;class &#x27;torch.quantization.fake_quantize.FakeQuantize&#x27;&gt;,</span><br><span class="line">            observer=&lt;class &#x27;torch.quantization.observer.MovingAverageMinMaxObserver&#x27;&gt;,</span><br><span class="line">            quant_min=0, quant_max=255, reduce_range=True)</span><br></pre></td></tr></table></figure>
+<p>而FakeQuantize的forward函数如下所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">def forward(self, X):</span><br><span class="line">        if self.observer_enabled[0] == 1:</span><br><span class="line">            #使用移动平均算法计算scale和zp</span><br><span class="line"></span><br><span class="line">        if self.fake_quant_enabled[0] == 1:</span><br><span class="line">            X = torch.fake_quantize_per_channel_or_tensor_affine(X...)</span><br><span class="line">        return X</span><br></pre></td></tr></table></figure>
+<p>FakeQuantize中的fake_quantize_per_channel_or_tensor_affine实现了quantize和dequantize，用公式表示的话为：out = (clamp(round(x/scale + zero_point), quant_min, quant_max)-zero_point)*scale。也就是说，这是把量化的误差引入到了训练loss之中呀！</p>
+<p>这样，在QAT中，所有的weights和activations就像上面那样被fake quantized了，且参与模型训练中的前向和反向计算。float值被round成了（用来模拟的）int8值，但是所有的计算仍然是通过float来完成的。 这样以来，所有的权重在优化过程中都能感知到量化带来的影响，称之为量化感知训练（支持cpu和cuda），精度也因此更高。</p>
+<p><strong>5，转换</strong><br>这一步和静态量化一样，不再赘述。需要注意的是，QAT中，有一些module在prepare中已经转换成新的module了，所以静态量化中所使用的字典包含有如下的条目：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">DEFAULT_STATIC_QUANT_MODULE_MAPPINGS = &#123;</span><br><span class="line">    ......</span><br><span class="line">    # QAT modules:</span><br><span class="line">    nnqat.Linear: nnq.Linear,</span><br><span class="line">    nnqat.Conv2d: nnq.Conv2d,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>总结下来就是：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"># 原始的模型，所有的tensor和计算都是浮点</span><br><span class="line">previous_layer_fp32 -- linear_fp32 -- activation_fp32 -- next_layer_fp32</span><br><span class="line">                      /</span><br><span class="line">    linear_weight_fp32</span><br><span class="line"></span><br><span class="line"># 训练过程中，fake_quants发挥作用</span><br><span class="line">previous_layer_fp32 -- fq -- linear_fp32 -- activation_fp32 -- fq -- next_layer_fp32</span><br><span class="line">                           /</span><br><span class="line">   linear_weight_fp32 -- fq</span><br><span class="line"></span><br><span class="line"># 量化后的模型进行推理，权重和输入都是int8</span><br><span class="line">previous_layer_int8 -- linear_with_activation_int8 -- next_layer_int8</span><br><span class="line">                     /</span><br><span class="line">   linear_weight_int8</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>那么如何更方便的在你的代码中使用PyTorch的量化功能呢？一个比较优雅的方式就是使用deepvac规范——这是一个定义了PyTorch工程标准的项目：<a target="_blank" rel="noopener" href="https://github.com/DeepVAC/deepvac">https://github.com/DeepVAC/deepvac</a></p>
+<p>原文链接: <a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/299108528">PyTorch</a></p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="http://huangzhiyuan.github.io/2021/01/10/quantization-in-pytorch/" title="PyTorch中的量化总结" target="_blank" rel="external">http://huangzhiyuan.github.io/2021/01/10/quantization-in-pytorch/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/cofess" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/photo.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/cofess" target="_blank"><span class="text-dark">黄志远</span><small class="ml-1x">研发攻城狮</small></a></h3>
+        <div>靡不有初 鲜克有终</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2021/05/25/Linux-perf-optimize-actual-combat/" title="Linux性能优化实战"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2021/01/10/memory-brief-introduction/" title="简要解读内存性能"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipay.jpg" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开支付宝扫一扫，即可进行扫码打赏哦</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpay.jpg" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开微信扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/huangzhiyuan" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/u/7041265015" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://www.zhihu.com/people/justforfun099/activitie" target="_blank" title="Zhihu" data-toggle=tooltip data-placement=top><i class="icon icon-zhihu"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        &copy; 2022 黄志远
+        
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

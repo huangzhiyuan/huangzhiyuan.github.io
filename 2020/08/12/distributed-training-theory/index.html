@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>分布式训练理论篇 | Blog</title>
+  <meta name="description" content="我们为什么需要分布式，一方面是不得已而为之，例如 数据量太大，数据无法加载模型太复杂，一个GPU放不下或者我们也可以利用分布式提高我们的训练速度">
+<meta property="og:type" content="article">
+<meta property="og:title" content="分布式训练理论篇">
+<meta property="og:url" content="http://huangzhiyuan.github.io/2020/08/12/distributed-training-theory/index.html">
+<meta property="og:site_name" content="靡不有初 鲜克有终">
+<meta property="og:description" content="我们为什么需要分布式，一方面是不得已而为之，例如 数据量太大，数据无法加载模型太复杂，一个GPU放不下或者我们也可以利用分布式提高我们的训练速度">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/distribution.png">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/dsd.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/reduce.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/all-reduce.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/all-to-all.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/ring0.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/ring1.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/ring2.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/ring3.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/ring4.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/ring5.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/gpu.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/gpu0.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/gpu1.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/gpu2.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/gpu3.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/gpu41.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/gpu42.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/gpu5.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/gpu6.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/gpu7.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/sync.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/sync1.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/async.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/async1.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/model-para.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/pic.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/zero.jpg">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0812/idle.jpg">
+<meta property="article:published_time" content="2020-08-12T07:00:45.000Z">
+<meta property="article:modified_time" content="2020-08-12T08:32:00.000Z">
+<meta property="article:author" content="黄志远">
+<meta property="article:tag" content="GPU">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://huangzhiyuan.github.io/img/2020/0812/distribution.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="http://huangzhiyuan.github.io/2020/08/12/distributed-training-theory/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="靡不有初 鲜克有终" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/cofess" target="_blank">
+          <img class="img-circle img-rotate" src="/images/photo.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">黄志远</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">研发攻城狮</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Shanghai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/huangzhiyuan" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/u/7041265015" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://www.zhihu.com/people/justforfun099/activitie" target="_blank" title="Zhihu" data-toggle=tooltip data-placement=top><i class="icon icon-zhihu"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验，广告位招租中~</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/CUDA/">CUDA</a><span class="category-list-count">10</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/GPU/">GPU</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Hexo/">Hexo</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Linux/">Linux</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/python/">python</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a><span class="category-list-count">15</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93/">技术总结</a><span class="category-list-count">47</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a><span class="category-list-count">22</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a><span class="category-list-count">14</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%94%B5%E5%BD%B1/">电影</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%AF%BB%E4%B9%A6/">读书</a><span class="category-list-count">8</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/AI/" rel="tag">AI</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AWK/" rel="tag">AWK</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/BP%E7%AE%97%E6%B3%95/" rel="tag">BP算法</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/" rel="tag">C++</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CNN/" rel="tag">CNN</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CPU-cache/" rel="tag">CPU-cache</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Optimization/" rel="tag">Code Optimization</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DL-Framwork/" rel="tag">DL Framwork</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DNNL/" rel="tag">DNNL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/" rel="tag">Docker</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GPU/" rel="tag">GPU</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Horovod/" rel="tag">Horovod</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java-memory/" rel="tag">Java memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java-%E9%9B%86%E5%90%88%E6%A1%86%E6%9E%B6/" rel="tag">Java 集合框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/KNN/" rel="tag">KNN</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LSTM/" rel="tag">LSTM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux/" rel="tag">Linux</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MLPerf/" rel="tag">MLPerf</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Memory/" rel="tag">Memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NUMA/" rel="tag">NUMA</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenMP/" rel="tag">OpenMP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RNN/" rel="tag">RNN</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SYCL/" rel="tag">SYCL</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TCP-IP/" rel="tag">TCP/IP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TVM/" rel="tag">TVM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/VIM/" rel="tag">VIM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Vtune/" rel="tag">Vtune</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/affinity/" rel="tag">affinity</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/batch-size/" rel="tag">batch-size</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/compiler/" rel="tag">compiler</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/conda-pip/" rel="tag">conda/pip</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cpu/" rel="tag">cpu</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cs179/" rel="tag">cs179</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cuda/" rel="tag">cuda</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/diff/" rel="tag">diff</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/embedding/" rel="tag">embedding</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gdb/" rel="tag">gdb</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/geohash/" rel="tag">geohash</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hash/" rel="tag">hash</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/" rel="tag">hexo</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hook/" rel="tag">hook</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hyperthreading/" rel="tag">hyperthreading</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/leetcode/" rel="tag">leetcode</a><span class="tag-list-count">18</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/license/" rel="tag">license</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mAP/" rel="tag">mAP</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/markdown/" rel="tag">markdown</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/memory/" rel="tag">memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ml2014/" rel="tag">ml2014</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pytorch/" rel="tag">pytorch</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/quantization/" rel="tag">quantization</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/stream-event/" rel="tag">stream/event</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tensorboard/" rel="tag">tensorboard</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tensoriterator/" rel="tag">tensoriterator</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/topk/" rel="tag">topk</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/volatile/" rel="tag">volatile</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vscode/" rel="tag">vscode</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webchat/" rel="tag">webchat</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/zero-copy/" rel="tag">zero-copy</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%B7%E5%80%BC%E8%A7%82/" rel="tag">价值观</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BD%93%E8%82%B2/" rel="tag">体育</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%81%A5%E8%BA%AB/" rel="tag">健身</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="tag">分布式</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%89%91%E6%8C%87offer/" rel="tag">剑指offer</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%89%AF%E4%B8%9A/" rel="tag">副业</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A0%E5%AF%86/" rel="tag">加密</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%A4%A7%E7%89%9B/" rel="tag">大牛</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%BD%B1%E8%AF%84/" rel="tag">影评</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%8A%A2%E7%BA%A2%E5%8C%85/" rel="tag">抢红包</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%91%98%E6%8A%84/" rel="tag">摘抄</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%96%B0%E9%97%BB/" rel="tag">新闻</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/" rel="tag">深入理解计算机系统</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E6%A1%86%E6%9E%B6/" rel="tag">深度学习框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%94%9F%E6%B4%BB/" rel="tag">生活</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%94%B5%E5%BD%B1/" rel="tag">电影</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1/" rel="tag">知识图谱</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E5%85%BB/" rel="tag">程序员的自我修养</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%81%8C%E4%B8%9A/" rel="tag">职业</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AF%BB%E4%B9%A6/" rel="tag">读书</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag">随笔</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9D%A2%E8%AF%95/" rel="tag">面试</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/" rel="tag">高并发</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/AI/" style="font-size: 13.13px;">AI</a> <a href="/tags/AWK/" style="font-size: 13px;">AWK</a> <a href="/tags/BP%E7%AE%97%E6%B3%95/" style="font-size: 13px;">BP算法</a> <a href="/tags/C/" style="font-size: 13.13px;">C++</a> <a href="/tags/CNN/" style="font-size: 13.13px;">CNN</a> <a href="/tags/CPU-cache/" style="font-size: 13px;">CPU-cache</a> <a href="/tags/Code-Optimization/" style="font-size: 13px;">Code Optimization</a> <a href="/tags/DL-Framwork/" style="font-size: 13px;">DL Framwork</a> <a href="/tags/DNNL/" style="font-size: 13px;">DNNL</a> <a href="/tags/Docker/" style="font-size: 13px;">Docker</a> <a href="/tags/GPU/" style="font-size: 13.5px;">GPU</a> <a href="/tags/Horovod/" style="font-size: 13px;">Horovod</a> <a href="/tags/Java-memory/" style="font-size: 13px;">Java memory</a> <a href="/tags/Java-%E9%9B%86%E5%90%88%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">Java 集合框架</a> <a href="/tags/KNN/" style="font-size: 13px;">KNN</a> <a href="/tags/LSTM/" style="font-size: 13px;">LSTM</a> <a href="/tags/Linux/" style="font-size: 13.5px;">Linux</a> <a href="/tags/MLPerf/" style="font-size: 13px;">MLPerf</a> <a href="/tags/Memory/" style="font-size: 13px;">Memory</a> <a href="/tags/NUMA/" style="font-size: 13px;">NUMA</a> <a href="/tags/OpenMP/" style="font-size: 13px;">OpenMP</a> <a href="/tags/RNN/" style="font-size: 13px;">RNN</a> <a href="/tags/SYCL/" style="font-size: 13.38px;">SYCL</a> <a href="/tags/TCP-IP/" style="font-size: 13px;">TCP/IP</a> <a href="/tags/TVM/" style="font-size: 13px;">TVM</a> <a href="/tags/VIM/" style="font-size: 13px;">VIM</a> <a href="/tags/Vtune/" style="font-size: 13px;">Vtune</a> <a href="/tags/affinity/" style="font-size: 13px;">affinity</a> <a href="/tags/atomic/" style="font-size: 13px;">atomic</a> <a href="/tags/batch-size/" style="font-size: 13px;">batch-size</a> <a href="/tags/compiler/" style="font-size: 13px;">compiler</a> <a href="/tags/conda-pip/" style="font-size: 13px;">conda/pip</a> <a href="/tags/cpu/" style="font-size: 13.13px;">cpu</a> <a href="/tags/cs179/" style="font-size: 13.63px;">cs179</a> <a href="/tags/cuda/" style="font-size: 13.88px;">cuda</a> <a href="/tags/diff/" style="font-size: 13px;">diff</a> <a href="/tags/embedding/" style="font-size: 13px;">embedding</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/gdb/" style="font-size: 13px;">gdb</a> <a href="/tags/geohash/" style="font-size: 13px;">geohash</a> <a href="/tags/git/" style="font-size: 13.13px;">git</a> <a href="/tags/hash/" style="font-size: 13px;">hash</a> <a href="/tags/hexo/" style="font-size: 13px;">hexo</a> <a href="/tags/hook/" style="font-size: 13px;">hook</a> <a href="/tags/hyperthreading/" style="font-size: 13px;">hyperthreading</a> <a href="/tags/leetcode/" style="font-size: 14px;">leetcode</a> <a href="/tags/license/" style="font-size: 13px;">license</a> <a href="/tags/mAP/" style="font-size: 13.13px;">mAP</a> <a href="/tags/markdown/" style="font-size: 13.13px;">markdown</a> <a href="/tags/memory/" style="font-size: 13px;">memory</a> <a href="/tags/ml2014/" style="font-size: 13px;">ml2014</a> <a href="/tags/pytorch/" style="font-size: 13.75px;">pytorch</a> <a href="/tags/quantization/" style="font-size: 13px;">quantization</a> <a href="/tags/stream-event/" style="font-size: 13px;">stream/event</a> <a href="/tags/tensorboard/" style="font-size: 13px;">tensorboard</a> <a href="/tags/tensoriterator/" style="font-size: 13px;">tensoriterator</a> <a href="/tags/topk/" style="font-size: 13px;">topk</a> <a href="/tags/volatile/" style="font-size: 13px;">volatile</a> <a href="/tags/vscode/" style="font-size: 13px;">vscode</a> <a href="/tags/webchat/" style="font-size: 13px;">webchat</a> <a href="/tags/zero-copy/" style="font-size: 13px;">zero-copy</a> <a href="/tags/%E4%BB%B7%E5%80%BC%E8%A7%82/" style="font-size: 13px;">价值观</a> <a href="/tags/%E4%BD%93%E8%82%B2/" style="font-size: 13px;">体育</a> <a href="/tags/%E5%81%A5%E8%BA%AB/" style="font-size: 13px;">健身</a> <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" style="font-size: 13px;">分布式</a> <a href="/tags/%E5%89%91%E6%8C%87offer/" style="font-size: 13px;">剑指offer</a> <a href="/tags/%E5%89%AF%E4%B8%9A/" style="font-size: 13px;">副业</a> <a href="/tags/%E5%8A%A0%E5%AF%86/" style="font-size: 13px;">加密</a> <a href="/tags/%E5%A4%A7%E7%89%9B/" style="font-size: 13px;">大牛</a> <a href="/tags/%E5%BD%B1%E8%AF%84/" style="font-size: 13.13px;">影评</a> <a href="/tags/%E6%8A%A2%E7%BA%A2%E5%8C%85/" style="font-size: 13px;">抢红包</a> <a href="/tags/%E6%91%98%E6%8A%84/" style="font-size: 13.25px;">摘抄</a> <a href="/tags/%E6%96%B0%E9%97%BB/" style="font-size: 13.75px;">新闻</a> <a href="/tags/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/" style="font-size: 13px;">深入理解计算机系统</a> <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">深度学习框架</a> <a href="/tags/%E7%94%9F%E6%B4%BB/" style="font-size: 13.13px;">生活</a> <a href="/tags/%E7%94%B5%E5%BD%B1/" style="font-size: 13.13px;">电影</a> <a href="/tags/%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1/" style="font-size: 13px;">知识图谱</a> <a href="/tags/%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E5%85%BB/" style="font-size: 13.13px;">程序员的自我修养</a> <a href="/tags/%E8%81%8C%E4%B8%9A/" style="font-size: 13px;">职业</a> <a href="/tags/%E8%AF%BB%E4%B9%A6/" style="font-size: 13.25px;">读书</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 13px;">随笔</a> <a href="/tags/%E9%9D%A2%E8%AF%95/" style="font-size: 13px;">面试</a> <a href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/" style="font-size: 13px;">高并发</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">八月 2020</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/07/">七月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/06/">六月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/05/">五月 2020</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">10</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">39</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/02/">二月 2020</a><span class="archive-list-count">32</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">十月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/12/">十二月 2017</a><span class="archive-list-count">9</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/11/">十一月 2017</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/07/">七月 2017</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">六月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/05/">五月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/03/">三月 2017</a><span class="archive-list-count">7</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/02/">二月 2016</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-CPU/" class="title">Linux性能优化实战之CPU性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-IO/" class="title">Linux性能优化实战之IO性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-Memory/" class="title">Linux性能优化实战之内存性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-Network/" class="title">Linux性能优化实战之网络性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat/" class="title">Linux性能优化实战</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-distributed-training-theory" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      分布式训练理论篇
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2020/08/12/distributed-training-theory/" class="article-date">
+	  <time datetime="2020-08-12T07:00:45.000Z" itemprop="datePublished">2020-08-12</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/GPU/" rel="tag">GPU</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2020/08/12/distributed-training-theory/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <p>我们为什么需要分布式，一方面是不得已而为之，例如</p>
+<p>数据量太大，数据无法加载<br>模型太复杂，一个GPU放不下<br>或者我们也可以利用分布式提高我们的训练速度<br><img src="/img/2020/0812/distribution.png" alt="&quot;1&quot;"></p>
+<span id="more"></span>
+
+<h2 id="算法分类"><a href="#算法分类" class="headerlink" title="算法分类"></a>算法分类</h2><h3 id="Parameter-Server"><a href="#Parameter-Server" class="headerlink" title="Parameter Server"></a>Parameter Server</h3><p>机器分为Parameter Server 和 woker 两类，Parameter server 负责整合梯度，更新参数，woker负责计算，训练网络。</p>
+<p><img src="/img/2020/0812/dsd.jpg" alt="&quot;1&quot;"></p>
+<p>从上图可以很清楚的看到PS的流程，共分为4步。</p>
+<ul>
+<li>Task Scheduler：<br>加载数据，并将数据分发给不同的workers</li>
+<li>Workers：</li>
+</ul>
+<p>1.计算梯度（1. compute）<br>加载训练数据; 从servers拉取最新的参数（4. Pull）<br>2.将梯度push到servers（2.Push）<br>从servers拉取最新的参数（4. Pull）</p>
+<ul>
+<li>Servers：</li>
+</ul>
+<p>1.聚合梯度<br>2.更新参数（3. Update）</p>
+<p>通信成本为： O(d/b(2m-1)), 通信时间和GPU个数成正比。<br><strong>m:</strong> number of GPUs.<br><strong>d:</strong> number of parameters.<br><strong>b:</strong> network bandwidth.</p>
+<h3 id="Ring-ALL-Reduce"><a href="#Ring-ALL-Reduce" class="headerlink" title="Ring ALL-Reduce"></a>Ring ALL-Reduce</h3><p>reduce 和 all-reduce的区别：</p>
+<ul>
+<li>reduce：server 获取reduce之后的结果（sum/avg/mean/count），其他节点并不知道reduce之后的结果。例如我们需要进行reduce_sum 的操作，那么所有的workers的值都会传给server，然后server将这些值进行相加。</li>
+</ul>
+<p><img src="/img/2020/0812/reduce.jpg" alt="&quot;1&quot;"></p>
+<ul>
+<li>all reduce：所有的节点都获取reduce之后的结果，不单单server有。all-reduce是reduce+broadcast。例如我们需要进行all-reduce_sum 的操作，那么所有的workers的值都会传给server，然后server将这些值进行相加，然后server会将相加的和broadcast给所有的workers。</li>
+</ul>
+<p><img src="/img/2020/0812/all-reduce.jpg" alt="&quot;1&quot;"></p>
+<ul>
+<li>all-to-all communication。或者说如果没有 server 机器，那么我们可以通过all-to-all 通信，让每个节点都获取其他节点的值，然后再在各自机器上进行reduce。</li>
+</ul>
+<p><img src="/img/2020/0812/all-to-all.jpg" alt="&quot;1&quot;"></p>
+<p>首先我们有4台机器GPU 0:4, 我们的目标是将每个GPU计算出来的梯度 [公式] 进行相加，使得每个GPU都有所有GPU的梯度。</p>
+<p><strong>Ring All-Reduce</strong><br><img src="/img/2020/0812/ring0.jpg" alt="&quot;1&quot;"></p>
+<p><strong>Native Approach</strong><br>首先我们想到的方式是，我们将每个GPU的目前加和的梯度都向下传递，然后最后一个GPU可以得到最后的加和，然后它再将所有的结果传递给其他的没有获得结果的GPU。<br>整个过程如下：</p>
+<ul>
+<li>GPU0 将 g0 传给GPU1，GPU1得到 g0+g1 的结果<br><img src="/img/2020/0812/ring1.jpg" alt="&quot;1&quot;"></li>
+<li>GPU1 将 g0+g1 传给 GPU2，GPU2得到 g0+g1+g2 的结果<br><img src="/img/2020/0812/ring2.jpg" alt="&quot;1&quot;"></li>
+<li>GPU2 将 g0+g1+g2 传给 GPU3，GPU3得到 g0+g1+g2+g3 的结果<br><img src="/img/2020/0812/ring3.jpg" alt="&quot;1&quot;"></li>
+<li>GPU3 将 g=g0+g1+g2+g3 传给GPU0， GPU0 得到 g</li>
+<li>GPU0 将 g 传给GPU1， GPU1 得到 g</li>
+<li>GPU1 将 g 传给GPU3， GPU1 得到 g<br><img src="/img/2020/0812/ring4.jpg" alt="&quot;1&quot;"><br><img src="/img/2020/0812/ring5.jpg" alt="&quot;1&quot;"></li>
+</ul>
+<p>最后每个worker自己做参数更新。</p>
+<p>我们可以发现，这样子做的话，每次的数据传输都只用了一个通道，即只有两台GPU在进行传输，其他的3个通道都没有使用，造成了资源的浪费。<br>我们假设有 m 台机器，每台机器传输的参数量为 d, 传输带宽为 b， 我们可以得到传输的时间为 O(d*m/b)，传输的速度和GPU数目成正比，这极大地限制了集群的可扩展性。</p>
+<p><strong>Ring All-Reduce (Efficient Approach)</strong><br>为了充分利用起其他的通道，我们可以采取 Ring All-reduce的方式进行传输。其主要的作用就是将传输的时间不再正比于GPU的数目。</p>
+<p>首先我们将传输的梯度进行 m 等分split，每一次的传输传的参数量为 d/m。 如下图。</p>
+<p><img src="/img/2020/0812/gpu.jpg" alt="&quot;1&quot;"></p>
+<p>首先我们得到GPU_i 计算出来的梯度倍等切成后的 gi=[ai;bi;ci;di]（本例子为4等分），然后我们可以发现所有 ai 加起来是第一部分的加和，所有 bi 加起来是第2部分的加和，所有 ci 加起来是第3部分的加和，所有 di 加起来是第4部分的加和。并且 GPU0 可以传输给GPU1，GPU1 可以传输给GPU2，GPU2可以传输给GPU3，GPU3可以传输给GPU0，形成环状网络。</p>
+<p>这个环状传输是同时进行的，其保证了每次传输的并行（纵向），且保证了每次的reduce计算都只在机器的一个部分，不会同一个机器多个部分同时进行（横向）。<br><img src="/img/2020/0812/gpu0.jpg" alt="&quot;1&quot;"></p>
+<ul>
+<li>首先进行第一次传输， GPU0 –a0–&gt; GPU1，GPU1 –b1–&gt; GPU2, GPU2 –c2–&gt; GPU3, GPU3 –d3–&gt; GPU0, 注意这边的初始传输值不是 a0, a1, a2,a3</li>
+<li><img src="/img/2020/0812/gpu1.jpg" alt="&quot;1&quot;"></li>
+<li>第二次传输，就是将目前得到的每个部门的reduce结果，传输给下个device。<br>GPU1 –a0+a1–&gt; GPU2，GPU2 –b1+b2–&gt; GPU3, GPU3 –c2+c3–&gt; GPU0, GPU0 –d0+d3–&gt; GPU1<br><img src="/img/2020/0812/gpu2.jpg" alt="&quot;1&quot;"></li>
+<li>第三次传输，还是将上次传输的结果传给下一个device，注意这边传的是结果而不是中间过程，即例如传输 a0+a1+a2 是传输这个结果而不是三个a0,a1,a2参数,否则传输的参数量就增加了。<br>GPU2 –a0+a1+a2–&gt; GPU3，GPU3 –b1+b2+b3–&gt; GPU0, GPU0 –c0+c2+c3–&gt; GPU1, GPU1 –d0+d1+d3–&gt; GPU2<br><img src="/img/2020/0812/gpu3.jpg" alt="&quot;1&quot;"></li>
+<li>第四次传输,还是将上次传输的结果传给下一个device，此时，每个部分都已经有一个机器获得了最终的结果。<br><img src="/img/2020/0812/gpu41.jpg" alt="&quot;1&quot;"></li>
+<li>我们令a=a0+a1+a2+a3, b=b0+b1+b2+b3, c=c0+c1+c2+c3, d=d0+d1+d2+d3<br>GPU3 –a–&gt; GPU0，GPU0 –b–&gt; GPU1, GPU1 –d–&gt; GPU2, GPU2 –d–&gt; GPU3<br><img src="/img/2020/0812/gpu42.jpg" alt="&quot;1&quot;"></li>
+<li>第五次传输，如下<br><img src="/img/2020/0812/gpu5.jpg" alt="&quot;1&quot;"></li>
+<li>第六次传输<br><img src="/img/2020/0812/gpu6.jpg" alt="&quot;1&quot;"></li>
+<li>得到最终的结果：<br><img src="/img/2020/0812/gpu7.jpg" alt="&quot;1&quot;"></li>
+</ul>
+<p>我们可以计算一下时间的开销：O(d/m *m/b) = O(d/m) ，传输的时间和GPU的个数无关！</p>
+<h2 id="更新方式分类"><a href="#更新方式分类" class="headerlink" title="更新方式分类"></a>更新方式分类</h2><p>同步式和异步式的区别在于参数的更新，是否需要等其他的worker的梯度计算完成。同步式需要，而异步式不需要。</p>
+<h3 id="同步式"><a href="#同步式" class="headerlink" title="同步式"></a>同步式</h3><p>我们以 MultiworkerMirroredStrategy 作为例子：<br>首先是数据并行，数据会被分发到不同的devices（下图的A/B/C）上，然后每个device 各自进行梯度计算，最后Parameter Device(s) 会等所有的梯度都计算完之后，再更新参数，最后将参数传给所有的devices。<br><img src="/img/2020/0812/sync.jpg" alt="&quot;1&quot;"><br>同步式的更新的优缺点：<br><strong>优点：</strong></p>
+<ul>
+<li>同步避免过多的通信（因为参数传输需要通信）</li>
+<li>效果会比异步并行略好</li>
+</ul>
+<p><strong>缺点：</strong></p>
+<ul>
+<li>有的机器计算可能快，有的机器计算慢，这样就导致，个别机器会有计算资源的空耗，导致浪费。（单机多卡一般不会）<br><img src="/img/2020/0812/sync1.jpg" alt="&quot;1&quot;"></li>
+</ul>
+<h3 id="异步式"><a href="#异步式" class="headerlink" title="异步式"></a>异步式</h3><p>我们以 ParameterServerStrategy 作为例子：<br>首先我们的所有的数据还是进行并行化，分发到不同的devices（下图的A/B/C）上，每个 worker device 各自进行了梯度的计算后，传给parameter server，而参数服务器在收到了梯度之后，不用等其他机器的结果，直接去更新参数，得到新的参数值，传给各个worker。<br><img src="/img/2020/0812/async.jpg" alt="&quot;1&quot;"></p>
+<p>异步式的更新的优缺点：<br><strong>优点：</strong></p>
+<ul>
+<li>参数更新不需要等其他机器，所有更高效，避免短板效应（多机多卡）</li>
+<li>异步的计算会增加模型的泛化能力,因为异步不是严格正确的，所以模型更容忍错误</li>
+</ul>
+<p><strong>缺点：</strong></p>
+<ul>
+<li>异步式更新的次数多了，会导致更多的通信时间</li>
+<li>每个GPU计算完梯度后就各自更新，速度快，但是最终模型的性能略低于同步数据并行方式。<br><img src="/img/2020/0812/async1.jpg" alt="&quot;1&quot;"></li>
+</ul>
+<h2 id="并行方式分类"><a href="#并行方式分类" class="headerlink" title="并行方式分类"></a>并行方式分类</h2><h3 id="数据并行"><a href="#数据并行" class="headerlink" title="数据并行"></a>数据并行</h3><p>数据同时分发给各个worker，并进行梯度计算。</p>
+<h3 id="模型并行"><a href="#模型并行" class="headerlink" title="模型并行"></a>模型并行</h3><p>当我们的模型过大，不能放在一个GPU中，那么需要将模型分成多个部分，在各个worker 中。<br><img src="/img/2020/0812/model-para.jpg" alt="&quot;1&quot;"></p>
+<h3 id="数据和模型并行"><a href="#数据和模型并行" class="headerlink" title="数据和模型并行"></a>数据和模型并行</h3><p>把数据和模型同时并行，进行训练。其中最出名的就是微软的<a target="_blank" rel="noopener" href="https://www.microsoft.com/en-us/research/blog/zero-deepspeed-new-system-optimizations-enable-training-models-with-over-100-billion-parameters/">ZeRO &amp; DeepSpeed: New system optimizations enable training models with over 100 billion parameters</a>算法。它的出现使得训练超级大模型成了可能。微软用这个算法，训练出了 <a target="_blank" rel="noopener" href="https://www.microsoft.com/en-us/research/blog/turing-nlg-a-17-billion-parameter-language-model-by-microsoft/">Turing-NLG: A 17-billion-parameter language model by Microsoft</a> 170亿的参数，直接刷新世界观（壕无人性）</p>
+<p><img src="/img/2020/0812/pic.jpg" alt="&quot;1&quot;"></p>
+<p>该ZeRO算法，主要如下图。</p>
+<p><img src="/img/2020/0812/zero.jpg" alt="&quot;1&quot;"></p>
+<p>数据被分为n+1份，并行处理。<br>然后整个模型结构被过大，不能但在单一的GPU中，它被存放在n+1个GPU中，每个GPU存放三个部分</p>
+<ul>
+<li>蓝色的部分是模型的参数</li>
+<li>黄色的部分是模型的梯度</li>
+<li>绿色的部分是模型梯度更新中间产生的数据，例如adam的中间产生数据。</li>
+</ul>
+<p>那么模型要如何进行训练呢？<br>首先我们知道模型在进行更新的过程是先将数据正向传播，计算loss和梯度，再反向传播进行更新。例如下图，我们的模型存放在两个GPU中，在正向传播过程中我们必须等到数据经过GPU1，才能到GPU2，在反向传播过程中，我们需要保证GPU2的参数都计算完成，才能传到GPU1，这就导致了每次都有一个机器是闲置的。</p>
+<p><img src="/img/2020/0812/idle.jpg" alt="&quot;1&quot;"></p>
+<p>这是因为我们的每个GPU都缺少了部分的模型参数，但是我们发现其实模型的参数并不大，大的是模型的 optimizer 的中间参数， 所以我们就是可以通过将所需要的其他部分的模型参数通过通信传输，获得，使得所有的部分都可以并行。</p>
+<ul>
+<li>在进行前向传播的时候，我们以 GPU0 做为例子，在data0 flow的时候，如果需要任何的参数，都可以通过通信的过程获得，比如说刚开始先forward flow完成GPU0的模型结构，之后需要GPU1的模型结构，GPU1 会将其的参数传给GPU0，之后GPU2会将其的参数传给GPU0… 以此类推，直至前行传播完成获得loss。计算出梯度。注意此时DATA1，…DATAn+1 都在并行进行前向传播。</li>
+<li>再反向传播的过程中，我们以 GPU0 做为例子，首先会计算出n+1 部分模型的梯度Gn+1（黄色的部分）, GPU0 不会储存这个梯度，而是将它直接传输给GPU_{n+1}, 因为它负责更新n+1 部分模型（注意，此时所有的其他GPU计算出来的这部分的梯度都会传给它，最后在有它进行reduce），之后计算会计算出第n 部分模型的梯度Gn（黄色的部分），并传给 GPU_n，以此类推，算出得到第0部分模型的梯度G0（黄色的部分），然后并且收到了其他GPU关于此部分的梯度，并按照optimizer paramters进行第0部分的参数的更新。</li>
+</ul>
+<h2 id="引用"><a href="#引用" class="headerlink" title="引用"></a>引用</h2><p><a target="_blank" rel="noopener" href="https://fyubang.com/2019/07/08/distributed-training/">https://fyubang.com/2019/07/08/distributed-training/</a><br><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/129912419">https://zhuanlan.zhihu.com/p/129912419</a><br><a target="_blank" rel="noopener" href="https://www.youtube.com/watch%3Fv%3DtC01FRB0M7w">https://www.youtube.com/watch%3Fv%3DtC01FRB0M7w</a></p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="http://huangzhiyuan.github.io/2020/08/12/distributed-training-theory/" title="分布式训练理论篇" target="_blank" rel="external">http://huangzhiyuan.github.io/2020/08/12/distributed-training-theory/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/cofess" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/photo.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/cofess" target="_blank"><span class="text-dark">黄志远</span><small class="ml-1x">研发攻城狮</small></a></h3>
+        <div>靡不有初 鲜克有终</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2020/08/20/Obfuscating-hello-world/" title="Hello World的魔幻打印"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2020/08/11/copy-issue-in-ATS/" title="Copy issue in ATS GPU"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipay.jpg" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开支付宝扫一扫，即可进行扫码打赏哦</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpay.jpg" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开微信扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/huangzhiyuan" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/u/7041265015" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://www.zhihu.com/people/justforfun099/activitie" target="_blank" title="Zhihu" data-toggle=tooltip data-placement=top><i class="icon icon-zhihu"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        &copy; 2022 黄志远
+        
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

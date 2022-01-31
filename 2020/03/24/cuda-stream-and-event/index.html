@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>cuda stream and event | Blog</title>
+  <meta name="description" content="一般来说，cuda c并行性表现在下面两个层面上：  Kernel level Grid level  到目前为止，我们讨论的一直是kernel level的，也就是一个kernel或者一个task由许多thread并行的执行在GPU上。Stream的概念是相对于后者来说的，Grid level是指多个kernel在一个device上同时执行。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="cuda stream and event">
+<meta property="og:url" content="http://huangzhiyuan.github.io/2020/03/24/cuda-stream-and-event/index.html">
+<meta property="og:site_name" content="靡不有初 鲜克有终">
+<meta property="og:description" content="一般来说，cuda c并行性表现在下面两个层面上：  Kernel level Grid level  到目前为止，我们讨论的一直是kernel level的，也就是一个kernel或者一个task由许多thread并行的执行在GPU上。Stream的概念是相对于后者来说的，Grid level是指多个kernel在一个device上同时执行。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0324/1.png">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0324/2.png">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0324/3.png">
+<meta property="og:image" content="http://huangzhiyuan.github.io/img/2020/0324/4.png">
+<meta property="article:published_time" content="2020-03-24T06:31:47.000Z">
+<meta property="article:modified_time" content="2020-03-24T09:12:02.000Z">
+<meta property="article:author" content="黄志远">
+<meta property="article:tag" content="stream&#x2F;event">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://huangzhiyuan.github.io/img/2020/0324/1.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="http://huangzhiyuan.github.io/2020/03/24/cuda-stream-and-event/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="靡不有初 鲜克有终" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/cofess" target="_blank">
+          <img class="img-circle img-rotate" src="/images/photo.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">黄志远</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">研发攻城狮</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Shanghai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/huangzhiyuan" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/u/7041265015" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://www.zhihu.com/people/justforfun099/activitie" target="_blank" title="Zhihu" data-toggle=tooltip data-placement=top><i class="icon icon-zhihu"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验，广告位招租中~</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/CUDA/">CUDA</a><span class="category-list-count">10</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/GPU/">GPU</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Hexo/">Hexo</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Linux/">Linux</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/python/">python</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a><span class="category-list-count">15</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93/">技术总结</a><span class="category-list-count">47</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a><span class="category-list-count">22</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a><span class="category-list-count">14</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%94%B5%E5%BD%B1/">电影</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%AF%BB%E4%B9%A6/">读书</a><span class="category-list-count">8</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/AI/" rel="tag">AI</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AWK/" rel="tag">AWK</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/BP%E7%AE%97%E6%B3%95/" rel="tag">BP算法</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/" rel="tag">C++</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CNN/" rel="tag">CNN</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CPU-cache/" rel="tag">CPU-cache</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Optimization/" rel="tag">Code Optimization</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DL-Framwork/" rel="tag">DL Framwork</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DNNL/" rel="tag">DNNL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/" rel="tag">Docker</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GPU/" rel="tag">GPU</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Horovod/" rel="tag">Horovod</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java-memory/" rel="tag">Java memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java-%E9%9B%86%E5%90%88%E6%A1%86%E6%9E%B6/" rel="tag">Java 集合框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/KNN/" rel="tag">KNN</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LSTM/" rel="tag">LSTM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux/" rel="tag">Linux</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MLPerf/" rel="tag">MLPerf</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Memory/" rel="tag">Memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NUMA/" rel="tag">NUMA</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenMP/" rel="tag">OpenMP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RNN/" rel="tag">RNN</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SYCL/" rel="tag">SYCL</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TCP-IP/" rel="tag">TCP/IP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TVM/" rel="tag">TVM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/VIM/" rel="tag">VIM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Vtune/" rel="tag">Vtune</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/affinity/" rel="tag">affinity</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/batch-size/" rel="tag">batch-size</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/compiler/" rel="tag">compiler</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/conda-pip/" rel="tag">conda/pip</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cpu/" rel="tag">cpu</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cs179/" rel="tag">cs179</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cuda/" rel="tag">cuda</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/diff/" rel="tag">diff</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/embedding/" rel="tag">embedding</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gdb/" rel="tag">gdb</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/geohash/" rel="tag">geohash</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hash/" rel="tag">hash</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/" rel="tag">hexo</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hook/" rel="tag">hook</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hyperthreading/" rel="tag">hyperthreading</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/leetcode/" rel="tag">leetcode</a><span class="tag-list-count">18</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/license/" rel="tag">license</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mAP/" rel="tag">mAP</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/markdown/" rel="tag">markdown</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/memory/" rel="tag">memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ml2014/" rel="tag">ml2014</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pytorch/" rel="tag">pytorch</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/quantization/" rel="tag">quantization</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/stream-event/" rel="tag">stream/event</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tensorboard/" rel="tag">tensorboard</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tensoriterator/" rel="tag">tensoriterator</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/topk/" rel="tag">topk</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/volatile/" rel="tag">volatile</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vscode/" rel="tag">vscode</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webchat/" rel="tag">webchat</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/zero-copy/" rel="tag">zero-copy</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%B7%E5%80%BC%E8%A7%82/" rel="tag">价值观</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BD%93%E8%82%B2/" rel="tag">体育</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%81%A5%E8%BA%AB/" rel="tag">健身</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="tag">分布式</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%89%91%E6%8C%87offer/" rel="tag">剑指offer</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%89%AF%E4%B8%9A/" rel="tag">副业</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A0%E5%AF%86/" rel="tag">加密</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%A4%A7%E7%89%9B/" rel="tag">大牛</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%BD%B1%E8%AF%84/" rel="tag">影评</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%8A%A2%E7%BA%A2%E5%8C%85/" rel="tag">抢红包</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%91%98%E6%8A%84/" rel="tag">摘抄</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%96%B0%E9%97%BB/" rel="tag">新闻</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/" rel="tag">深入理解计算机系统</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E6%A1%86%E6%9E%B6/" rel="tag">深度学习框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%94%9F%E6%B4%BB/" rel="tag">生活</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%94%B5%E5%BD%B1/" rel="tag">电影</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1/" rel="tag">知识图谱</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E5%85%BB/" rel="tag">程序员的自我修养</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%81%8C%E4%B8%9A/" rel="tag">职业</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AF%BB%E4%B9%A6/" rel="tag">读书</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag">随笔</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9D%A2%E8%AF%95/" rel="tag">面试</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/" rel="tag">高并发</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/AI/" style="font-size: 13.13px;">AI</a> <a href="/tags/AWK/" style="font-size: 13px;">AWK</a> <a href="/tags/BP%E7%AE%97%E6%B3%95/" style="font-size: 13px;">BP算法</a> <a href="/tags/C/" style="font-size: 13.13px;">C++</a> <a href="/tags/CNN/" style="font-size: 13.13px;">CNN</a> <a href="/tags/CPU-cache/" style="font-size: 13px;">CPU-cache</a> <a href="/tags/Code-Optimization/" style="font-size: 13px;">Code Optimization</a> <a href="/tags/DL-Framwork/" style="font-size: 13px;">DL Framwork</a> <a href="/tags/DNNL/" style="font-size: 13px;">DNNL</a> <a href="/tags/Docker/" style="font-size: 13px;">Docker</a> <a href="/tags/GPU/" style="font-size: 13.5px;">GPU</a> <a href="/tags/Horovod/" style="font-size: 13px;">Horovod</a> <a href="/tags/Java-memory/" style="font-size: 13px;">Java memory</a> <a href="/tags/Java-%E9%9B%86%E5%90%88%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">Java 集合框架</a> <a href="/tags/KNN/" style="font-size: 13px;">KNN</a> <a href="/tags/LSTM/" style="font-size: 13px;">LSTM</a> <a href="/tags/Linux/" style="font-size: 13.5px;">Linux</a> <a href="/tags/MLPerf/" style="font-size: 13px;">MLPerf</a> <a href="/tags/Memory/" style="font-size: 13px;">Memory</a> <a href="/tags/NUMA/" style="font-size: 13px;">NUMA</a> <a href="/tags/OpenMP/" style="font-size: 13px;">OpenMP</a> <a href="/tags/RNN/" style="font-size: 13px;">RNN</a> <a href="/tags/SYCL/" style="font-size: 13.38px;">SYCL</a> <a href="/tags/TCP-IP/" style="font-size: 13px;">TCP/IP</a> <a href="/tags/TVM/" style="font-size: 13px;">TVM</a> <a href="/tags/VIM/" style="font-size: 13px;">VIM</a> <a href="/tags/Vtune/" style="font-size: 13px;">Vtune</a> <a href="/tags/affinity/" style="font-size: 13px;">affinity</a> <a href="/tags/atomic/" style="font-size: 13px;">atomic</a> <a href="/tags/batch-size/" style="font-size: 13px;">batch-size</a> <a href="/tags/compiler/" style="font-size: 13px;">compiler</a> <a href="/tags/conda-pip/" style="font-size: 13px;">conda/pip</a> <a href="/tags/cpu/" style="font-size: 13.13px;">cpu</a> <a href="/tags/cs179/" style="font-size: 13.63px;">cs179</a> <a href="/tags/cuda/" style="font-size: 13.88px;">cuda</a> <a href="/tags/diff/" style="font-size: 13px;">diff</a> <a href="/tags/embedding/" style="font-size: 13px;">embedding</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/gdb/" style="font-size: 13px;">gdb</a> <a href="/tags/geohash/" style="font-size: 13px;">geohash</a> <a href="/tags/git/" style="font-size: 13.13px;">git</a> <a href="/tags/hash/" style="font-size: 13px;">hash</a> <a href="/tags/hexo/" style="font-size: 13px;">hexo</a> <a href="/tags/hook/" style="font-size: 13px;">hook</a> <a href="/tags/hyperthreading/" style="font-size: 13px;">hyperthreading</a> <a href="/tags/leetcode/" style="font-size: 14px;">leetcode</a> <a href="/tags/license/" style="font-size: 13px;">license</a> <a href="/tags/mAP/" style="font-size: 13.13px;">mAP</a> <a href="/tags/markdown/" style="font-size: 13.13px;">markdown</a> <a href="/tags/memory/" style="font-size: 13px;">memory</a> <a href="/tags/ml2014/" style="font-size: 13px;">ml2014</a> <a href="/tags/pytorch/" style="font-size: 13.75px;">pytorch</a> <a href="/tags/quantization/" style="font-size: 13px;">quantization</a> <a href="/tags/stream-event/" style="font-size: 13px;">stream/event</a> <a href="/tags/tensorboard/" style="font-size: 13px;">tensorboard</a> <a href="/tags/tensoriterator/" style="font-size: 13px;">tensoriterator</a> <a href="/tags/topk/" style="font-size: 13px;">topk</a> <a href="/tags/volatile/" style="font-size: 13px;">volatile</a> <a href="/tags/vscode/" style="font-size: 13px;">vscode</a> <a href="/tags/webchat/" style="font-size: 13px;">webchat</a> <a href="/tags/zero-copy/" style="font-size: 13px;">zero-copy</a> <a href="/tags/%E4%BB%B7%E5%80%BC%E8%A7%82/" style="font-size: 13px;">价值观</a> <a href="/tags/%E4%BD%93%E8%82%B2/" style="font-size: 13px;">体育</a> <a href="/tags/%E5%81%A5%E8%BA%AB/" style="font-size: 13px;">健身</a> <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" style="font-size: 13px;">分布式</a> <a href="/tags/%E5%89%91%E6%8C%87offer/" style="font-size: 13px;">剑指offer</a> <a href="/tags/%E5%89%AF%E4%B8%9A/" style="font-size: 13px;">副业</a> <a href="/tags/%E5%8A%A0%E5%AF%86/" style="font-size: 13px;">加密</a> <a href="/tags/%E5%A4%A7%E7%89%9B/" style="font-size: 13px;">大牛</a> <a href="/tags/%E5%BD%B1%E8%AF%84/" style="font-size: 13.13px;">影评</a> <a href="/tags/%E6%8A%A2%E7%BA%A2%E5%8C%85/" style="font-size: 13px;">抢红包</a> <a href="/tags/%E6%91%98%E6%8A%84/" style="font-size: 13.25px;">摘抄</a> <a href="/tags/%E6%96%B0%E9%97%BB/" style="font-size: 13.75px;">新闻</a> <a href="/tags/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/" style="font-size: 13px;">深入理解计算机系统</a> <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">深度学习框架</a> <a href="/tags/%E7%94%9F%E6%B4%BB/" style="font-size: 13.13px;">生活</a> <a href="/tags/%E7%94%B5%E5%BD%B1/" style="font-size: 13.13px;">电影</a> <a href="/tags/%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1/" style="font-size: 13px;">知识图谱</a> <a href="/tags/%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E5%85%BB/" style="font-size: 13.13px;">程序员的自我修养</a> <a href="/tags/%E8%81%8C%E4%B8%9A/" style="font-size: 13px;">职业</a> <a href="/tags/%E8%AF%BB%E4%B9%A6/" style="font-size: 13.25px;">读书</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 13px;">随笔</a> <a href="/tags/%E9%9D%A2%E8%AF%95/" style="font-size: 13px;">面试</a> <a href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/" style="font-size: 13px;">高并发</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">八月 2020</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/07/">七月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/06/">六月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/05/">五月 2020</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">10</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">39</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/02/">二月 2020</a><span class="archive-list-count">32</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">十月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/12/">十二月 2017</a><span class="archive-list-count">9</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/11/">十一月 2017</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/07/">七月 2017</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">六月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/05/">五月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/03/">三月 2017</a><span class="archive-list-count">7</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/02/">二月 2016</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-CPU/" class="title">Linux性能优化实战之CPU性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-IO/" class="title">Linux性能优化实战之IO性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-Memory/" class="title">Linux性能优化实战之内存性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-Network/" class="title">Linux性能优化实战之网络性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat/" class="title">Linux性能优化实战</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-cuda-stream-and-event" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      cuda stream and event
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2020/03/24/cuda-stream-and-event/" class="article-date">
+	  <time datetime="2020-03-24T06:31:47.000Z" itemprop="datePublished">2020-03-24</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/CUDA/">CUDA</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/stream-event/" rel="tag">stream/event</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2020/03/24/cuda-stream-and-event/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <p>一般来说，cuda c并行性表现在下面两个层面上：</p>
+<ul>
+<li>Kernel level</li>
+<li>Grid level</li>
+</ul>
+<p>到目前为止，我们讨论的一直是kernel level的，也就是一个kernel或者一个task由许多thread并行的执行在GPU上。Stream的概念是相对于后者来说的，Grid level是指多个kernel在一个device上同时执行。</p>
+<span id="more"></span>
+
+<h2 id="Stream和event简介"><a href="#Stream和event简介" class="headerlink" title="Stream和event简介"></a>Stream和event简介</h2><p>Cuda stream是指一堆异步的cuda操作，他们按照host代码调用的顺序执行在device上。Stream维护了这些操作的顺序，并在所有预处理完成后允许这些操作进入工作队列，同时也可以对这些操作进行一些查询操作。这些操作包括host到device的数据传输，launch kernel以及其他的host发起由device执行的动作。这些操作的执行总是异步的，cuda runtime会决定这些操作合适的执行时机。我们则可以使用相应的cuda api来保证所取得结果是在所有操作完成后获得的。同一个stream里的操作有严格的执行顺序，不同的stream则没有此限制。</p>
+<p>由于不同stream的操作是异步执行的，就可以利用相互之间的协调来充分发挥资源的利用率。典型的cuda编程模式我们已经熟知了：</p>
+<ul>
+<li>将输入数据从host转移到device</li>
+<li>在device上执行kernel</li>
+<li>将结果从device上转移回host</li>
+</ul>
+<p>在许多情况下，花费在执行kernel上的时间要比传输数据多得多，所以很容易想到将cpu和gpu之间的沟通时间隐藏在其他kernel执行过程中，我们可以将数据传输和kernel执行放在不同的stream中来实现此功能。Stream可以用来实现pipeline和双buffer（front-back）渲染。</p>
+<p>Cuda API可分为同步和异步两类，同步函数会阻塞host端的线程执行，异步函数会立刻将控制权返还给host从而继续执行之后的动作。异步函数和stream是grid level并行的两个基石。</p>
+<p>从软件角度来看，不同stream中的不同操作可以并行执行，但是硬件角度却不一定如此。这依赖于PCIe链接或者每个SM可获得的资源，不同的stream仍然需要等待别的stream来完成执行。下面会简单介绍在不同CC版本下，stream在device上的行为。</p>
+<h3 id="Cuda-Streams"><a href="#Cuda-Streams" class="headerlink" title="Cuda Streams"></a>Cuda Streams</h3><p>所有的cuda操作（包括kernel执行和数据传输）都显式或隐式的运行在stream中，stream也就两种类型，分别是：</p>
+<ul>
+<li>隐式声明stream（NULL stream）</li>
+<li>显示声明stream（non-NULL stream）<br>默认情况下是NULL stream，在之前未涉及到stream的博文中，都是该类型。如果显式的声明一个stream就是non-NULL stream了。</li>
+</ul>
+<p>异步且基于stream的kernel执行和数据传输能够实现以下几种类型的并行：</p>
+<ul>
+<li>Host运算操作和device运算操作并行</li>
+<li>Host运算操作和host到device的数据传输并行</li>
+<li>Host到device的数据传输和device运算操作并行</li>
+<li>Device内的运算并行</li>
+</ul>
+<p>下面代码是之前常见的使用形式，默认使用NULL stream:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cudaMemcpy(..., cudaMemcpyHostToDevice);</span><br><span class="line">kernel&lt;&lt;&lt;grid, block&gt;&gt;&gt;(...);</span><br><span class="line">cudaMemcpy(..., cudaMemcpyDeviceToHost);</span><br></pre></td></tr></table></figure>
+<p>从device角度看，所有者三个操作都是使用的默认stream，并且按照代码从上到下的顺序依次执行，device本身是不知道其他的host操作怎样执行的。从host角度来看，数据传输都是同步的并且会一直等待，直到操作完成。不过不同于数据传输，Kernel的launch是异步的，host差不多立刻就能重新得到控制权，不用管kernel是否执行完毕，从而进行下一步动作。很明显，这种异步行为有助于重叠device和host之间的运算时间。</p>
+<p>上文内容在之前博文都有涉及，这里特别说明的是数据传输，它也是可以异步执行的，这就用到了本次讲的stream，我们必须显示的声明一个stream来分派它的执行。下面版本是异步版本的cudaMemcpy：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cudaError_t cudaMemcpyAsync(void* dst, const void* src, size_t count,cudaMemcpyKind kind, cudaStream_t stream = 0);</span><br></pre></td></tr></table></figure>
+<p>注意新增加的最后一个参数。这样，在host issue了这个函数给device执行后，控制权可以立刻返还给host。上面代码使用了默认stream，如果要声明一个新的stream则使用下面的API定义一个：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cudaError_t cudaStreamCreate(cudaStream_t* pStream);</span><br></pre></td></tr></table></figure>
+<p>这样就定义了一个可以使用在cuda异步API函数中stream。使用该函数的一个比较常见的错误，或者说容易引起混乱的地方是，这个函数返回的error code可能是上一次调用异步函数产生的。也就是说，函数返回error并不是调用该函数产生error的必要条件。</p>
+<p>当执行一次异步数据传输时，我们必须使用pinned（或者non-pageable）memory。Pinned memory的分配如下，具体请参见前面博文：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cudaError_t cudaMallocHost(void **ptr, size_t size);</span><br><span class="line">cudaError_t cudaHostAlloc(void **pHost, size_t size, unsigned int flags);</span><br></pre></td></tr></table></figure>
+<p>通过在将该内存pin到host的虚拟内存上，就可以将该memory的物理位置强制分配到CPU内存中以便使之在整个程序生命周期中保持不变。否则的话，操作系统可能会在任意时刻改变该host端的虚拟内存对应的物理地址。假设异步数据传输函数没有使用pinned host memory的话，操作系统就可能将数据从一块物理空间移动到另一块物理空间（因为是异步的，CPU在执行其他的动作就可能影响这块数据），而此时cuda runtime正在执行数据的传输，这会导致不确定的行为。</p>
+<p>在执行kernel时要想设置stream的话，也是很简单的，同样只要加一个stream参数就好：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">kernel_name&lt;&lt;&lt;grid, block, sharedMemSize, stream&gt;&gt;&gt;(argument list);</span><br><span class="line">// 非默认的stream声明</span><br><span class="line">cudaStream_t stream;</span><br><span class="line">// 初始化</span><br><span class="line">cudaStreamCreate(&amp;stream);</span><br><span class="line">// 资源释放</span><br><span class="line">cudaError_t cudaStreamDestroy(cudaStream_t stream);</span><br></pre></td></tr></table></figure>
+<p>当执行资源释放的时候，如果仍然有stream的工作没干完，那么虽然该函数仍然会立刻返回，但是相关的工作做完后，这些资源才会自动的释放掉。</p>
+<p>由于所有stream的执行都是异步的，就需要一些API在必要的时候做同步操作：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cudaError_t cudaStreamSynchronize(cudaStream_t stream);</span><br><span class="line">cudaError_t cudaStreamQuery(cudaStream_t stream);</span><br></pre></td></tr></table></figure>
+<p>第一个会强制host阻塞等待，直至stream中所有操作完成为止；第二个会检查stream中的操作是否全部完成，即使有操作没完成也不会阻塞host。如果所有操作都完成了，则返回cudaSuccess，否则返回cudaErrorNotReady。</p>
+<p>下面看一下一个代码片段来帮助理解：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">for (int i = 0; i &lt; nStreams; i++) &#123;</span><br><span class="line">    int offset = i * bytesPerStream;</span><br><span class="line">    cudaMemcpyAsync(&amp;d_a[offset], &amp;a[offset], bytePerStream, streams[i]);</span><br><span class="line">    kernel&lt;&lt;grid, block, 0, streams[i]&gt;&gt;(&amp;d_a[offset]);</span><br><span class="line">    cudaMemcpyAsync(&amp;a[offset], &amp;d_a[offset], bytesPerStream, streams[i]);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">for (int i = 0; i &lt; nStreams; i++) &#123;</span><br><span class="line">    cudaStreamSynchronize(streams[i]);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上图就跟流水线一样差不多的道理，不多说。需要注意的是，上图中数据传输的操作并不是并行执行的，即使他们是在不同的stream中。按惯例，这种情况肯定就是硬件资源的锅了，硬件资源就那么些，软件层面做的优化无非就是尽量让所有硬件资源一刻不停的被利用起来（万恶的资本主义，嗯……），而这里就是PCIe卡了瓶颈。当然从编程角度来看，这些操作依然是相互独立的，只是他们要共享硬件资源，就不得不是串行的。有两个PCIe就可以重叠这两次数据传输操作，不过也是要保证不同的stream和不同的传输方向。<br> <img src="/img/2020/0324/1.png" alt="&quot;1&quot;"><br>最大并发kernel数目是依赖于device本身的，Fermi支持16路并行，Kepler是32。并行数是受限于shared memory，寄存器等device资源。</p>
+<h3 id="Stream-Scheduling"><a href="#Stream-Scheduling" class="headerlink" title="Stream Scheduling"></a>Stream Scheduling</h3><p>概念上来说，所有stream是同时运行的。但是，事实上通常并非如此。</p>
+<p><strong>False Dependencies</strong><br>尽管Fermi最高支持16路并行，但是在物理上，所有stream是被塞进硬件上唯一一个工作队列来调度的，当选中一个grid来执行时，runtime会查看task的依赖关系，如果当前task依赖前面的task，该task就会阻塞，由于只有一个队列，后面的都会跟着等待，即使后面的task是别的stream上的任务。就如下图所示：<br> <img src="/img/2020/0324/2.png" alt="&quot;2&quot;"></p>
+<p>C和P以及R和X是可以并行的，因为他们在不同的stream中，但是ABC，PQR以及XYZ却不行，比如，在B没完成之前，C和P都在等待。</p>
+<h3 id="Hyper-Q"><a href="#Hyper-Q" class="headerlink" title="Hyper-Q"></a>Hyper-Q</h3><p>伪依赖的情况在Kepler系列里得到了解决，采用的一种叫Hyper-Q的技术，简单粗暴的理解就是，既然工作队列不够用，那就增加好了，于是Kepler上出现了32个工作队列。该技术也实现了TPC上可以同时运行compute和graphic的应用。当然，如果超过32个stream被创建了，依然会出现伪依赖的情况。<br> <img src="/img/2020/0324/3.png" alt="&quot;3&quot;"></p>
+<h3 id="Stream-Priorities"><a href="#Stream-Priorities" class="headerlink" title="Stream Priorities"></a>Stream Priorities</h3><p>对于CC3.5及以上版本，stream可以有优先级的属性：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cudaError_t cudaStreamCreateWithPriority(cudaStream_t* pStream, unsigned int flags, int priority);</span><br></pre></td></tr></table></figure>
+<p>该函数创建一个stream，赋予priority的优先级，高优先级的grid可以抢占低优先级执行。不过优先级属性只对kernel有效，对数据传输无效。此外，如果设置的优先级超出了可设置范围，则会自动设置成最高或者最低。有效可设置范围可用下列函数查询：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cudaError_t cudaDeviceGetStreamPriorityRange(int *leastPriority, int *greatestPriority);</span><br></pre></td></tr></table></figure>
+<p>顾名思义，leastPriority是下限，gretestPriority是上限。老规矩，数值较小则拥有较高优先级。如果device不支持优先级设置，则这两个值都返回0。</p>
+<h2 id="Cuda-Events"><a href="#Cuda-Events" class="headerlink" title="Cuda Events"></a>Cuda Events</h2><p>Event是stream相关的一个重要概念，其用来标记strean执行过程的某个特定的点。其主要用途是：</p>
+<ul>
+<li>同步stream执行</li>
+<li>操控device运行步调<br>Cuda api提供了相关函数来插入event到stream中和查询该event是否完成（或者叫满足条件？）。只有当该event标记的stream位置的所有操作都被执行完毕，该event才算完成。关联到默认stream上的event则对所有的stream有效。</li>
+</ul>
+<h3 id="Creation-and-Destruction"><a href="#Creation-and-Destruction" class="headerlink" title="Creation and Destruction"></a>Creation and Destruction</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">// 声明</span><br><span class="line">cudaEvent_t event;</span><br><span class="line">// 创建</span><br><span class="line">cudaError_t cudaEventCreate(cudaEvent_t* event);</span><br><span class="line">// 销毁</span><br><span class="line">cudaError_t cudaEventDestroy(cudaEvent_t event);</span><br></pre></td></tr></table></figure>
+<p>同理streeam的释放，在调用该函数的时候，如果相关操作没完成，则会在操作完成后自动释放资源。</p>
+<p><strong>Recording Events and Mesuring Elapsed Time</strong><br>Events标记了stream执行过程中的一个点，我们就可以检查正在执行的stream中的操作是否到达该点，我们可以把event当成一个操作插入到stream中的众多操作中，当执行到该操作时，所做工作就是设置CPU的一个flag来标记表示完成。下面函数将event关联到指定stream。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cudaError_t cudaEventRecord(cudaEvent_t event, cudaStream_t stream = 0);</span><br></pre></td></tr></table></figure>
+<p>等待event会阻塞调用host线程，同步操作调用下面的函数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cudaError_t cudaEventSynchronize(cudaEvent_t event);</span><br></pre></td></tr></table></figure>
+<p>该函数类似于cudaStreamSynchronize，只不过是等待一个event而不是整个stream执行完毕。我们同时可以使用下面的API来测试event是否完成，该函数不会阻塞host：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cudaError_t cudaEventQuery(cudaEvent_t event);</span><br></pre></td></tr></table></figure>
+<p>该函数类似cudaStreamQuery。此外，还有专门的API可以度量两个event之间的时间间隔：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cudaError_t cudaEventElapsedTime(float* ms, cudaEvent_t start, cudaEvent_t stop);</span><br></pre></td></tr></table></figure>
+<p>返回start和stop之间的时间间隔，单位是毫秒。Start和stop不必关联到同一个stream上，但是要注意，如果二者任意一个关联到了non-NULL stream上，时间间隔可能要比期望的大。这是因为cudaEventRecord是异步发生的，我们没办法保证度量出来的时间恰好就是两个event之间，所以只是想要gpu工作的时间间隔，则stop和strat都关联到默认stream就好了。</p>
+<p>下面代码简单展示了如何使用event来度量时间：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">// create two events</span><br><span class="line">cudaEvent_t start, stop;</span><br><span class="line">cudaEventCreate(&amp;start);</span><br><span class="line">cudaEventCreate(&amp;stop);</span><br><span class="line">// record start event on the default stream</span><br><span class="line">cudaEventRecord(start);</span><br><span class="line">// execute kernel</span><br><span class="line">kernel&lt;&lt;&lt;grid, block&gt;&gt;&gt;(arguments);</span><br><span class="line">// record stop event on the default stream</span><br><span class="line">cudaEventRecord(stop);</span><br><span class="line">// wait until the stop event completes</span><br><span class="line">cudaEventSynchronize(stop);</span><br><span class="line">// calculate the elapsed time between two events</span><br><span class="line">float time;</span><br><span class="line">cudaEventElapsedTime(&amp;time, start, stop);</span><br><span class="line">// clean up the two events</span><br><span class="line">cudaEventDestroy(start);</span><br><span class="line">cudaEventDestroy(stop);</span><br></pre></td></tr></table></figure>
+
+<h3 id="Stream-Synchronization"><a href="#Stream-Synchronization" class="headerlink" title="Stream Synchronization"></a>Stream Synchronization</h3><p>由于所有non-default stream的操作对于host来说都是非阻塞的，就需要相应的同步操作。</p>
+<p>从host的角度来看，cuda操作可以被分为两类：</p>
+<ul>
+<li>Memory相关的操作</li>
+<li>Kernel launch<br>Kernel launch对于host来说都是异步的，许多memory操作则是同步的，比如cudaMemcpy，但是，cuda runtime也会提供异步函数来执行memory操作。</li>
+</ul>
+<p>我们已经知道Stream可以被分为同步（NULL stream）和异步（non-NULL stream）两种，同步异步是针对host来讲的，异步stream不会阻塞host的执行，而大多数同步stream则会阻塞host，不过kernel launch例外，不会阻塞host。</p>
+<p>此外，异步stream又可以被分为阻塞和非阻塞两种，阻塞非阻塞是异步stream针对同步stream来讲的。异步stream如果是阻塞stream，那么同步stream会阻塞该异步stream中的操作。如果异步stream是非阻塞stream，那么该stream不会阻塞同步stream中的操作（有点绕……）。</p>
+<p><strong>阻塞和非阻塞stream</strong><br>使用cudaStreamCreate创建的是阻塞stream，也就是说，该stream中执行的操作会被早先执行的同步stream阻塞。通常来说，当issue一个NULL stream时，cuda context会等待之前所有阻塞stream完成后才执行该NULL stream，当然所有阻塞stream也会等待之前的NULL stream完成才开始执行。</p>
+<p>例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">kernel_1&lt;&lt;&lt;1, 1, 0, stream_1&gt;&gt;&gt;();</span><br><span class="line">kernel_2&lt;&lt;&lt;1, 1&gt;&gt;&gt;();</span><br><span class="line">kernel_3&lt;&lt;&lt;1, 1, 0, stream_2&gt;&gt;&gt;();</span><br></pre></td></tr></table></figure>
+<p>从device角度来说，这三个kernel是串行依次执行的，当然从host角度来说，却是并行非阻塞的。除了通过cudaStreamCreate生成的阻塞stream外，我们还可以通过下面的API配置生成非阻塞stream：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cudaError_t cudaStreamCreateWithFlags(cudaStream_t* pStream, unsigned int flags);</span><br><span class="line">// flag为以下两种，默认为第一种，非阻塞便是第二种。</span><br><span class="line">cudaStreamDefault: default stream creation flag (blocking)</span><br><span class="line">cudaStreamNonBlocking: asynchronous stream creation flag (non-blocking)</span><br></pre></td></tr></table></figure>
+<p>如果之前的kernel_1和kernel_3的stream被定义成第二种，就不会被阻塞。</p>
+<h3 id="Implicit-Synchronization"><a href="#Implicit-Synchronization" class="headerlink" title="Implicit Synchronization"></a>Implicit Synchronization</h3><p>Cuda有两种类型的host和device之间同步：显式和隐式。我们之前已经了解到显式同步API有：</p>
+<ul>
+<li>cudaDeviceSynchronize</li>
+<li>cudaStreamSynchronize</li>
+<li>cudaEventSynchronize<br>这三个函数由host显式的调用，在device上执行。</li>
+</ul>
+<p>隐式同步我们也了解过，比如cudaMemcpy就会隐式的同步device和host，因为该函数同步作用只是数据传输的副作用，所以称为隐式。了解这些隐式同步是很中要的，因为不经意的调用这样一个函数可能会导致性能急剧降低。</p>
+<p>隐式同步是cuda编程中比较特殊情况，因为隐式同步行为可能会导致意外的阻塞行为，通常发生在device端。许多memory相关的操作都会影响当前device的操作，比如：</p>
+<ul>
+<li>A page-locked host memory allocation</li>
+<li>A device memory allocation</li>
+<li>A device memset</li>
+<li>A memory copy between two addresses on the same device</li>
+<li>A modification to the L1/shared memory confi guration</li>
+</ul>
+<h3 id="Explicit-Synchronization"><a href="#Explicit-Synchronization" class="headerlink" title="Explicit Synchronization"></a>Explicit Synchronization</h3><p>从grid level来看显式同步方式，有如下几种：</p>
+<ul>
+<li>Synchronizing the device</li>
+<li>Synchronizing a stream</li>
+<li>Synchronizing an event in a stream</li>
+<li>Synchronizing across streams using an event<br>我们可以使用之前提到过的cudaDeviceSynchronize来同步该device上的所有操作。该函数会导致host等待所有device上的运算或者数据传输操作完成。显而易见，该函数是个heavyweight的函数，我们应该尽量减少这类函数的使用。</li>
+</ul>
+<p>通过使用cudaStreamSynchronize可以使host等待特定stream中的操作全部完成或者使用非阻塞版本的cudaStreamQuery来测试是否完成。</p>
+<p>Cuda event可以用来实现更细粒度的阻塞和同步，相关函数为cudaEventSynchronize和cudaEventSynchronize，用法类似stream相关的函数。此外，cudaStreamWaitEvent提供了一种灵活的方式来引入stream之间的依赖关系：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cudaError_t cudaStreamWaitEvent(cudaStream_t stream, cudaEvent_t event);</span><br></pre></td></tr></table></figure>
+<p>该函数会指定该stream等待特定的event，该event可以关联到相同或者不同的stream，对于不同stream的情况，如下图所示：</p>
+<p> <img src="/img/2020/0324/4.png" alt="&quot;4&quot;"></p>
+<p> Stream2会等待stream1中的event完成后继续执行。</p>
+<h3 id="Configurable-Events"><a href="#Configurable-Events" class="headerlink" title="Configurable Events"></a>Configurable Events</h3><p> Event的配置可用下面函数：<br> <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">cudaError_t cudaEventCreateWithFlags(cudaEvent_t* event, unsigned int flags);</span><br><span class="line">cudaEventDefault</span><br><span class="line">cudaEventBlockingSync</span><br><span class="line">cudaEventDisableTiming</span><br><span class="line">cudaEventInterprocess</span><br></pre></td></tr></table></figure><br> cudaEventBlockingSync说明该event会阻塞host。cudaEventSynchronize默认行为是使用CPU时钟来固定的查询event状态。使用cudaEventBlockingSync，调用线程会进入休眠，将控制权交给其他线程或者进程，直到event完成为止。但是这样会导致少量的CPU时钟浪费，也会增加event完成和唤醒线程的之间的时间消耗。</p>
+<p> cudaEventDisableTiming指定event只能用来同步，并且不需要记录计时数据。这样扔掉记录时间戳的消耗可以提高cuudaStreamWaitEvent和cudaEventQuery的调用性能。</p>
+<p> cudaEventInterprocess指定event可以被用来作为inter-process event。</p>
+<p>NVIDIA CUDA板块：<a target="_blank" rel="noopener" href="https://developer.nvidia.com/cuda-zone">https://developer.nvidia.com/cuda-zone</a><br>CUDA在线文档：<a target="_blank" rel="noopener" href="http://docs.nvidia.com/cuda/index.html">http://docs.nvidia.com/cuda/index.html</a><br>转载原文注明：<a target="_blank" rel="noopener" href="http://www.cnblogs.com/1024incn/p/5891051.html">http://www.cnblogs.com/1024incn/p/5891051.html</a></p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="http://huangzhiyuan.github.io/2020/03/24/cuda-stream-and-event/" title="cuda stream and event" target="_blank" rel="external">http://huangzhiyuan.github.io/2020/03/24/cuda-stream-and-event/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/cofess" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/photo.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/cofess" target="_blank"><span class="text-dark">黄志远</span><small class="ml-1x">研发攻城狮</small></a></h3>
+        <div>靡不有初 鲜克有终</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2020/03/25/batchnorm-sycl-mkldnn-ut/" title="在SYCL device调用DNNL library纯C++文件实现"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2020/03/23/cpu-threading-and-torchscript-inference/" title="CPU THREADING AND TORCHSCRIPT INFERENCE"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipay.jpg" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开支付宝扫一扫，即可进行扫码打赏哦</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpay.jpg" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开微信扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/huangzhiyuan" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/u/7041265015" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://www.zhihu.com/people/justforfun099/activitie" target="_blank" title="Zhihu" data-toggle=tooltip data-placement=top><i class="icon icon-zhihu"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        &copy; 2022 黄志远
+        
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

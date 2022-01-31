@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>深度学习框架的来龙去脉 | Blog</title>
+  <meta name="description" content="哪一个深度学习框架是最好用呢？哪一个深度学习框架更适合自己呢？这真是一个十分让人纠结的问题。不过，在你选择站队之前，不妨和我一起来了解一下各个框架的来龙去脉，先看一看哪一个框架更能激发起你的兴趣，有了兴趣，剩下的问题就变得简单了，我们能够透过浮躁的排名和对比，深入研究这些框架背后的设计思想与技术本质。让每一个框架的优点都能为我所用。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深度学习框架的来龙去脉">
+<meta property="og:url" content="http://huangzhiyuan.github.io/2019/09/19/DeepLearning-Framework/index.html">
+<meta property="og:site_name" content="靡不有初 鲜克有终">
+<meta property="og:description" content="哪一个深度学习框架是最好用呢？哪一个深度学习框架更适合自己呢？这真是一个十分让人纠结的问题。不过，在你选择站队之前，不妨和我一起来了解一下各个框架的来龙去脉，先看一看哪一个框架更能激发起你的兴趣，有了兴趣，剩下的问题就变得简单了，我们能够透过浮躁的排名和对比，深入研究这些框架背后的设计思想与技术本质。让每一个框架的优点都能为我所用。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-09-19T14:13:09.000Z">
+<meta property="article:modified_time" content="2020-03-01T12:09:42.000Z">
+<meta property="article:author" content="黄志远">
+<meta property="article:tag" content="DL Framwork">
+<meta name="twitter:card" content="summary">
+  <!-- Canonical links -->
+  <link rel="canonical" href="http://huangzhiyuan.github.io/2019/09/19/DeepLearning-Framework/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="靡不有初 鲜克有终" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/cofess" target="_blank">
+          <img class="img-circle img-rotate" src="/images/photo.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">黄志远</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">研发攻城狮</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Shanghai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/huangzhiyuan" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/u/7041265015" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://www.zhihu.com/people/justforfun099/activitie" target="_blank" title="Zhihu" data-toggle=tooltip data-placement=top><i class="icon icon-zhihu"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验，广告位招租中~</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/CUDA/">CUDA</a><span class="category-list-count">10</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/GPU/">GPU</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Hexo/">Hexo</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Linux/">Linux</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/python/">python</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a><span class="category-list-count">15</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93/">技术总结</a><span class="category-list-count">47</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a><span class="category-list-count">22</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a><span class="category-list-count">14</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%94%B5%E5%BD%B1/">电影</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%AF%BB%E4%B9%A6/">读书</a><span class="category-list-count">8</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/AI/" rel="tag">AI</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AWK/" rel="tag">AWK</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/BP%E7%AE%97%E6%B3%95/" rel="tag">BP算法</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/" rel="tag">C++</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CNN/" rel="tag">CNN</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CPU-cache/" rel="tag">CPU-cache</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Optimization/" rel="tag">Code Optimization</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DL-Framwork/" rel="tag">DL Framwork</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DNNL/" rel="tag">DNNL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/" rel="tag">Docker</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GPU/" rel="tag">GPU</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Horovod/" rel="tag">Horovod</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java-memory/" rel="tag">Java memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java-%E9%9B%86%E5%90%88%E6%A1%86%E6%9E%B6/" rel="tag">Java 集合框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/KNN/" rel="tag">KNN</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LSTM/" rel="tag">LSTM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux/" rel="tag">Linux</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MLPerf/" rel="tag">MLPerf</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Memory/" rel="tag">Memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NUMA/" rel="tag">NUMA</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenMP/" rel="tag">OpenMP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RNN/" rel="tag">RNN</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SYCL/" rel="tag">SYCL</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TCP-IP/" rel="tag">TCP/IP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TVM/" rel="tag">TVM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/VIM/" rel="tag">VIM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Vtune/" rel="tag">Vtune</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/affinity/" rel="tag">affinity</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/batch-size/" rel="tag">batch-size</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/compiler/" rel="tag">compiler</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/conda-pip/" rel="tag">conda/pip</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cpu/" rel="tag">cpu</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cs179/" rel="tag">cs179</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cuda/" rel="tag">cuda</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/diff/" rel="tag">diff</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/embedding/" rel="tag">embedding</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gdb/" rel="tag">gdb</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/geohash/" rel="tag">geohash</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hash/" rel="tag">hash</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/" rel="tag">hexo</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hook/" rel="tag">hook</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hyperthreading/" rel="tag">hyperthreading</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/leetcode/" rel="tag">leetcode</a><span class="tag-list-count">18</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/license/" rel="tag">license</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mAP/" rel="tag">mAP</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/markdown/" rel="tag">markdown</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/memory/" rel="tag">memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ml2014/" rel="tag">ml2014</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pytorch/" rel="tag">pytorch</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/quantization/" rel="tag">quantization</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/stream-event/" rel="tag">stream/event</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tensorboard/" rel="tag">tensorboard</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tensoriterator/" rel="tag">tensoriterator</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/topk/" rel="tag">topk</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/volatile/" rel="tag">volatile</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vscode/" rel="tag">vscode</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webchat/" rel="tag">webchat</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/zero-copy/" rel="tag">zero-copy</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%B7%E5%80%BC%E8%A7%82/" rel="tag">价值观</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BD%93%E8%82%B2/" rel="tag">体育</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%81%A5%E8%BA%AB/" rel="tag">健身</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="tag">分布式</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%89%91%E6%8C%87offer/" rel="tag">剑指offer</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%89%AF%E4%B8%9A/" rel="tag">副业</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A0%E5%AF%86/" rel="tag">加密</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%A4%A7%E7%89%9B/" rel="tag">大牛</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%BD%B1%E8%AF%84/" rel="tag">影评</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%8A%A2%E7%BA%A2%E5%8C%85/" rel="tag">抢红包</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%91%98%E6%8A%84/" rel="tag">摘抄</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%96%B0%E9%97%BB/" rel="tag">新闻</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/" rel="tag">深入理解计算机系统</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E6%A1%86%E6%9E%B6/" rel="tag">深度学习框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%94%9F%E6%B4%BB/" rel="tag">生活</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%94%B5%E5%BD%B1/" rel="tag">电影</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1/" rel="tag">知识图谱</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E5%85%BB/" rel="tag">程序员的自我修养</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%81%8C%E4%B8%9A/" rel="tag">职业</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AF%BB%E4%B9%A6/" rel="tag">读书</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag">随笔</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9D%A2%E8%AF%95/" rel="tag">面试</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/" rel="tag">高并发</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/AI/" style="font-size: 13.13px;">AI</a> <a href="/tags/AWK/" style="font-size: 13px;">AWK</a> <a href="/tags/BP%E7%AE%97%E6%B3%95/" style="font-size: 13px;">BP算法</a> <a href="/tags/C/" style="font-size: 13.13px;">C++</a> <a href="/tags/CNN/" style="font-size: 13.13px;">CNN</a> <a href="/tags/CPU-cache/" style="font-size: 13px;">CPU-cache</a> <a href="/tags/Code-Optimization/" style="font-size: 13px;">Code Optimization</a> <a href="/tags/DL-Framwork/" style="font-size: 13px;">DL Framwork</a> <a href="/tags/DNNL/" style="font-size: 13px;">DNNL</a> <a href="/tags/Docker/" style="font-size: 13px;">Docker</a> <a href="/tags/GPU/" style="font-size: 13.5px;">GPU</a> <a href="/tags/Horovod/" style="font-size: 13px;">Horovod</a> <a href="/tags/Java-memory/" style="font-size: 13px;">Java memory</a> <a href="/tags/Java-%E9%9B%86%E5%90%88%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">Java 集合框架</a> <a href="/tags/KNN/" style="font-size: 13px;">KNN</a> <a href="/tags/LSTM/" style="font-size: 13px;">LSTM</a> <a href="/tags/Linux/" style="font-size: 13.5px;">Linux</a> <a href="/tags/MLPerf/" style="font-size: 13px;">MLPerf</a> <a href="/tags/Memory/" style="font-size: 13px;">Memory</a> <a href="/tags/NUMA/" style="font-size: 13px;">NUMA</a> <a href="/tags/OpenMP/" style="font-size: 13px;">OpenMP</a> <a href="/tags/RNN/" style="font-size: 13px;">RNN</a> <a href="/tags/SYCL/" style="font-size: 13.38px;">SYCL</a> <a href="/tags/TCP-IP/" style="font-size: 13px;">TCP/IP</a> <a href="/tags/TVM/" style="font-size: 13px;">TVM</a> <a href="/tags/VIM/" style="font-size: 13px;">VIM</a> <a href="/tags/Vtune/" style="font-size: 13px;">Vtune</a> <a href="/tags/affinity/" style="font-size: 13px;">affinity</a> <a href="/tags/atomic/" style="font-size: 13px;">atomic</a> <a href="/tags/batch-size/" style="font-size: 13px;">batch-size</a> <a href="/tags/compiler/" style="font-size: 13px;">compiler</a> <a href="/tags/conda-pip/" style="font-size: 13px;">conda/pip</a> <a href="/tags/cpu/" style="font-size: 13.13px;">cpu</a> <a href="/tags/cs179/" style="font-size: 13.63px;">cs179</a> <a href="/tags/cuda/" style="font-size: 13.88px;">cuda</a> <a href="/tags/diff/" style="font-size: 13px;">diff</a> <a href="/tags/embedding/" style="font-size: 13px;">embedding</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/gdb/" style="font-size: 13px;">gdb</a> <a href="/tags/geohash/" style="font-size: 13px;">geohash</a> <a href="/tags/git/" style="font-size: 13.13px;">git</a> <a href="/tags/hash/" style="font-size: 13px;">hash</a> <a href="/tags/hexo/" style="font-size: 13px;">hexo</a> <a href="/tags/hook/" style="font-size: 13px;">hook</a> <a href="/tags/hyperthreading/" style="font-size: 13px;">hyperthreading</a> <a href="/tags/leetcode/" style="font-size: 14px;">leetcode</a> <a href="/tags/license/" style="font-size: 13px;">license</a> <a href="/tags/mAP/" style="font-size: 13.13px;">mAP</a> <a href="/tags/markdown/" style="font-size: 13.13px;">markdown</a> <a href="/tags/memory/" style="font-size: 13px;">memory</a> <a href="/tags/ml2014/" style="font-size: 13px;">ml2014</a> <a href="/tags/pytorch/" style="font-size: 13.75px;">pytorch</a> <a href="/tags/quantization/" style="font-size: 13px;">quantization</a> <a href="/tags/stream-event/" style="font-size: 13px;">stream/event</a> <a href="/tags/tensorboard/" style="font-size: 13px;">tensorboard</a> <a href="/tags/tensoriterator/" style="font-size: 13px;">tensoriterator</a> <a href="/tags/topk/" style="font-size: 13px;">topk</a> <a href="/tags/volatile/" style="font-size: 13px;">volatile</a> <a href="/tags/vscode/" style="font-size: 13px;">vscode</a> <a href="/tags/webchat/" style="font-size: 13px;">webchat</a> <a href="/tags/zero-copy/" style="font-size: 13px;">zero-copy</a> <a href="/tags/%E4%BB%B7%E5%80%BC%E8%A7%82/" style="font-size: 13px;">价值观</a> <a href="/tags/%E4%BD%93%E8%82%B2/" style="font-size: 13px;">体育</a> <a href="/tags/%E5%81%A5%E8%BA%AB/" style="font-size: 13px;">健身</a> <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" style="font-size: 13px;">分布式</a> <a href="/tags/%E5%89%91%E6%8C%87offer/" style="font-size: 13px;">剑指offer</a> <a href="/tags/%E5%89%AF%E4%B8%9A/" style="font-size: 13px;">副业</a> <a href="/tags/%E5%8A%A0%E5%AF%86/" style="font-size: 13px;">加密</a> <a href="/tags/%E5%A4%A7%E7%89%9B/" style="font-size: 13px;">大牛</a> <a href="/tags/%E5%BD%B1%E8%AF%84/" style="font-size: 13.13px;">影评</a> <a href="/tags/%E6%8A%A2%E7%BA%A2%E5%8C%85/" style="font-size: 13px;">抢红包</a> <a href="/tags/%E6%91%98%E6%8A%84/" style="font-size: 13.25px;">摘抄</a> <a href="/tags/%E6%96%B0%E9%97%BB/" style="font-size: 13.75px;">新闻</a> <a href="/tags/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/" style="font-size: 13px;">深入理解计算机系统</a> <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">深度学习框架</a> <a href="/tags/%E7%94%9F%E6%B4%BB/" style="font-size: 13.13px;">生活</a> <a href="/tags/%E7%94%B5%E5%BD%B1/" style="font-size: 13.13px;">电影</a> <a href="/tags/%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1/" style="font-size: 13px;">知识图谱</a> <a href="/tags/%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E5%85%BB/" style="font-size: 13.13px;">程序员的自我修养</a> <a href="/tags/%E8%81%8C%E4%B8%9A/" style="font-size: 13px;">职业</a> <a href="/tags/%E8%AF%BB%E4%B9%A6/" style="font-size: 13.25px;">读书</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 13px;">随笔</a> <a href="/tags/%E9%9D%A2%E8%AF%95/" style="font-size: 13px;">面试</a> <a href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/" style="font-size: 13px;">高并发</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">八月 2020</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/07/">七月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/06/">六月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/05/">五月 2020</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">10</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">39</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/02/">二月 2020</a><span class="archive-list-count">32</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">十月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/12/">十二月 2017</a><span class="archive-list-count">9</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/11/">十一月 2017</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/07/">七月 2017</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">六月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/05/">五月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/03/">三月 2017</a><span class="archive-list-count">7</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/02/">二月 2016</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-CPU/" class="title">Linux性能优化实战之CPU性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-IO/" class="title">Linux性能优化实战之IO性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-Memory/" class="title">Linux性能优化实战之内存性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-Network/" class="title">Linux性能优化实战之网络性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat/" class="title">Linux性能优化实战</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-DeepLearning-Framework" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      深度学习框架的来龙去脉
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2019/09/19/DeepLearning-Framework/" class="article-date">
+	  <time datetime="2019-09-19T14:13:09.000Z" itemprop="datePublished">2019-09-19</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/DL-Framwork/" rel="tag">DL Framwork</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2019/09/19/DeepLearning-Framework/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <p>哪一个深度学习框架是最好用呢？哪一个深度学习框架更适合自己呢？这真是一个十分让人纠结的问题。不过，在你选择站队之前，不妨和我一起来了解一下各个框架的来龙去脉，先看一看哪一个框架更能激发起你的兴趣，有了兴趣，剩下的问题就变得简单了，我们能够透过浮躁的排名和对比，深入研究这些框架背后的设计思想与技术本质。让每一个框架的优点都能为我所用。</p>
+<span id="more"></span>
+
+
+<h1 id="深度学习框架概述与深度学习技术的四大阵营"><a href="#深度学习框架概述与深度学习技术的四大阵营" class="headerlink" title="深度学习框架概述与深度学习技术的四大阵营"></a>深度学习框架概述与深度学习技术的四大阵营</h1><p>人工智能从学术理论研究到生产应用的产品化开发过程中通常会涉及到多个不同的步骤和工具，这使得人工智能开发依赖的环境安装、部署、测试以及不断迭代改进准确性和性能调优的工作变得非常繁琐耗时也非常复杂。为了简化、加速和优化这个过程，学界和业界都作了很多的努力，开发并完善了多个基础的平台和通用工具，也被称会机器学习框架或深度学习框架。有了这些基础的平台和工具，我们就可以避免重复发明轮子，而专注于技术研究和产品创新。这些框架有早期从学术界走出的Caffe、 Torch和Theano，到现在产业界由Google领导的TensorFlow，Amazon选择押注的MXNet，Facebook倾力打造的PyTorch，Microsoft内部开源的CNTK等等。</p>
+<p>当前主流的深度学习框架列表：</p>
+<ul>
+<li>TensorFlow</li>
+<li>Keras</li>
+<li>PyTorch</li>
+<li>MXNet</li>
+<li>Caffe</li>
+<li>Caffe2</li>
+<li>Theano</li>
+<li>FastAI</li>
+<li>CNTK</li>
+<li>Gluon</li>
+<li>PyTorch</li>
+<li>PaddlePaddle</li>
+<li>Chainer</li>
+</ul>
+<p>其它小众深度学习框架还有如亚马逊曾经使用的深度学习引擎DSSTNE，卡耐基梅隆大学的小众DyNet，Intel开源的基于Spark且只能运行在Intel CPU芯片之上的深度学习库BigDL，Nervana开发的基于Python的深度学习库Neon，简洁无依赖且符合C++11标准的tiny-dnn，基于Theano的轻量级的库Lasagne等。</p>
+<p>这其中有几个框架曾经辉煌过，但是现在已经被更新的框架取代了，或者被新一代的版本收编了，我们称他们为没落的贵族，如Torch，基于Python的版本PyTorch已经取代了Torch。Caffe与Caffe2，Facebook已经把Caffe和Caffe2与PyTorch进行了整合，推出了全新的PyTorch 1.0，资历最老的框架之一Theano的创始人已经转投TensorFlow，已经停止更新维护走向没落了。</p>
+<p>基于Java和Scala的开源的分布式深度学习库Deeplearning4J在深度学习领域缺少像Python这样强大的社区支持，日本公司Preferred Networks开源的Chainer曾经是动态计算图的首选框架，特别适用于自然语言处理，但后来MXNet，PyTorch等也支持了这个特性，其优势也不复存在了。由于没有巨头的支持，Deeplearning4J和Chainer都只能默默的发展。</p>
+<p>看起来我们好像有很多很多选择，但其实如果我们进一步进行细分，就会发现我们的选择也并不是很多，没有巨头背书的框架就只能面临被淘汰和边缘化的命运了，其实顶级深度学习框架只有四大阵营，或者说是四大门派，Google领导的TensorFlow，Amazon选择的MXnet，Facebook倾力打造的PyTorch，Microsoft把内部核心技术开源的CNTK。虽然Keras等框架在深度学习框架中排名很高，但它却不是一个独立框架，而是作为前端对底层引擎进行上层封装的高级API层，提升易用性，此类深度学习框架的目标是只需几行代码就能让你构建一个神经网络，这类框架还有FastAI和Gluon。好在每一个前端上层轻量级框架又都对应一个最适合的基础底层框架，这样就出现了深度学习框架的四大技术方向，每一个技术方向背后又都有一个巨头在背书和推动。</p>
+<p>深度学习框架的四大阵营与其技术方向分别为：</p>
+<ul>
+<li>TensorFlow，前端框架Keras，背后巨头Google；</li>
+<li>PyTorch，前端框架FastAI，背后巨头Facebook；</li>
+<li>MXNet，前端框架Gluon，背后巨头Amazon；</li>
+<li>Cognitive Toolkit (CNTK)，前端框架Keras或Gluon，背后巨头Microsoft。</li>
+</ul>
+<h1 id="主流开源深度学习框架的来龙去脉"><a href="#主流开源深度学习框架的来龙去脉" class="headerlink" title="主流开源深度学习框架的来龙去脉"></a>主流开源深度学习框架的来龙去脉</h1><p>Google在2015年11月正式开源发布TensorFlow，TensorFlow由Google大脑团队开发，其命名来源于本身的运行原理。由于Google的巨大影响力和巨大支持，很快就成为深度学习领域占据绝对统治地位的框架。很多企业都在基于TensorFlow 开发自己的产品或将 TensorFlow整合到自己的产品中去，如Airbnb、Uber、Twitter、英特尔、高通、小米、京东等。</p>
+<p>Google大脑一开始是Google X的一个研究项目，2011年，Google大脑的雏形起源于一项斯坦福大学与谷歌公司的联合研究项目，由Google Fellow杰夫·迪恩（Jeff Dean）、研究员格雷科拉多（Greg Corrado）与斯坦福大学人工智能教授吴恩达（Andrew Ng）共同发起，把深度学习技术带到了人工智能问题的解决中，并建立起了第一代大型深度学习软件系统DistBelief，这是一个运行在谷歌云计算平台上的一个服务。随后，Google在其商业产品广泛应用部署了DistBelief的深度学习神经网络，包括搜索、YouTube、语音搜索、广告、相册、地图、街景和Google翻译等。</p>
+<p>2013年3月，Google收购了DNNResearch，DNNResearch创始人Geoffrey Hinton也由此进入Google大脑团队工作。Google指派Geoffrey Hinton和Jeff Dean等开始简化和重构DistBelief的代码库，使其变成一个更快、更健壮的应用级别代码库，形成了TensorFlow。对DistBelief 进行了多方面的改进后，使其可在小到一部手机，大到数千台数据中心服务器的各种设备上运行，TensorFlow也成为了基于 DistBelief 进行研发的第二代人工智能学习系统，可被用于语音识别或图像识别等多想机器学习和深度学习领域。一个突破性的成果是在2012年6月Google大脑用16000台电脑模拟人类电脑的活动，并在学习1000万张图像后，成功在YouTube视频中找出了“猫”，这可能意味着机器第一次有了猫的概念。</p>
+<p>Google在2014年1月又收购了英国DeepMind，DeepMind成为谷歌大脑之外另一个研究人工智能方向的团队。DeepMind在4年来的首要的人工智能研究平台是开源软件Torch7机器学习库，Torch7非常灵活和快速，能够快速建模。在Google的大力支持下，AlphaGo横空出世，使人工智能第一次战胜人类职业围棋高手，轰动世界，以一己之力推动人工智能应用到了一个新的高度。2016年4月，DeepMind宣布将开始在将来所有的研究中开始使用TensorFlow。这样Google的两大人工智能团队也统一到了统一的深度学习框架TensorFlow上。</p>
+<p>TensorFlow的编程接口支持C++和Python，Java、Go、R和Haskell API也将被支持，是所有深度学习框架中对开发语言支持的最全面的，TensorFlow可以在AWS和Google Cloud中运行，支持Windows 7、Windows 10、Windows Server 2016，TenserFlow使用C++ Eigen库，可以在ARM架构上编译和优化，使其可以在各种服务器和移动设备上部署自己的训练模型，也是在所有深度学习框架中支持运行平台最多的。TensorFlow基于计算图实现自动微分系统，使用数据流图进行数值计算，图中的节点代表数学运算，图中的线条则代表在这些节点之间传递的张量（多维数组）。TensorFlow追求对运行平台和开发语言最广泛的支持，力求统一深度学习领域，但是这也带来了过于复杂的系统设计，TensorFlow在GitHub上的总代码数已经超过100万行了，TensorFlow在接口设计中创造了很多新的抽象概念，如图、会话、命名空间和Place-Holder等，同一个功能又提供了多种实现，使用上可能有细微的区别，频繁的接口变动也导致了向后兼容性上的问题。由于直接使用TensorFlow过于复杂，包括Google官方在内的很多开发者尝试构建一个高级API作为TensorFlow更易用的接口，包括Keras、Sonnet、TFLearn、TensorLayer、Slim、Fold、PrettyLayer等，其中Keras在2017年成为第一个被Google添加到TensorFlow核心中的高级别框架，这让Keras变成TensorFlow的默认API，使Keras + TensorFlow的组合成为Google官方认可并大力支持的平台。TensorFlow仍在快速的发展中，是最具野心和最具统治力的深度学习框架，十分期待2019年即将发布的TensorFlow 2.0带来的新技术。</p>
+<p>Keras是第二流行的深度学习框架，但并不是独立框架。Keras由纯Python编写而成，以TensorFlow、Theano或CNTK为底层引擎。Keras是在Tensorflow上层封装的高级API层，提升易用性。Keras的目标是只需几行代码就能让你构建一个神经网络。</p>
+<p>Keras的创造者是谷歌AI研究员Francois Chollet，也同时参与TensorFlow的开发，最初创建Keras是为了自己有一个好的工具来使用RNNs。在研究LSTM在自然语言处理中的应用时用Theano做了一个可重用的开源实现，逐渐变成了一个框架，并命名为Keras。Keras在2015年3月开源，最初因为同时支持CNN和RNN，可以通过Python代码而不是通过配置文件来定义模型等特点而逐渐流行起来。2017年，Keras成为第一个被Google添加到TensorFlow核心中的高级别框架，这让Keras变成Tensorflow的默认API，使Keras + TensorFlow的组合成为Google官方认可并大力支持的平台。</p>
+<p>学习使用Keras很容易，但是大多数时间都在学习如何调用接口，难以真正学习到深度学习的内容，Keras层层封装让用户在新增操作或获取底层的数据信息时过于困难，存在过度封装导致缺乏灵活性的问题，性能也存在瓶颈。Keras有助于快速入门，但是不应该依赖它，需要进一步学习使用TensorFlow。</p>
+<p>PyTorch是Facebook开发的用于训练神经网络的Python包，也是Facebook倾力打造的首选深度学习框架，在2017年1月首次推出，Facebook人工智能研究院（FAIR）在GitHub上开源了PyTorch，迅速占领了GitHub热度榜榜首，Facebook用Python重写了基于Lua语言的深度学习库Torch，PyTorch不是简单的封装Torch提供Python接口，而是对Tensor上的全部模块进行了重构，新增了自动求导系统，使其成为最流行的动态图框架，这使得PyTorch对于开发人员更为原生，与TensorFlow相比也更加年轻更有活力，PyTorch继承了Torch灵活、动态的编程环境和用户友好的界面，支持以快速和灵活的方式构建动态神经网络，还允许在训练过程中快速更改代码而不妨碍其性能，即支持动态图形等尖端AI模型的能力，是快速实验的理想选择。</p>
+<p>PyTorch专注于快速原型设计和研究的灵活性，很快就成为AI研究人员的热门选择，流行度的增长十分迅猛，现在已经是第二流行的独立框架。PyTorch的社区迅速发展起来。PyTorch 现在是GitHub 上增长速度第二快的开源项目，在过去的12个月里，贡献者增加了2.8倍。这个增速是十分可怕的，意味着PyTorch成为现在最受关注的深度学习框架，能够挑战TensorFlow的霸主地位。</p>
+<p>2018年12月08号，在 NeurIPS 大会上，Facebook 正式发布 PyTorch 1.0稳定版，目前领导PyTorch 1.0核心开发工作的是Facebook的AI基础设施技术负责人Dmytro Dzhulgakov。Caffe的作者贾扬清发文介绍PyTorch 1.0 = Caffe2 + PyTorch。现在，PyTorch 1.0已经为大量Facebook产品和服务提供了支持，包括每天执行60亿次文本翻译。</p>
+<p>根据贾扬清发文介绍，PyTorch 1.0拥有能在命令式执行模式和声明式执行模式之间无缝转换的混合前端，这样就不需要开发人员通过重写代码来优化性能或从Python迁移，能够无缝地共享用于原型设计的即时模式和用于生产环境的图执行模式之间的大部分代码。PyTorch 1.0将即时模式和图执行模式融合在一起，既具备研究的灵活性，也具备生产所需的最优性能。</p>
+<p>PyTorch 1.0重构和统一了Caffe2和PyTorch 0.4框架的代码库，删除了重复的组件并共享上层抽象，得到了一个统一的框架，支持高效的图模式执行、移动部署和广泛的供应商集成等。这让开发人员可以同时拥有PyTorch和Caffe2的优势，同时做到快速验证和优化性能。PyTorch的命令式前端通过其灵活而高效的编程模型实现了更快速的原型设计和实验，又吸取了Caffe2和ONNX的模块化以及面向生产的特点，使得深度学习项目能从研究原型快速无缝衔接到生产部署，在一个框架中统一实验研究和生产能力。</p>
+<p>Theano最早始于2007，以一个希腊数学家的名字命名，早期开发者是蒙特利尔大学的Yoshua Bengio 和 Ian Goodfellow。Theano是最老牌和最稳定的库之一，是第一个有较大影响力的Python深度学习框架，早期的深度学习库的开不是Caffe就是Theano。</p>
+<p>Theano是一个比较底层的Python库，这一点上和TensorFlow类似，专门用于定义、优化和求值数学表达式，效率高，非常适用于多维数组，所以特别适合做机器学习。Theano可以被理解为一个数学表达式的编译器，Theano框架会对用符号式语言定义的程序进行编译，来高效运行于 GPU 或 CPU上。但是Theano不支持分布式计算，这使其更适合于在实验室的学习入门，并不适用于大型的工业界的项目，这可能是其技术上落后的一个重要原因。</p>
+<p>Theano来自学界，它最初是为学术研究而设计，这使得深度学习领域的许多学者至今仍在使用 Theano，但Theano在工程设计上有较大的缺陷，有难调试，构建图慢的缺点，开发人员在它的基础之上，开发了Lasagne、Blocks、PyLearn2和Keras上层接口封装框架。但随着 Tensorflow 在谷歌的大力支持下强势崛起，使用Theano的人已经越来越少了。标志性的事件就是创始者之一的 Ian Goodfellow 放弃 Theano 转去谷歌开发 Tensorflow了。而另一位创始人Yoshua Bengio 于 2017 年 09 月宣布不再维护 Theano，所以这个项目事实上已经宣告死亡了。基于 Theano 的前端轻量级的神经网络库，如 Lasagne和Blocks也同样没落了。但我们可以说，Theano作为第一个主要的Python深度学习框架，已经完成了自己的使命，为早期的研究人员提供了强大的工具和很大的帮助，为后来的深度学习框架奠定了以计算图为框架核心 ，采用GPU加速计算的基本设计理念。</p>
+<p>Caffe的全称是Convolutional Architecture for Fast Feature Embedding，意为“用于特征提取的卷积架构”，它是一个清晰、高效的深度学习框架，核心语言是C++。作者是贾扬清，贾扬清在清华大学获得本科和硕士学位。在UC Berkeley获得计算机科学博士学位。他曾在Google Brain工作，参与过TensorFlow的开发。贾扬清现在是Facebook AI架构总监，但据2019年3月的最新消息贾扬清可能加入阿里巴巴任VP。Caffe最初发起于2013年9月，从贾扬清用NVIDIA的学术捐赠的一块K20 GPU开始攒了一个机器开始，然后用大概两个多月的时间写了整个架构和ImageNet所需要的各个实现。12月份正式在Github上发布开源。</p>
+<p>Caffe是一款十分适合深度学习入门的开源框架，它的代码和框架都比较简单，代码易于扩展，运行速度快，也适合深入学习分析。正是由于Caffe有着更小的系统框架，使得一些探索性的实验更加容易一些。即使在Google工作时，贾扬清仍然会经常使用Caffe来做一些快速的prototype和实验，Google的研究人员通常使用各种自己熟悉的开源框架来进行小规模的研究，然后用DistBelief（Google Brain的大规模的机器学习框架）来作为一个通用的框架实现大规模产品级别的部署。</p>
+<p>在Caffe之前，深度学习领域缺少一个完全公开所有的代码、算法和各种细节的框架，导致很多的研究人员和博士需要一次又一次重复实现相同的算法，所以说Caffe对于深度学习开源社区的贡献非常大，Caffe是学术界和业界公认的最老牌的框架之一，是很多人入门的基础。</p>
+<p>Caffe不支持分布式，与其它更新的深度学习框架相比，Caffe确实不够灵活，文档也不够用，Caffe的安装也比较复杂，安装需要解决大量的依赖包。大家会发现套用原有模型很方便，但个性化就要读源代码，灵活性明显不足，为模型做调整常常需要用 C++ 和 CUDA编程，虽然使用Python 和Matlab 也能做一些小调整。与Keras过度封装导致缺乏灵活性不同，Caffe缺乏灵活性主要是由于其自身的设计，在Caffe中最主要的抽象对象是层，每实现一个新层，必须要利用C++实现其前向传播和反向传播代码，如果需要新层在GPU上运行，还需要同时用CUDA实现这一层的前向传播和反向传播，这让不熟悉C++和CUDA的用户扩展Caffe非常困难。这也是由于Caffe最初定位在科研上面，并假设说大家都会有一定的时间和精力来读代码。</p>
+<p>与Theano的没落与终结不同，随着贾扬清在2016年2月加入Facebook，2016年11月，贾扬清在 Facebook 官网发文，介绍了Caffe2go，它使用Unix理念构建的轻量级、模块化框架，核心架构非常轻量化，可以附加多个模块，是一个在手机上也能运行神经网络模型，可以在移动平台上实时获取、分析、处理像素。Caffe2go规模更小、训练速度更快、对计算性能要求较低。Caffe2go是Facebook继Torch后的第二个AI平台，因为其大小、速度和灵活性上的优势，Facebook曾将Caffe2go推上了战略地位，和研究工具链Torch一起组成了Facebook 机器学习产品的核心。</p>
+<p>2017年4 月 18 日，Facebook 开源了 Caffe2，Facebook 的AI双平台定位已经清晰了，Caffe2 的开发重点是性能和跨平台部署，PyTorch 则专注于快速原型设计和研究的灵活性。Caffe2一开始的定位就是工业界产品级别的一个轻量化的深度学习算法框架，更注重模块化，支持大规模的分布式计算，支持跨平台，如同 TensorFlow，Caffe2 使用 C++ Eigen 库，支持 ARM 架构。并且为移动端实时计算做了很多优化，支持移动端iOS, Android, 服务器端Linux, Mac, Windows, 甚至一些物联网设备如Raspberry Pi, NVIDIA Jetson TX2等平台部署。Caffe2将AI生产工具标准化，目前全球各地的Facebook服务器和超过10亿部手机通过Caffe2运行神经网络，其中包含了最新的iPhone和Android手机。</p>
+<p>虽然Facebook的Caffe2和PyTorch两个团队一直在独立的发展，但是二者的组件已经被大量共享，双方也意识到将各自的优势特性整合到一个包中的重要性，实现从快速原型到快速部署执行的平稳过渡是有重要意义的，这样也可以轻松地使用共享工具提高开发效率。最终可以将 PyTorch 前端的灵活用户体验与 Caffe2 后端的扩展、部署和嵌入式功能相结合。在2018年12月的 NeurIPS 大会上，Facebook 正式发布 PyTorch 1.0稳定版，支持AWS、谷歌云、微软Azure等云平台。贾扬清发文介绍PyTorch 1.0 = Caffe2 + PyTorch，至此，Facebook的AI深度学习框架正式统一。Caffe, Caffe2, Torch, PyTorch的用户们都不用再纠结了，有了统一明确的技术架构与技术路线，就是PyTorch 1.0。</p>
+<p>Torch在2002年诞生于纽约大学Torch，后续加入了深度学习的内容，是一个著名开源深度学习框架，是BSD3协议下的开源项目。由Facebook的Ronan Collobert和Soumith Chintala，Twitter的Clement Farabet，DeepMind的Koray Kavukcuoglu共同开发和维护，所以Torch7自然也成为Facebook和DeepMind一开始使用的深度学习工具，Twitter和英伟达也都使用定制版的Torch用于人工智能研究，DeepMind在被Google收购后转向了TensorFlow。</p>
+<p>Torch的编程语言为1990 年代诞生于巴西的 Lua，Lua相当于一个小型加强版的C，支持类和面向对象，运行效率极高，所以需要先学习Lua语言然后才能使用Torch，在开发人员没有熟练掌握Lua之前，使用Torch很难提高开发的整体生产力。其实Lua和Python都属于比较容易入门的语言，但Python很明显已经抢先统治了机器学习领域，大多数开发人员都不愿意为了使用一个框架而学习一门新语言，相反，一些开发人员在学习并掌握一门新语言后才会愿意使用基于这门语言的框架，这一点使Torch的进一步发展受到了限制，并导致Torch推广的困难。</p>
+<p>Torch是命令式的，因此与TensorFlow和Theano相比，Torch的灵活度更高，而前两者是陈述式的（declarative），必须declare一个计算图。Torch 非常适用于卷积神经网络，Torch的原生交互界面比其他框架用起来更自然、更得心应手。第三方的扩展工具包提供了丰富的递归神经网络RNN模型。</p>
+<p>FastAI不是一个独立的深度学习框架，而是一个基于PyTorch的上层封装的高级API层，提升PyTorch的易用性，目标是只需几行代码就能让你构建一个神经网络。FastAI并不是简单意义上的将PyTorch封装了一遍，而是类似于Keras与TensorFlow的关系，充分借鉴了Keras，将PyTorch的强大性易用化。</p>
+<p>FastAI最初的版本在2018年9月发布，FastAI 1.0版本在2018年10月Facebook开发者大会上和Facebook的PyTorch 1.0 rc1预览版一起发布，在实验和测试比拼中，用5行代码就可以完成Keras用31行才能解决的事情，因此，在Hacker News上关注度比PyTorch 1.0还高，FastAI基于PyTorch 1.0框架，也被Facebook官方重点宣传。</p>
+<p>MXNet是一个轻量级、可移植、灵活的分布式的开源深度学习框架，也是Amazon官方主推的深度学习框架，MXNet 支持卷积神经网络（CNN）、循环神经网络（RNN）和长短时间记忆网络（LTSM），为图像、手写文字和语音的识别和预测以及自然语言处理提供了出色的工具。MXNet项目诞生于2015年9月，作者是当时在卡耐基梅隆大学CMU读博士的李沐，MXNet 在2016年11月被亚马逊选为官方开源平台，2017年1月23日，MXNet项目进入Apache基金会，成为Apache的孵化器项目。Amazon和Apache的双重认可使其生命力更加强大，成为能够与Google的TensorFlow，Facebook的PyTorch和微软的CNTK分庭抗礼的顶级深度学习框架。值得一提的是，其实MXNet的很多作者都是中国人，其最大的贡献组织为百度。</p>
+<p>Amazon的AWS虽然支持TensorFlow等主流深度学习框架，但是Amazon不会傻到为Google做嫁衣而依赖Tensorflow，深度学习技术平台太重要了，Amazon不会受制于人。Amazon之所以选择MXNet作为首选开源深度学习框架与平台与李沐在 CMU 的两位博士导师之一的Alex Smola有很大的关系，2015 年Alex从CMU重返工业界，加入亚马逊AWS 担任机器学习总监。</p>
+<p>在2014年NIPS上，同为上海交大校友的陈天奇和李沐在讨论到各自在做深度学习Toolkits的项目时，发现他们都在做很多重复性的工作，如文件加载等，于是他们又拉来几个优秀的C++机器学习系统的开发人员共同成立了DMLC（Distributed (Deep) Machine Learning Community），一个小的机器学习爱好者圈子，号召大家发挥各自所长，一起合作开发，发起了通过配置来定义和训练神经网络的CXXNet和提供类似numpy一样的张量计算接口的Minerva两个深度学习项目，本意是更方便共享各自项目的代码，并给用户提供一致的体验。CXXNet擅长使用卷积神经网络进行图片分类，但它的灵活性不足，用户只能通过配置来定义模型，而无法进行交互式的编程。Minerva则更灵活，但不够稳定，李沐想同时给两个项目做分布式的扩展，后来自然想到把两个项目合并起来，于是就有了MXNet，可以读作“mix net”，其名字来自Minerva的M和CXXNet的XNet。其中Symbol的想法来自CXXNet，而NDArray的想法来自Minerva。</p>
+<p>目前主流的深度学习系统一般采用命令式编程（imperative programming，比如 Torch）或声明式编程（declarative programming，比如 Caffe，theano 和 TensorFlow）两种编程模式中的一种，而 MXNet 尝试将两种模式结合起来，在命令式编程上 MXNet 提供张量运算，而声明式编程中 MXNet 支持符号表达式。用户可以根据需要自由选择，同时，MXNet 支持多种语言的 API 接口，包括 Python、C++（并支持在 Android 和 iOS 上编译）、R、Scala、Julia、Matlab 和 JavaScript。</p>
+<p>MXNet长期处于快速迭代的过程中，文档却长时间没有更新，导致新用户难以上手，老用户也需要查阅源码才能理解MXNet接口的用法，为了完善MXNet的生态圈并推广，MXNet先后推出了MinPy，Keras和Gluon等高级API封装接口，但目前前两个高级接口已经停止了开发，Gluon模仿了PyTorch的接口设计，成为李沐和Amazon主推的配套MXNet使用的上层API。</p>
+<p>MXNet的优势是分布式支持和对内存、显存的明显优化，同样的模型，MXNet往往占用更小的内存和显存，在分布式环境下，MXNet的扩展性能也显示优于其他框架。Keras作Francois Chollet认为除了TensorFlow，MXNet和它的高级API接口Gluon也很有前景，与TensorFlow一样，MXNet是为数不多的具有实际生产级和可扩展性的框架。亚马逊有一个庞大的团队在很认真的支持MXNet，成为了MXNet背后强大的工程力量。</p>
+<p>2017年10月20日，Amazon和 Microsoft 联合发布了Gluon，Gluon是一种新的动态计算图的开源深度学习框架的高级接口，简而言之，是一个基于MXNet深度学习框架的类似Keras和FastAI的上层API接口，但其最大的特点是Gluon同时支持灵活的动态图和高效的静态图，支持符号式和命令式编程的API，支持高度可扩展的训练，能够高效的评估模型，可帮助开发人员更轻松、更快速地构建机器学习模型，而不牺牲任何性能。Gluon现已在Apache MXNet 中可用，后续将支持Microsoft Cognitive Toolkit及其他架构。微软Azure的所有服务、工具和基础结构也将全面支持Gluon。</p>
+<p>微软的人工智能工具包是CNTK，CNTK 全名为Computational Network Toolkit，2016年1月26日宣布在GitHub上开源，10月份又更命名为微软认知工具包Microsoft Cognitive Toolkit。CNTK最初是面向语音识别的框架，早在2014年，黄学东博士和他的团队正在对计算机能够理解语音的能力进行改进，但是手上的工具却延缓了他们的进度，一组自发组成的团队构想设计了一个全新的方案，由此诞生了CNTK，微软语音识别研究团队在语音识别上不断打破世界纪录并逼近人类水准，使得微软的技术受到广泛关注，在处理图像、手写字体和语音识别问题上，它都是很好的选择。Cognitive Toolkit工具包在微软内部被广泛使用，微软的人工智能工具包跟其他工具包最大的不同在于数据，Cognitive Toolkit的数据都来自于微软自己的大规模生产数据。包括Cortana、Bing以及Cognitive Services中的Emotion API，这些都是用Cognitive Toolkit创建出来的。</p>
+<p>CNTK基于C++架构，Python或C++编程接口，CNTK 支持 64 位的 Linux 和 Windows 系统，在 MIT 许可证下发布。支持跨平台的CPU/GPU 部署。CNTK 在 Azure GPU Lab 上显示出最高效的分布式计算性能。但CNTK现在还不支持ARM 架构，使其在移动设备上的功能受到了限制。</p>
+<p>Chainer是由日本深度学习创业公司Preferred Networks于2015年6月发布的深度学习框架。最大的特点是支持动态图，曾经是动态计算图的首选框架，特别适用于自然语言处理。Chainer是用Python开发的，支持多种前馈神经网络，包括卷积网络、循环网络、递归网络，支持运行中动态定义的网络（Define-by-Run）。前馈计算可以引入Python的各种控制流，同时反向传播时不受干扰，简化了调试错误的难度。</p>
+<p>开放神经网络交换（ONNX，全称是“Open Neural Network Exchange”）格式的发布于2017年9月横空出世。ONNX最初由微软和Facebook联合发布，后来亚马逊也加入进来，并在12月发布了V1版本，宣布支持ONNX的公司还有AMD、ARM、华为、 IBM、英特尔、Qualcomm等。ONNX是一个表示深度学习模型的开放格式。它使用户可以更轻松地在不同框架之间转移模型。例如，它允许用户构建一个PyTorch模型，然后使用MXNet运行该模型来进行推理。ONNX从一开始就支持Caffe2，Microsoft Cognitive Toolkit，MXNet和PyTorch，Google虽然目前还不在这个阵营中，但与其他开源项目一样，社区也已经为TensorFlow添加了一个转换器。</p>
+<h1 id="诞生于中国本土的深度学习框架"><a href="#诞生于中国本土的深度学习框架" class="headerlink" title="诞生于中国本土的深度学习框架"></a>诞生于中国本土的深度学习框架</h1><p>下面要重点介绍一下诞生于中国本土深度学习框架，他们正在崛起：</p>
+<h2 id="华为MindSpore"><a href="#华为MindSpore" class="headerlink" title="华为MindSpore"></a>华为MindSpore</h2><p>2018年10月10日，华为在上海全联接大会上首次发布华为AI战略与全栈全场景AI解决方案，包括Ascend(昇腾)系列AI芯片以及CANN算子库、MindSpore深度学习框架、AI开发平台ModelArts。华为MindSpore支持端、边、云独立的和协同的统一训练和推理框架。但是目前仍然在开发中，以华为在中国科技界地位和研发投入，自然是最受大家期待的。华为云虽然可以支持其它所有主流的深度学习框架，但就如同Amazon选择MXNet一样，这不是一个可以讨论的问题，为了不受制于人，是一定要有的。我相信为了与其它主流框架进行竞争，MindSpore将来也一定会开源的。</p>
+<h2 id="百度PaddlePaddle"><a href="#百度PaddlePaddle" class="headerlink" title="百度PaddlePaddle"></a>百度PaddlePaddle</h2><p>2016年8月底百度开源了内部使用多年的深度学习平台PaddlePaddle，PaddlePaddle 100% 都在Github上公开，没有内部版本。PaddlePaddle能够应用于自然语言处理、图像识别、推荐引擎等多个领域，其优势在于开放的多个领先的预训练中文模型。PaddlePaddle的2013年版本是百度杰出科学家徐伟主导设计和开发的，其设计思路是每一个模型的表示方式都是“一串Layers”， Caffe的作者贾扬清称赞了百度的 PaddlePaddle，并说“整体的设计感觉和 Caffe 心有灵犀”。三年后，百度AI团队在徐伟的指导下作了两次升级，2017年4月推出PaddlePaddle v2，v2参考TensorFlow增加了Operators的概念，把Layers打碎成更细粒度的Operators，同时支持更复杂的网络拓扑图而不只是“串”。2017 年底推出PaddlePaddleFluid。Fluid类似PyTorch，提供自己的解释器甚至编译器，所以不受限于 Python 的执行速度问题。</p>
+<h2 id="阿里巴巴XDL-X-Deep-Learning"><a href="#阿里巴巴XDL-X-Deep-Learning" class="headerlink" title="阿里巴巴XDL (X-Deep Learning)"></a>阿里巴巴XDL (X-Deep Learning)</h2><p>2018年11月，阿里巴巴宣布，其大数据营销平台阿里妈妈将把其应用于自身广告业务的算法框架XDL (X-Deep Learning)进行开源，正式加入开源学习框架的激烈竞争。XDL主要是针对特定应用场景如广告的深度学习问题的解决方案，是上层高级API框架而不是底层框架。XDL需要采用桥接的方式配合使用 TensorFlow 和 MXNet 作为单节点的计算后端，XDL依赖于阿里提供特定的部署环境。</p>
+<h2 id="小米MACE"><a href="#小米MACE" class="headerlink" title="小米MACE"></a>小米MACE</h2><p>2018年6月28日，小米首席架构师、人工智能与云平台副总裁崔宝秋宣布正式开源小米自研的移动端深度学习框架(MACE) Mobile AI Compute Engine。它针对移动芯片特性进行了大量优化，目前在小米手机上已广泛应用，如人像模式、场景识别等。该框架采用与 Caffe2 类似的描述文件定义模型，因此它能非常便捷地部署移动端应用。目前该框架为 TensorFlow 和 Caffe 模型提供转换工具，并且其它框架定义的模型很快也能得到支持。</p>
+<h1 id="如何做深度学习框架的选型"><a href="#如何做深度学习框架的选型" class="headerlink" title="如何做深度学习框架的选型"></a>如何做深度学习框架的选型</h1><p>进入深度学习领域，基础是学习Python。可以说现在进入深度学习领域是相对容易的，在5年前，研究深度学习需要用C++或Matlab来编写大量的低级算法，这需要研究生教育甚至是博士的教育。现在不一样了，你只需要学习Python，就很容易上手，虽然深度学习正在支持越来越多的编程语言，但Python最简单而且应用最广泛的一个，Python最厉害的地方在于其生态系统非常好，有社区的强大支持，比如要装Python，有方便的Anaconda；要用Python visualization，有Matplotlib可以用；要Numerical computation有NumPy和SciPy可以选择，要做图像处理，还有Scikit-image。有很多现成的工具可以使用，可以节省自己大量的时间，这正是工程师所需要的。</p>
+<p>在对所有主流深度学习框架有一个了解后，我想是时候舍弃开发语言（基本都支持Python和C++，Java和Lua面向特定社区）、接口简易、文档完善、运算速度、性能、安装部署方便等方面的纯技术比较了，可能在这些框架诞生的初期我们更看重这些方面，但是随着各个框架的不断的完善与大企业的支持与不断的投入，各个框架之间也在不断的相互借鉴，最后的结果就是大家都差不多，各有千秋，我们现在要进入深一层维度的比拼，应该至少考虑下面几个维度：</p>
+<ol>
+<li>深度学习框架是否支持分布式计算，是不是分布式框架？</li>
+</ol>
+<p>分布式：TensorFlow、MXNet、PyTorch、CNTK、Caffe2、DL4J</p>
+<p>不支持分布式：Caffe、Theano、Torch</p>
+<ol start="2">
+<li>深度学习框架是否支持移动端部署？</li>
+</ol>
+<p>支持：PyTorch、MXNet、TensorFlow、Caffe2</p>
+<p>不支持：CNTK</p>
+<ol start="3">
+<li>编程接口的设计是命令式编程(imperative programming)还是声明式语言(declarative programing)？</li>
+</ol>
+<p>命令式：简单易懂的编程接口PyTorch，NumPy和Torch、TheanoMXNet通过NDarray模块和Gluon高级接口提供了非常类似PyTorch的编程接口。</p>
+<p>声明式：TensorFlow、Theano、Caffe</p>
+<ol start="4">
+<li>深度学习框架是基于动态计算图还是静态计算图？</li>
+</ol>
+<p>目前使用动态计算图的框架有PyTorch、MXNet、Chainer。</p>
+<p>目前使用静态计算图框架有TensorFlow、Keras、CNTK、Caffe/Caffe2、Theano等，其中TensorFlow主要使用了静态计算图，TensorFlow在2018年10月宣布了一个动态计算选项Eager Execution，但该特性还比较新颖可能并不是很成熟，并且 TensorFlow 的文档和项目依然以静态计算图为主。MXNet同时具有动态计算图和静态计算图两种机制。</p>
+<ol start="5">
+<li><p>深度学习框架是否有强大的社区和生态支持？重金打造的TensorFlow，多方押注的MXNet，正在崛起的PyTorh，技术稳重的CNTK，这四大开源深度学习框架都满足这一点。</p>
+</li>
+<li><p>深度学习框架背后是否有巨头支持？</p>
+</li>
+</ol>
+<p>Google领导的TensorFlow，Amazon选择的MXNet，Facebook倾力打造的PyTorch，Microsoft把内部核心技术开源的CNTK，这四大开源深度学习框架都满足这一点。</p>
+<p>通过对上面六个维度的思考，我想大家应该知道该如何作选择了：首先，静态计算图很好，但是动态图是未来和趋势，对于大多数开发者来说，Python是基础，Python的成熟可用的库、工具和生态与社区的支持太重要了；对于深度学习的商业应用而非纯粹的实验室研究来说，支持分布式和移动端运行平台是必选的，将来一定会用到的；前端的编程接口越灵活超好，我们需要考虑不同的应用场景，因此前端编程接口的设计需要兼容简单高效的命令式和逻辑清晰的声明式；深度学习框架一定要有背后巨头的大力支持和强大的社区，有专业的团队不断的更新并完善代码库。这样来看，只有下面的四大顶级深度学习框架阵营才能够满足我们的要求。</p>
+<p>深度学习框架的四大阵营与其技术方向分别为：<br>（1）TensorFlow，前端框架Keras，背后巨头Google；<br>（2）PyTorch，前端框架FastAI，背后巨头Facebook；<br>（3）MXNet，前端框架Gluon，背后巨头Amazon；<br>（4）Cognitive Toolkit (CNTK)，前端框架Keras或Gluon，背后巨头Microsoft。</p>
+<p>那么在这四大阵营中又如何选择呢？这就要看具体项目的需要了，看重Google无与伦比的巨大影响力的开发者并不需要太过纠结，TensorFlow会支持最广泛的开发语言与最多的运行平台，开发者很难逃出Google的覆盖范围，更多的开发者会被收编，AlphaGo已经帮助Google证明了Google在人工智能上技术领先地位，Keras+TensorFlow的方案已经被Google官方认可，Google的TensorFlow2.0将带来的新技术与突破；喜欢学习新事物和追求完美的开发者一定不能错过Facebook的PyTorch，PyTorch正在强势崛起，是动态图技术的最佳代表，是当前最活跃最有生命力的深度学习框架，这一次Google遇到了真正的对手；Amazon在云计算和云服务上的领先地位带给开发者更大的信心，选择Amazon人工智能背后的技术一定没有错；微软的技术正在不断挑战人类语音识别和图像识别的极限，长期受益于微软阵营的开发人员对于微软开源其核心技术是非常兴奋的，Cognitive Toolkit (CNTK)可以被Keras和Gluon同时支持，这太棒了，确实带给开发者更多的选择。</p>
+<p>最后，我们会发现深度学习框架其实只是一个工具和平台，虽然分为四大阵营和四大技术路线，但是得益于这些主流框架之间的不停的比拼与互相借鉴，最后会发现其实大家都差不多，最棒的是这些主流的深度学习框架都是基于Python的，只要掌握了Python和深度学习算法的设计思想，每一种框架都是一个可用的库或工具集，我们是工程师，工程师需要善于学习并善于选择使用最优的工具。初学者可以从上层高级API框架开始学习，如Keras、Gluon和FastAI，但是不能依赖这些层层封装高级API，不然是无法真正掌握深度学习的技术本质的。深入学习并熟练掌握一种顶级深度学习框架是非常重要的，比如PyTorch，然后再跑一跑TensorFlow和MXNet，我们可以在对比中学习，在深度学习领域，可以深刻理解什么是“纸上得来终觉浅”，我觉得学习深度学习及人工智能技术，一定要动手实践，只有动手做过了才是自己的，不然，一切都还是书本上的。</p>
+<p>我还想再多谈一点的一个深度学习领域要面对的问题是“我们是否需要自己重新发明轮子？”我们需要自己重新设计并实现一个深度学习的框架吗？</p>
+<p>我想这取决于你的兴趣和你的时间，如果你立志成为一个大神级的专家，有充足的时间和强烈的兴趣，那么根据自己对算法和数据结构的独特理解，在设计思想上融入自己的哲学和艺术的思考，自己从头开始设计并实现一个深度学习框架也未尝不可，发起一个开源项目并聚合一群志合道同的小伙伴一起奋斗，是一件十分有挑战并且十分有趣的事情，我认为我们应该大力鼓励有这样志向的年轻人，哪怕只是为了更深入的学习研究也好呀。何况我们中国人已经有了业界最成功的榜样，前有UC伯克利的贾扬清开发了Caffe，后有CMU卡耐基梅隆的李沐创造了MXNet，他们都是在读博士的时候创造了自己的深度学习框架并发起了开源项目，再看看他们今天在行业中的地位，都是Google、Facebook、Amazon、Apple等巨头必抢的顶级人才。对于中小企业来说，快速把商业应用做好并服务于消费者才是最重要的，因此选好一个顶级深度学习阵营和成熟的技术路线才是更重要的，确实没有必要重新发明轮子，但是对于一个严重依赖人工智能基础技术的超大型巨头企业来说，比如华为、阿里巴巴或百度，必须要拥有自己的深度学习框架和平台，这不是一个可以讨论的问题。如同Amazon选择了MXNet，AWS虽然支持TensorFlow，但Amazon不会傻到去依赖于Google。</p>
+<p>链接：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/59086302">https://zhuanlan.zhihu.com/p/59086302</a><br>来源：知乎</p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="http://huangzhiyuan.github.io/2019/09/19/DeepLearning-Framework/" title="深度学习框架的来龙去脉" target="_blank" rel="external">http://huangzhiyuan.github.io/2019/09/19/DeepLearning-Framework/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/cofess" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/photo.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/cofess" target="_blank"><span class="text-dark">黄志远</span><small class="ml-1x">研发攻城狮</small></a></h3>
+        <div>靡不有初 鲜克有终</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2019/09/23/chapter-two-build-and-link/" title="第二章、编译和链接"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2019/09/18/chapter-one-review-old-and-learn-new/" title="第一章、温故而知新"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipay.jpg" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开支付宝扫一扫，即可进行扫码打赏哦</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpay.jpg" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开微信扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/huangzhiyuan" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/u/7041265015" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://www.zhihu.com/people/justforfun099/activitie" target="_blank" title="Zhihu" data-toggle=tooltip data-placement=top><i class="icon icon-zhihu"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        &copy; 2022 黄志远
+        
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>OpenMP 总结 | Blog</title>
+  <meta name="description" content="本文档尝试快速介绍 OpenMP（如版本 4.5），这是一个简单的 C&#x2F;C++&#x2F;Fortran 编译器扩展 C++，它允许在现有源代码中添加并行性，而无需重写它。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenMP 总结">
+<meta property="og:url" content="http://huangzhiyuan.github.io/2020/08/26/guide-into-openmp/index.html">
+<meta property="og:site_name" content="靡不有初 鲜克有终">
+<meta property="og:description" content="本文档尝试快速介绍 OpenMP（如版本 4.5），这是一个简单的 C&#x2F;C++&#x2F;Fortran 编译器扩展 C++，它允许在现有源代码中添加并行性，而无需重写它。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-08-26T05:14:17.000Z">
+<meta property="article:modified_time" content="2020-08-26T07:13:54.000Z">
+<meta property="article:author" content="黄志远">
+<meta property="article:tag" content="OpenMP">
+<meta name="twitter:card" content="summary">
+  <!-- Canonical links -->
+  <link rel="canonical" href="http://huangzhiyuan.github.io/2020/08/26/guide-into-openmp/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="靡不有初 鲜克有终" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/cofess" target="_blank">
+          <img class="img-circle img-rotate" src="/images/photo.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">黄志远</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">研发攻城狮</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Shanghai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/huangzhiyuan" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/u/7041265015" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://www.zhihu.com/people/justforfun099/activitie" target="_blank" title="Zhihu" data-toggle=tooltip data-placement=top><i class="icon icon-zhihu"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验，广告位招租中~</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/CUDA/">CUDA</a><span class="category-list-count">10</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/GPU/">GPU</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Hexo/">Hexo</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Linux/">Linux</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/python/">python</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a><span class="category-list-count">15</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93/">技术总结</a><span class="category-list-count">47</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a><span class="category-list-count">22</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a><span class="category-list-count">14</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%94%B5%E5%BD%B1/">电影</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%AF%BB%E4%B9%A6/">读书</a><span class="category-list-count">8</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/AI/" rel="tag">AI</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/AWK/" rel="tag">AWK</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/BP%E7%AE%97%E6%B3%95/" rel="tag">BP算法</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/" rel="tag">C++</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CNN/" rel="tag">CNN</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CPU-cache/" rel="tag">CPU-cache</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Optimization/" rel="tag">Code Optimization</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DL-Framwork/" rel="tag">DL Framwork</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DNNL/" rel="tag">DNNL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/" rel="tag">Docker</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/GPU/" rel="tag">GPU</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Horovod/" rel="tag">Horovod</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java-memory/" rel="tag">Java memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Java-%E9%9B%86%E5%90%88%E6%A1%86%E6%9E%B6/" rel="tag">Java 集合框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/KNN/" rel="tag">KNN</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LSTM/" rel="tag">LSTM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux/" rel="tag">Linux</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MLPerf/" rel="tag">MLPerf</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Memory/" rel="tag">Memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/NUMA/" rel="tag">NUMA</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenMP/" rel="tag">OpenMP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RNN/" rel="tag">RNN</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SYCL/" rel="tag">SYCL</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TCP-IP/" rel="tag">TCP/IP</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TVM/" rel="tag">TVM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/VIM/" rel="tag">VIM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Vtune/" rel="tag">Vtune</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/affinity/" rel="tag">affinity</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/atomic/" rel="tag">atomic</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/batch-size/" rel="tag">batch-size</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/compiler/" rel="tag">compiler</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/conda-pip/" rel="tag">conda/pip</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cpu/" rel="tag">cpu</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cs179/" rel="tag">cs179</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cuda/" rel="tag">cuda</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/diff/" rel="tag">diff</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/embedding/" rel="tag">embedding</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ftp/" rel="tag">ftp</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gdb/" rel="tag">gdb</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/geohash/" rel="tag">geohash</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hash/" rel="tag">hash</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hexo/" rel="tag">hexo</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hook/" rel="tag">hook</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hyperthreading/" rel="tag">hyperthreading</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/leetcode/" rel="tag">leetcode</a><span class="tag-list-count">18</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/license/" rel="tag">license</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mAP/" rel="tag">mAP</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/markdown/" rel="tag">markdown</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/memory/" rel="tag">memory</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ml2014/" rel="tag">ml2014</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/pytorch/" rel="tag">pytorch</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/quantization/" rel="tag">quantization</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/stream-event/" rel="tag">stream/event</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tensorboard/" rel="tag">tensorboard</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tensoriterator/" rel="tag">tensoriterator</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/topk/" rel="tag">topk</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/volatile/" rel="tag">volatile</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vscode/" rel="tag">vscode</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/webchat/" rel="tag">webchat</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/zero-copy/" rel="tag">zero-copy</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%B7%E5%80%BC%E8%A7%82/" rel="tag">价值观</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BD%93%E8%82%B2/" rel="tag">体育</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%81%A5%E8%BA%AB/" rel="tag">健身</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="tag">分布式</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%89%91%E6%8C%87offer/" rel="tag">剑指offer</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%89%AF%E4%B8%9A/" rel="tag">副业</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8A%A0%E5%AF%86/" rel="tag">加密</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%A4%A7%E7%89%9B/" rel="tag">大牛</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%BD%B1%E8%AF%84/" rel="tag">影评</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%8A%A2%E7%BA%A2%E5%8C%85/" rel="tag">抢红包</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%91%98%E6%8A%84/" rel="tag">摘抄</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%96%B0%E9%97%BB/" rel="tag">新闻</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/" rel="tag">深入理解计算机系统</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E6%A1%86%E6%9E%B6/" rel="tag">深度学习框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%94%9F%E6%B4%BB/" rel="tag">生活</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%94%B5%E5%BD%B1/" rel="tag">电影</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1/" rel="tag">知识图谱</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E5%85%BB/" rel="tag">程序员的自我修养</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%81%8C%E4%B8%9A/" rel="tag">职业</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AF%BB%E4%B9%A6/" rel="tag">读书</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag">随笔</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9D%A2%E8%AF%95/" rel="tag">面试</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/" rel="tag">高并发</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/AI/" style="font-size: 13.13px;">AI</a> <a href="/tags/AWK/" style="font-size: 13px;">AWK</a> <a href="/tags/BP%E7%AE%97%E6%B3%95/" style="font-size: 13px;">BP算法</a> <a href="/tags/C/" style="font-size: 13.13px;">C++</a> <a href="/tags/CNN/" style="font-size: 13.13px;">CNN</a> <a href="/tags/CPU-cache/" style="font-size: 13px;">CPU-cache</a> <a href="/tags/Code-Optimization/" style="font-size: 13px;">Code Optimization</a> <a href="/tags/DL-Framwork/" style="font-size: 13px;">DL Framwork</a> <a href="/tags/DNNL/" style="font-size: 13px;">DNNL</a> <a href="/tags/Docker/" style="font-size: 13px;">Docker</a> <a href="/tags/GPU/" style="font-size: 13.5px;">GPU</a> <a href="/tags/Horovod/" style="font-size: 13px;">Horovod</a> <a href="/tags/Java-memory/" style="font-size: 13px;">Java memory</a> <a href="/tags/Java-%E9%9B%86%E5%90%88%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">Java 集合框架</a> <a href="/tags/KNN/" style="font-size: 13px;">KNN</a> <a href="/tags/LSTM/" style="font-size: 13px;">LSTM</a> <a href="/tags/Linux/" style="font-size: 13.5px;">Linux</a> <a href="/tags/MLPerf/" style="font-size: 13px;">MLPerf</a> <a href="/tags/Memory/" style="font-size: 13px;">Memory</a> <a href="/tags/NUMA/" style="font-size: 13px;">NUMA</a> <a href="/tags/OpenMP/" style="font-size: 13px;">OpenMP</a> <a href="/tags/RNN/" style="font-size: 13px;">RNN</a> <a href="/tags/SYCL/" style="font-size: 13.38px;">SYCL</a> <a href="/tags/TCP-IP/" style="font-size: 13px;">TCP/IP</a> <a href="/tags/TVM/" style="font-size: 13px;">TVM</a> <a href="/tags/VIM/" style="font-size: 13px;">VIM</a> <a href="/tags/Vtune/" style="font-size: 13px;">Vtune</a> <a href="/tags/affinity/" style="font-size: 13px;">affinity</a> <a href="/tags/atomic/" style="font-size: 13px;">atomic</a> <a href="/tags/batch-size/" style="font-size: 13px;">batch-size</a> <a href="/tags/compiler/" style="font-size: 13px;">compiler</a> <a href="/tags/conda-pip/" style="font-size: 13px;">conda/pip</a> <a href="/tags/cpu/" style="font-size: 13.13px;">cpu</a> <a href="/tags/cs179/" style="font-size: 13.63px;">cs179</a> <a href="/tags/cuda/" style="font-size: 13.88px;">cuda</a> <a href="/tags/diff/" style="font-size: 13px;">diff</a> <a href="/tags/embedding/" style="font-size: 13px;">embedding</a> <a href="/tags/ftp/" style="font-size: 13px;">ftp</a> <a href="/tags/gdb/" style="font-size: 13px;">gdb</a> <a href="/tags/geohash/" style="font-size: 13px;">geohash</a> <a href="/tags/git/" style="font-size: 13.13px;">git</a> <a href="/tags/hash/" style="font-size: 13px;">hash</a> <a href="/tags/hexo/" style="font-size: 13px;">hexo</a> <a href="/tags/hook/" style="font-size: 13px;">hook</a> <a href="/tags/hyperthreading/" style="font-size: 13px;">hyperthreading</a> <a href="/tags/leetcode/" style="font-size: 14px;">leetcode</a> <a href="/tags/license/" style="font-size: 13px;">license</a> <a href="/tags/mAP/" style="font-size: 13.13px;">mAP</a> <a href="/tags/markdown/" style="font-size: 13.13px;">markdown</a> <a href="/tags/memory/" style="font-size: 13px;">memory</a> <a href="/tags/ml2014/" style="font-size: 13px;">ml2014</a> <a href="/tags/pytorch/" style="font-size: 13.75px;">pytorch</a> <a href="/tags/quantization/" style="font-size: 13px;">quantization</a> <a href="/tags/stream-event/" style="font-size: 13px;">stream/event</a> <a href="/tags/tensorboard/" style="font-size: 13px;">tensorboard</a> <a href="/tags/tensoriterator/" style="font-size: 13px;">tensoriterator</a> <a href="/tags/topk/" style="font-size: 13px;">topk</a> <a href="/tags/volatile/" style="font-size: 13px;">volatile</a> <a href="/tags/vscode/" style="font-size: 13px;">vscode</a> <a href="/tags/webchat/" style="font-size: 13px;">webchat</a> <a href="/tags/zero-copy/" style="font-size: 13px;">zero-copy</a> <a href="/tags/%E4%BB%B7%E5%80%BC%E8%A7%82/" style="font-size: 13px;">价值观</a> <a href="/tags/%E4%BD%93%E8%82%B2/" style="font-size: 13px;">体育</a> <a href="/tags/%E5%81%A5%E8%BA%AB/" style="font-size: 13px;">健身</a> <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" style="font-size: 13px;">分布式</a> <a href="/tags/%E5%89%91%E6%8C%87offer/" style="font-size: 13px;">剑指offer</a> <a href="/tags/%E5%89%AF%E4%B8%9A/" style="font-size: 13px;">副业</a> <a href="/tags/%E5%8A%A0%E5%AF%86/" style="font-size: 13px;">加密</a> <a href="/tags/%E5%A4%A7%E7%89%9B/" style="font-size: 13px;">大牛</a> <a href="/tags/%E5%BD%B1%E8%AF%84/" style="font-size: 13.13px;">影评</a> <a href="/tags/%E6%8A%A2%E7%BA%A2%E5%8C%85/" style="font-size: 13px;">抢红包</a> <a href="/tags/%E6%91%98%E6%8A%84/" style="font-size: 13.25px;">摘抄</a> <a href="/tags/%E6%96%B0%E9%97%BB/" style="font-size: 13.75px;">新闻</a> <a href="/tags/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/" style="font-size: 13px;">深入理解计算机系统</a> <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E6%A1%86%E6%9E%B6/" style="font-size: 13px;">深度学习框架</a> <a href="/tags/%E7%94%9F%E6%B4%BB/" style="font-size: 13.13px;">生活</a> <a href="/tags/%E7%94%B5%E5%BD%B1/" style="font-size: 13.13px;">电影</a> <a href="/tags/%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1/" style="font-size: 13px;">知识图谱</a> <a href="/tags/%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E5%85%BB/" style="font-size: 13.13px;">程序员的自我修养</a> <a href="/tags/%E8%81%8C%E4%B8%9A/" style="font-size: 13px;">职业</a> <a href="/tags/%E8%AF%BB%E4%B9%A6/" style="font-size: 13.25px;">读书</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 13px;">随笔</a> <a href="/tags/%E9%9D%A2%E8%AF%95/" style="font-size: 13px;">面试</a> <a href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/" style="font-size: 13px;">高并发</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">五月 2021</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">八月 2020</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/07/">七月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/06/">六月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/05/">五月 2020</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">10</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">39</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/02/">二月 2020</a><span class="archive-list-count">32</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">十月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/12/">十二月 2017</a><span class="archive-list-count">9</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/11/">十一月 2017</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/07/">七月 2017</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">六月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/05/">五月 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/04/">四月 2017</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/03/">三月 2017</a><span class="archive-list-count">7</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/02/">二月 2016</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-CPU/" class="title">Linux性能优化实战之CPU性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-IO/" class="title">Linux性能优化实战之IO性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-Memory/" class="title">Linux性能优化实战之内存性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat-Network/" class="title">Linux性能优化实战之网络性能篇</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2021/05/25/Linux-perf-optimize-actual-combat/" class="title">Linux性能优化实战</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-05-24T16:53:03.000Z" itemprop="datePublished">2021-05-25</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-guide-into-openmp" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      OpenMP 总结
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2020/08/26/guide-into-openmp/" class="article-date">
+	  <time datetime="2020-08-26T05:14:17.000Z" itemprop="datePublished">2020-08-26</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/%E6%8A%80%E6%9C%AF%E6%80%BB%E7%BB%93/">技术总结</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/OpenMP/" rel="tag">OpenMP</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2020/08/26/guide-into-openmp/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <p>本文档尝试快速介绍 OpenMP（如版本 4.5），这是一个简单的 C/C++/Fortran 编译器扩展 C++，它允许在现有源代码中添加并行性，而无需重写它。</p>
+<span id="more"></span>
+
+<h2 id="引言-多线程的重要性"><a href="#引言-多线程的重要性" class="headerlink" title="引言 多线程的重要性"></a>引言 多线程的重要性</h2><p>随着 CPU 速度不再像以前那样显著提高，多核系统正变得越来越流行。要利用这种功能，程序员在并行编程中知识化变得非常重要。本文档试图快速介绍 OpenMP，这是一个简单的 C/C++/Fortran 编译器扩展，允许将并行性添加到现有源代码中，而无需完全重写它。</p>
+<h3 id="多个编译器支持"><a href="#多个编译器支持" class="headerlink" title="多个编译器支持"></a>多个编译器支持</h3><ul>
+<li>GCC (GNU Compiler Collection)</li>
+<li>Clang++</li>
+<li>Solaris Studio</li>
+<li>ICC (Intel C Compiler)</li>
+<li>Microsoft Visual C++</li>
+</ul>
+<h2 id="C-中的OpenMP介绍"><a href="#C-中的OpenMP介绍" class="headerlink" title="C++中的OpenMP介绍"></a>C++中的OpenMP介绍</h2><p>OpenMP 由一组编译器<code>#pragmas</code>控制程序工作原理的编译器。<code>pragmas</code>的设计使即使编译器不支持它们，程序仍将产生正确的行为，但没有任何并行性。<br>下面是演示 OpenMP 的两个简单的示例程序。你可以像这样编译它们：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ tmp.cpp -fopenmp</span><br></pre></td></tr></table></figure>
+
+<p><strong>Example: Initializing a table in parallel (multiple threads)</strong><br>此代码将表初始化划分为多个线程，这些线程同时运行。每个线程初始化表的一部分</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;cmath&gt;</span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">  const int size = 256;</span><br><span class="line">  double sinTable[size];</span><br><span class="line"></span><br><span class="line">  #pragma omp parallel for</span><br><span class="line">  for(int n=0; n&lt;size; ++n)</span><br><span class="line">    sinTable[n] = std::sin(2 * M_PI * n / size);</span><br><span class="line"></span><br><span class="line">  // the table is now initialized</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Example: Initializing a table in parallel (single thread, SIMD)</strong><br>此版本需要至少对 OpenMP 4.0 的编译器支持，并使用并行浮点库，如 AMD ACML 或英特尔SVML(可以在GCC中使用通过添加‑mveclibabi=svml）。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;cmath&gt;</span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">  const int size = 256;</span><br><span class="line">  double sinTable[size];</span><br><span class="line"></span><br><span class="line">  #pragma omp simd</span><br><span class="line">  for(int n=0; n&lt;size; ++n)</span><br><span class="line">    sinTable[n] = std::sin(2 * M_PI * n / size);</span><br><span class="line"></span><br><span class="line">  // the table is now initialized</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Example: Initializing a table in parallel (multiple threads on another device)</strong><br>OpenMP 4.0 增加了对将代码卸载到不同设备（如 GPU）的支持。因此，单个程序中可以有三层并行性：单个线程处理多个数据;多个线程同时运行;和多个设备同时运行同一程序。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;cmath&gt;</span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">  const int size = 256;</span><br><span class="line">  double sinTable[size];</span><br><span class="line"></span><br><span class="line">  #pragma omp target teams distribute parallel for map(from:sinTable[0:256])</span><br><span class="line">  for(int n=0; n&lt;size; ++n)</span><br><span class="line">    sinTable[n] = std::sin(2 * M_PI * n / size);</span><br><span class="line"></span><br><span class="line">  // the table is now initialized</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>综上所述，程序中很少指示它并行运行。如果删除 #pragma 行，则结果仍然是运行并执行预期操作。#pragma的有效 C++ 程序。它确实同时计算 N 个值，其中 N 是线程数。在 GCC 中，libgomp 从处理器数目确定这个N的值。<br>在C 和 C++ 标准中，如果编译器遇到#pragma但它不支持，它将忽略它。因此，添加 OMP 语句可以安全地完成，而不会破坏与旧编译器的兼容性。<br>还有一个运行时库，可以通过 omp.h 访问，但它不太经常需要。如果需要，可以在不支持 OpenMP #define _OPENMP检查条件编译的格式。</p>
+<h2 id="OpenMP语法解析"><a href="#OpenMP语法解析" class="headerlink" title="OpenMP语法解析"></a>OpenMP语法解析</h2><p>C 和 C++的所有 OpenMP 构造都用 #pragma，后跟参数，以新行结尾。#pragma通常仅适用于紧接着它的语句，但<code>barrier</code>和<code>flush</code>命令除外，它们没有关联的语句。</p>
+<h3 id="The-parallel-construct"><a href="#The-parallel-construct" class="headerlink" title="The parallel construct"></a>The parallel construct</h3><p>parallel构造用parallel关键字启动并行块。它创建一组N个数目线程（其中 N 在运行时确定，通常来自 CPU 内核的数量，但可能受到一些因素的影响），所有这些线程都执行下一个语句（或下一个块，如果语句是 […] - 存储模块）。语句之后，线程将重新联接到一个线程中。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">#pragma omp parallel</span><br><span class="line">&#123;</span><br><span class="line">  // Code inside this region runs in parallel.</span><br><span class="line">  printf(&quot;Hello!\n&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在内部，GCC 通过创建一个magic函数并移动关联的代码到该函数中实现此功能，使该块内声明的所有变量成为该函数的局部变量（从而成为每个线程的局部变量）。另一方面，ICC 使用类似于fork()的机制，并且不创建一个magic函数。当然，这两个实现都是有效和语义上相同的。<br>从上下文共享的变量以透明方式处理，有时通过传递引用，有时通过使用在并行块末尾刷新的寄存器变量（或每当执行<code>flush</code>时）。</p>
+<p><strong>Parallelism conditionality clause: if</strong><br>通过在并行命令中包括 if 子句，可以使并行性成为条件，例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">extern int parallelism_enabled;</span><br><span class="line">#pragma omp parallel for if(parallelism_enabled)</span><br><span class="line">for(int c=0; c&lt;n; ++c)</span><br><span class="line">  handle(c);</span><br></pre></td></tr></table></figure>
+<p>在这种情况下，如果parallelism_enabled值为零，则for循环中开启的线程数将始终为一个。</p>
+<h3 id="Loop-construct-for"><a href="#Loop-construct-for" class="headerlink" title="Loop construct: for"></a>Loop construct: for</h3><p><code>for</code>关键字把<code>for-loop</code>拆分，因此每个线程都可以单独处理在循环里面不同的部分。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">#pragma omp for</span><br><span class="line">for(int n=0; n&lt;10; ++n)</span><br><span class="line">&#123;</span><br><span class="line">  printf(&quot; %d&quot;, n);</span><br><span class="line">&#125;</span><br><span class="line">printf(&quot;.\n&quot;);</span><br></pre></td></tr></table></figure>
+<p>此循环将输出 0…9 一次。但是，它可以按任意顺序执行。它可以输出，例如</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0 5 6 7 1 8 2 3 4 9.</span><br></pre></td></tr></table></figure>
+<p>事实上，上述代码和如下代码效果等同：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();</span><br><span class="line">int my_start = (this_thread  ) * 10 / num_threads;</span><br><span class="line">int my_end   = (this_thread+1) * 10 / num_threads;</span><br><span class="line">for(int n=my_start; n&lt;my_end; ++n)</span><br><span class="line">  printf(&quot; %d&quot;, n);</span><br></pre></td></tr></table></figure>
+<p>因此每个线程都会得到不同的部分代码，并且它们并行的执行只属于自己的部分。</p>
+<p>也可以显示的指定线程数目，通过使用关键字<code>num_threads</code>。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">#pragma omp parallel num_threads(3)</span><br><span class="line">&#123;</span><br><span class="line">  // This code will be executed by three threads.</span><br><span class="line"></span><br><span class="line">  // Chunks of this loop will be divided amongst</span><br><span class="line">  // the (three) threads of the current team.</span><br><span class="line">  #pragma omp for</span><br><span class="line">  for(int n=0; n&lt;10; ++n) printf(&quot; %d&quot;, n);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意OpenMP同样对C语言适用。在C里面，你需要显示的指定循环变量使用关键字<code>private</code>，因为C不允许在for循环体内声明变量。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">int n;</span><br><span class="line">#pragma omp for private(n)</span><br><span class="line">for(n=0; n&lt;10; ++n) printf(&quot; %d&quot;, n);</span><br><span class="line">printf(&quot;.\n&quot;);</span><br></pre></td></tr></table></figure>
+
+<h3 id="parallel-for-and-a-team概念"><a href="#parallel-for-and-a-team概念" class="headerlink" title="parallel, for and a team概念"></a>parallel, for and a team概念</h3><ul>
+<li>parallel for ：parallel for是两个命令的组合，parallel和for 。：parallel 创建一个新team，for为该team拆分以处理循环的不同部分。</li>
+<li>for：用于在当前team的线程之间划分 for 循环的工作。它不创建线程，它只将工作划分到当前正在执行团队的线程之间。</li>
+<li>team: 是当前执行所有线程的组合。在程序开始的时候，team里面只包含一个线程。parallel关键字把当前线程切分为多个线程team，直到执行完毕</li>
+</ul>
+<h2 id="调度策略"><a href="#调度策略" class="headerlink" title="调度策略"></a>调度策略</h2><p>for-loop 的调度算法可以显式控制。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#pragma omp for schedule(static)</span><br><span class="line">for(int n=0; n&lt;10; ++n) printf(&quot; %d&quot;, n);</span><br><span class="line">printf(&quot;.\n&quot;)</span><br></pre></td></tr></table></figure>
+<p>共有5种调度算法：<code>static</code>, <code>dynamic</code>, <code>guided</code>, <code>auto</code>, <code>runtime</code> （OpenMP 4.0之后）。之外在OpenMP4.5之后，又添加了新的3种<code>monotonic</code>, <code>nonmonotonic</code>, <code>simd</code>。</p>
+<p>使用如下demo验证：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;omp.h&gt;</span><br><span class="line">#include &lt;iostream&gt;</span><br><span class="line"></span><br><span class="line">#define COUNT 48</span><br><span class="line"></span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">#pragma omp parallel for schedule(static)</span><br><span class="line">/* #pragma omp parallel for schedule(static, 2) */</span><br><span class="line">    for(int i = 0;i &lt; COUNT; i++)</span><br><span class="line">    &#123;</span><br><span class="line">        printf(&quot;Thread: %d, Iteration: %d\n&quot;, omp_get_thread_num(), i);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Build and Run:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ g++ omp.cpp -fopenmp</span><br><span class="line">$ ./a.out</span><br></pre></td></tr></table></figure>
+
+<p>本机配置：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">(base) huang@mlp:~/taichi/omp$ lscpu</span><br><span class="line">Architecture:        x86_64</span><br><span class="line">CPU op-mode(s):      32-bit, 64-bit</span><br><span class="line">Byte Order:          Little Endian</span><br><span class="line">CPU(s):              12</span><br><span class="line">On-line CPU(s) list: 0-11</span><br><span class="line">Thread(s) per core:  2</span><br><span class="line">Core(s) per socket:  6</span><br><span class="line">Socket(s):           1</span><br><span class="line">NUMA node(s):        1</span><br><span class="line">Vendor ID:           GenuineIntel</span><br><span class="line">CPU family:          6</span><br><span class="line">Model:               158</span><br><span class="line">Model name:          Intel(R) Core(TM) i7-8700K CPU @ 3.70GHz</span><br><span class="line">Stepping:            10</span><br><span class="line">CPU MHz:             3907.882</span><br><span class="line">CPU max MHz:         4700.0000</span><br><span class="line">CPU min MHz:         800.0000</span><br><span class="line">BogoMIPS:            7399.70</span><br><span class="line">Virtualization:      VT-x</span><br><span class="line">L1d cache:           32K</span><br><span class="line">L1i cache:           32K</span><br><span class="line">L2 cache:            256K</span><br><span class="line">L3 cache:            12288K</span><br><span class="line">NUMA node0 CPU(s):   0-11</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="static"><a href="#static" class="headerlink" title="static"></a>static</h3><p><code>static</code>是默认的调度算法。在上面的所有例子中，每个线程独立的决定它们处理哪个loop片段。<br><code>schedule(static, chunk-size)</code>子句指定 for 循环具有静态调度类型。OpenMP 将迭代划分为大小块大小的块，并将区块按循环顺序分发到线程。当<code>chunk-size</code>没有指定的时候OpenMP将迭代划分为大小大致相等的区块，并且最多将一个区块分发到每个线程。<br>下面是关于<code>static</code>调度的例子。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">schedule(static):</span><br><span class="line">****************</span><br><span class="line">                ****************</span><br><span class="line">                                ****************</span><br><span class="line">                                                ****************</span><br></pre></td></tr></table></figure>
+<p>实际效果如下：这个分配是静态的，“静态”体现在这个分配过程跟实际的运行是无关的，可以从逻辑上推断出哪几次迭代会在哪几个线程上运行。具体而言，对于一个N次迭代，使用M个线程，那么，[0,size-1]的size次的迭代是在第一个线程上运行，[size, size + size -1]是在第二个线程上运行，依次类推。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">(base) huang@mlp:~/omp$ ./a.out</span><br><span class="line">Thread: 11, Iteration: 44</span><br><span class="line">Thread: 11, Iteration: 45</span><br><span class="line">Thread: 11, Iteration: 46</span><br><span class="line">Thread: 5, Iteration: 20</span><br><span class="line">Thread: 5, Iteration: 21</span><br><span class="line">Thread: 5, Iteration: 22</span><br><span class="line">Thread: 5, Iteration: 23</span><br><span class="line">Thread: 1, Iteration: 4</span><br><span class="line">Thread: 1, Iteration: 5</span><br><span class="line">Thread: 1, Iteration: 6</span><br><span class="line">Thread: 1, Iteration: 7</span><br><span class="line">Thread: 10, Iteration: 40</span><br><span class="line">Thread: 10, Iteration: 41</span><br><span class="line">Thread: 10, Iteration: 42</span><br><span class="line">Thread: 10, Iteration: 43</span><br><span class="line">Thread: 7, Iteration: 28</span><br><span class="line">Thread: 7, Iteration: 29</span><br><span class="line">Thread: 7, Iteration: 30</span><br><span class="line">Thread: 7, Iteration: 31</span><br><span class="line">Thread: 8, Iteration: 32</span><br><span class="line">Thread: 8, Iteration: 33</span><br><span class="line">Thread: 8, Iteration: 34</span><br><span class="line">Thread: 2, Iteration: 8</span><br><span class="line">Thread: 11, Iteration: 47</span><br><span class="line">Thread: 6, Iteration: 24</span><br><span class="line">Thread: 6, Iteration: 25</span><br><span class="line">Thread: 6, Iteration: 26</span><br><span class="line">Thread: 6, Iteration: 27</span><br><span class="line">Thread: 4, Iteration: 16</span><br><span class="line">Thread: 4, Iteration: 17</span><br><span class="line">Thread: 4, Iteration: 18</span><br><span class="line">Thread: 4, Iteration: 19</span><br><span class="line">Thread: 2, Iteration: 9</span><br><span class="line">Thread: 2, Iteration: 10</span><br><span class="line">Thread: 2, Iteration: 11</span><br><span class="line">Thread: 9, Iteration: 36</span><br><span class="line">Thread: 9, Iteration: 37</span><br><span class="line">Thread: 9, Iteration: 38</span><br><span class="line">Thread: 9, Iteration: 39</span><br><span class="line">Thread: 8, Iteration: 35</span><br><span class="line">Thread: 0, Iteration: 0</span><br><span class="line">Thread: 0, Iteration: 1</span><br><span class="line">Thread: 0, Iteration: 2</span><br><span class="line">Thread: 0, Iteration: 3</span><br><span class="line">Thread: 3, Iteration: 12</span><br><span class="line">Thread: 3, Iteration: 13</span><br><span class="line">Thread: 3, Iteration: 14</span><br><span class="line">Thread: 3, Iteration: 15</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">schedule(static, 4):</span><br><span class="line">****            ****            ****            ****</span><br><span class="line">    ****            ****            ****            ****</span><br><span class="line">        ****            ****            ****            ****</span><br><span class="line">            ****            ****            ****            ****</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">schedule(static, 8):</span><br><span class="line">********                        ********</span><br><span class="line">        ********                        ********</span><br><span class="line">                ********                        ********</span><br><span class="line">                        ********                        ********</span><br></pre></td></tr></table></figure>
+<p>让我解释一下这些例子。我们使用 64 次迭代并行化 for 循环，并且使用四个线程并行化 for 循环。示例中的每一行星数表示一个线程。每列表示迭代。当所有迭代具有相同的计算成本时，静态调度类型是适当的。</p>
+<h3 id="dynamic"><a href="#dynamic" class="headerlink" title="dynamic"></a>dynamic</h3><p><code>schedule(dynamic, chunk-size)</code>子句指定 for 循环具有动态调度类型。OpenMP 将迭代划分为大小块大小的块。每个线程执行一个迭代区块，然后请求另一个区块，直到不再有可用的区块。没有将区块以特定顺序分布到线程。每次执行 for 循环时，顺序会更改。<br>如果没有指定<code>chunk-size</code>，默认为1。下面是一些动态调度的例子。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">schedule(dynamic):</span><br><span class="line">*   ** **  * * *  *      *  *    **   *  *  * *       *  *   *</span><br><span class="line">  *       *     *    * *     * *   *    *        * *   *    *</span><br><span class="line"> *       *    *     * *   *   *     *  *       *  *  *  *  *   *</span><br><span class="line">   *  *     *    * *    *  *    *    *    ** *  *   *     *   *</span><br></pre></td></tr></table></figure>
+
+<p>对于dynamic，没有size参数的情况下，每个线程按先执行完先分配的方式执行1次循环。实际运行情况如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">Thread: 5, Iteration: 4</span><br><span class="line">Thread: 5, Iteration: 12</span><br><span class="line">Thread: 5, Iteration: 13</span><br><span class="line">Thread: 5, Iteration: 14</span><br><span class="line">Thread: 5, Iteration: 15</span><br><span class="line">Thread: 5, Iteration: 16</span><br><span class="line">Thread: 5, Iteration: 17</span><br><span class="line">Thread: 5, Iteration: 18</span><br><span class="line">Thread: 5, Iteration: 19</span><br><span class="line">Thread: 5, Iteration: 20</span><br><span class="line">Thread: 5, Iteration: 21</span><br><span class="line">Thread: 5, Iteration: 22</span><br><span class="line">Thread: 5, Iteration: 23</span><br><span class="line">Thread: 5, Iteration: 24</span><br><span class="line">Thread: 5, Iteration: 25</span><br><span class="line">Thread: 5, Iteration: 26</span><br><span class="line">Thread: 5, Iteration: 27</span><br><span class="line">Thread: 5, Iteration: 28</span><br><span class="line">Thread: 5, Iteration: 29</span><br><span class="line">Thread: 5, Iteration: 30</span><br><span class="line">Thread: 5, Iteration: 31</span><br><span class="line">Thread: 5, Iteration: 32</span><br><span class="line">Thread: 5, Iteration: 33</span><br><span class="line">Thread: 5, Iteration: 34</span><br><span class="line">Thread: 5, Iteration: 35</span><br><span class="line">Thread: 5, Iteration: 36</span><br><span class="line">Thread: 5, Iteration: 37</span><br><span class="line">Thread: 5, Iteration: 38</span><br><span class="line">Thread: 5, Iteration: 39</span><br><span class="line">Thread: 5, Iteration: 40</span><br><span class="line">Thread: 5, Iteration: 41</span><br><span class="line">Thread: 5, Iteration: 42</span><br><span class="line">Thread: 5, Iteration: 43</span><br><span class="line">Thread: 5, Iteration: 44</span><br><span class="line">Thread: 5, Iteration: 45</span><br><span class="line">Thread: 5, Iteration: 46</span><br><span class="line">Thread: 5, Iteration: 47</span><br><span class="line">Thread: 9, Iteration: 1</span><br><span class="line">Thread: 0, Iteration: 6</span><br><span class="line">Thread: 3, Iteration: 2</span><br><span class="line">Thread: 7, Iteration: 0</span><br><span class="line">Thread: 6, Iteration: 5</span><br><span class="line">Thread: 8, Iteration: 3</span><br><span class="line">Thread: 10, Iteration: 8</span><br><span class="line">Thread: 1, Iteration: 7</span><br><span class="line">Thread: 11, Iteration: 9</span><br><span class="line">Thread: 4, Iteration: 10</span><br><span class="line">Thread: 2, Iteration: 11</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">schedule(dynamic, 1):</span><br><span class="line">    *    *     *        *   *    * *  *  *         *  * *  * *</span><br><span class="line">*  *  *   * *     *  * * *    * *      *   ***  *   *         *</span><br><span class="line"> *   *  *  *  *    ** *    *      *  *  * *   *  *   *   *</span><br><span class="line">  *    *     *  **        *  * *    *          *  *    *  * *  *</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">schedule(dynamic, 4):</span><br><span class="line">            ****                    ****                    ****</span><br><span class="line">****            ****    ****            ****        ****</span><br><span class="line">    ****            ****    ****            ****        ****</span><br><span class="line">        ****                    ****            ****</span><br></pre></td></tr></table></figure>
+<p>实际运行情况如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">(base) huang@mlp:~/taichi/omp$ ./a.out</span><br><span class="line">Thread: 0, Iteration: 12</span><br><span class="line">Thread: 0, Iteration: 13</span><br><span class="line">Thread: 0, Iteration: 14</span><br><span class="line">Thread: 0, Iteration: 15</span><br><span class="line">Thread: 3, Iteration: 28</span><br><span class="line">Thread: 3, Iteration: 29</span><br><span class="line">Thread: 3, Iteration: 30</span><br><span class="line">Thread: 3, Iteration: 31</span><br><span class="line">Thread: 8, Iteration: 8</span><br><span class="line">Thread: 8, Iteration: 9</span><br><span class="line">Thread: 8, Iteration: 10</span><br><span class="line">Thread: 8, Iteration: 11</span><br><span class="line">Thread: 4, Iteration: 4</span><br><span class="line">Thread: 4, Iteration: 5</span><br><span class="line">Thread: 4, Iteration: 6</span><br><span class="line">Thread: 4, Iteration: 7</span><br><span class="line">Thread: 11, Iteration: 36</span><br><span class="line">Thread: 11, Iteration: 37</span><br><span class="line">Thread: 11, Iteration: 38</span><br><span class="line">Thread: 11, Iteration: 39</span><br><span class="line">Thread: 5, Iteration: 24</span><br><span class="line">Thread: 5, Iteration: 25</span><br><span class="line">Thread: 7, Iteration: 32</span><br><span class="line">Thread: 2, Iteration: 44</span><br><span class="line">Thread: 9, Iteration: 16</span><br><span class="line">Thread: 10, Iteration: 0</span><br><span class="line">Thread: 10, Iteration: 1</span><br><span class="line">Thread: 10, Iteration: 2</span><br><span class="line">Thread: 10, Iteration: 3</span><br><span class="line">Thread: 7, Iteration: 33</span><br><span class="line">Thread: 7, Iteration: 34</span><br><span class="line">Thread: 7, Iteration: 35</span><br><span class="line">Thread: 9, Iteration: 17</span><br><span class="line">Thread: 9, Iteration: 18</span><br><span class="line">Thread: 9, Iteration: 19</span><br><span class="line">Thread: 6, Iteration: 20</span><br><span class="line">Thread: 6, Iteration: 21</span><br><span class="line">Thread: 6, Iteration: 22</span><br><span class="line">Thread: 6, Iteration: 23</span><br><span class="line">Thread: 5, Iteration: 26</span><br><span class="line">Thread: 5, Iteration: 27</span><br><span class="line">Thread: 2, Iteration: 45</span><br><span class="line">Thread: 2, Iteration: 46</span><br><span class="line">Thread: 2, Iteration: 47</span><br><span class="line">Thread: 1, Iteration: 40</span><br><span class="line">Thread: 1, Iteration: 41</span><br><span class="line">Thread: 1, Iteration: 42</span><br><span class="line">Thread: 1, Iteration: 43</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">schedule(dynamic, 8):</span><br><span class="line">                ********                                ********</span><br><span class="line">                        ********        ********</span><br><span class="line">********                        ********        ********</span><br><span class="line">        ********</span><br></pre></td></tr></table></figure>
+<p>当迭代需要不同的计算成本时，动态调度类型是合适的。这意味着迭代之间的平衡很差。动态计划类型比静态计划类型具有更高的开销，因为它在运行时动态分布迭代。</p>
+<h2 id="Guided"><a href="#Guided" class="headerlink" title="Guided"></a>Guided</h2><p><code>Guided</code>调度算法类似于动态计划类型。OpenMP 再次将迭代划分为块。每个线程执行一个迭代块，然后请求另一个区块，直到不再有可用的区块。与动态调度类型的区别在于<code>chunk-size</code>。区块的大小与未分配迭代数除以线程数成正比。因此，区块的大小减小。<br>区块的最小大小由<code>chunk-size</code>设置。我们在调度确定它：<code>schedule(guided, chunk-size)</code>。但是，包含上次迭代的区块的大小可能小于<code>chunk-size</code>。<br>如果我们不指定<code>chunk-size</code>，则默认为 1。对应示例如下。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">schedule(guided):</span><br><span class="line">                            *********                        *</span><br><span class="line">                ************                     *******  ***</span><br><span class="line">                                     *******                   *</span><br><span class="line">****************                            *****       **    *</span><br><span class="line"></span><br><span class="line">schedule(guided, 2):</span><br><span class="line">                ************                     ****     **</span><br><span class="line">                                     *******         ***    **</span><br><span class="line">                            *********</span><br><span class="line">****************                            *****       **    **</span><br><span class="line"></span><br><span class="line">schedule(guided, 4):</span><br><span class="line">                                     *******</span><br><span class="line">                ************                     ****    ****</span><br><span class="line">                            *********</span><br><span class="line">****************                            *****    ****    ***</span><br><span class="line"></span><br><span class="line">schedule(guided, 8):</span><br><span class="line">                ************                 ********        ***</span><br><span class="line">****************</span><br><span class="line">                                     ********</span><br><span class="line">                            *********                ********</span><br></pre></td></tr></table></figure>
+
+<p>我们可以看出chunk的大小一直在递减。第一个chunk总是有16个iteration，这是因为我们有64个iteration共有4个线程去并行这个loop。<br>我们还可以看到，最小区块大小在计划子句中确定。唯一的例外是最后一个区块。其大小可能低于规定的最小大小。</p>
+<p>当迭代之间不平衡时，引导调度类型是合适的。初始区块较大，因为它们减少了开销。较小的区块在计算结束时填充计划并改善负载平衡。当在计算接近尾声时发生负载平衡不佳的情况时，此调度类型尤其合适。</p>
+<h3 id="Auto"><a href="#Auto" class="headerlink" title="Auto"></a>Auto</h3><p><code>Auto</code>调度算法将调度决策委托给编译器和runtime。在下面的示例中，编译器/系统确定静态调度。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">schedule(auto):</span><br><span class="line">****************</span><br><span class="line">                ****************</span><br><span class="line">                                ****************</span><br><span class="line">                                                ****************</span><br></pre></td></tr></table></figure>
+
+<h3 id="Runtime"><a href="#Runtime" class="headerlink" title="Runtime"></a>Runtime</h3><p><code>Runtime</code>调度策略将有关计划的决定推迟到运行时。本例中，我们已经描述了指定计划类型的不同方法。一个选项是环境变量<code>OMP_SCHEDULE</code>，另一个选项是函数<code>omp_set_schedule</code>。</p>
+<h2 id="Default"><a href="#Default" class="headerlink" title="Default"></a>Default</h2><p>如果我们不指定任何调度策略：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#pragma omp parallel for</span><br><span class="line">for (...)</span><br><span class="line">&#123; ... &#125;</span><br></pre></td></tr></table></figure>
+<p><code>OpenMP</code>使用默认的调度策略，由内部的控制变量<code>def-sched-var</code>决定。在我的机器上面结果如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">Thread: 5, Iteration: 20</span><br><span class="line">Thread: 5, Iteration: 21</span><br><span class="line">Thread: 5, Iteration: 22</span><br><span class="line">Thread: 5, Iteration: 23</span><br><span class="line">Thread: 1, Iteration: 4</span><br><span class="line">Thread: 1, Iteration: 5</span><br><span class="line">Thread: 1, Iteration: 6</span><br><span class="line">Thread: 1, Iteration: 7</span><br><span class="line">Thread: 0, Iteration: 0</span><br><span class="line">Thread: 0, Iteration: 1</span><br><span class="line">Thread: 0, Iteration: 2</span><br><span class="line">Thread: 0, Iteration: 3</span><br><span class="line">Thread: 6, Iteration: 24</span><br><span class="line">Thread: 6, Iteration: 25</span><br><span class="line">Thread: 6, Iteration: 26</span><br><span class="line">Thread: 6, Iteration: 27</span><br><span class="line">Thread: 9, Iteration: 36</span><br><span class="line">Thread: 9, Iteration: 37</span><br><span class="line">Thread: 9, Iteration: 38</span><br><span class="line">Thread: 9, Iteration: 39</span><br><span class="line">Thread: 10, Iteration: 40</span><br><span class="line">Thread: 4, Iteration: 16</span><br><span class="line">Thread: 4, Iteration: 17</span><br><span class="line">Thread: 4, Iteration: 18</span><br><span class="line">Thread: 4, Iteration: 19</span><br><span class="line">Thread: 2, Iteration: 8</span><br><span class="line">Thread: 2, Iteration: 9</span><br><span class="line">Thread: 2, Iteration: 10</span><br><span class="line">Thread: 2, Iteration: 11</span><br><span class="line">Thread: 8, Iteration: 32</span><br><span class="line">Thread: 8, Iteration: 33</span><br><span class="line">Thread: 8, Iteration: 34</span><br><span class="line">Thread: 8, Iteration: 35</span><br><span class="line">Thread: 3, Iteration: 12</span><br><span class="line">Thread: 3, Iteration: 13</span><br><span class="line">Thread: 3, Iteration: 14</span><br><span class="line">Thread: 3, Iteration: 15</span><br><span class="line">Thread: 7, Iteration: 28</span><br><span class="line">Thread: 7, Iteration: 29</span><br><span class="line">Thread: 7, Iteration: 30</span><br><span class="line">Thread: 7, Iteration: 31</span><br><span class="line">Thread: 10, Iteration: 41</span><br><span class="line">Thread: 10, Iteration: 42</span><br><span class="line">Thread: 10, Iteration: 43</span><br><span class="line">Thread: 11, Iteration: 44</span><br><span class="line">Thread: 11, Iteration: 45</span><br><span class="line">Thread: 11, Iteration: 46</span><br><span class="line">Thread: 11, Iteration: 47</span><br></pre></td></tr></table></figure>
+
+
+
+<p>参考：<br><a target="_blank" rel="noopener" href="https://bisqwit.iki.fi/story/howto/openmp/">https://bisqwit.iki.fi/story/howto/openmp/</a><br><a target="_blank" rel="noopener" href="https://www.openmp.org/wp-content/uploads/omp-hands-on-SC08.pdf">https://www.openmp.org/wp-content/uploads/omp-hands-on-SC08.pdf</a><br><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/1448318/omp-parallel-vs-omp-parallel-for">https://stackoverflow.com/questions/1448318/omp-parallel-vs-omp-parallel-for</a><br><a target="_blank" rel="noopener" href="http://jakascorner.com/blog/2016/06/omp-for-scheduling.html">http://jakascorner.com/blog/2016/06/omp-for-scheduling.html</a></p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="http://huangzhiyuan.github.io/2020/08/26/guide-into-openmp/" title="OpenMP 总结" target="_blank" rel="external">http://huangzhiyuan.github.io/2020/08/26/guide-into-openmp/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/cofess" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/photo.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/cofess" target="_blank"><span class="text-dark">黄志远</span><small class="ml-1x">研发攻城狮</small></a></h3>
+        <div>靡不有初 鲜克有终</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2021/01/07/Linux-IO-and-zero-copy-tech/" title="Linux IO原理解析和zero-copy技术揭秘"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2020/08/20/Obfuscating-hello-world/" title="Hello World的魔幻打印"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipay.jpg" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开支付宝扫一扫，即可进行扫码打赏哦</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpay.jpg" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开微信扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/huangzhiyuan" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/u/7041265015" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://www.zhihu.com/people/justforfun099/activitie" target="_blank" title="Zhihu" data-toggle=tooltip data-placement=top><i class="icon icon-zhihu"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        &copy; 2022 黄志远
+        
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>
