@@ -6,7 +6,7 @@
   <link href="http://huangzhiyuan.github.io/atom.xml" rel="self"/>
   
   <link href="http://huangzhiyuan.github.io/"/>
-  <updated>2021-05-28T05:26:13.649Z</updated>
+  <updated>2021-05-25T14:10:12.451Z</updated>
   <id>http://huangzhiyuan.github.io/</id>
   
   <author>
@@ -15,6 +15,25 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Linux性能优化实战之IO性能篇</title>
+    <link href="http://huangzhiyuan.github.io/2021/05/25/Linux-perf-optimize-actual-combat-IO/"/>
+    <id>http://huangzhiyuan.github.io/2021/05/25/Linux-perf-optimize-actual-combat-IO/</id>
+    <published>2021-05-24T16:53:03.000Z</published>
+    <updated>2021-05-25T14:10:12.451Z</updated>
+    
+    <content type="html"><![CDATA[<p>　　实际上，性能优化一直都是大多数软件工程师头上的紧箍咒，甚至许多工作多年的资深工程师，有时也无法准确地分析出线上的很多性能问题。<br>　　性能分析问题为什么这么难呢？性能优化是个系统工具，常常牵一发而动全身。它涉及了从程序设计、算法分析、编程语言，再到系统、存储、网络等各种底层基础设施的方方面面。每一个组件都可能出现问题，甚至多个组件同时出现问题。毫无疑问，性能优化是软件系统中最有挑战的工作指引，也是最考验体现你综合能力的工作之一。该篇blog记录总结了倪朋飞老师在极客时间开设的[《Linux性能优化实战》][1]课程笔记。</p><span id="more"></span>]]></content>
+    
+    
+    <summary type="html">&lt;p&gt;　　实际上，性能优化一直都是大多数软件工程师头上的紧箍咒，甚至许多工作多年的资深工程师，有时也无法准确地分析出线上的很多性能问题。&lt;br&gt;　　性能分析问题为什么这么难呢？性能优化是个系统工具，常常牵一发而动全身。它涉及了从程序设计、算法分析、编程语言，再到系统、存储、网络等各种底层基础设施的方方面面。每一个组件都可能出现问题，甚至多个组件同时出现问题。毫无疑问，性能优化是软件系统中最有挑战的工作指引，也是最考验体现你综合能力的工作之一。该篇blog记录总结了倪朋飞老师在极客时间开设的[《Linux性能优化实战》][1]课程笔记。&lt;/p&gt;</summary>
+    
+    
+    
+    
+    <category term="Linux" scheme="http://huangzhiyuan.github.io/tags/Linux/"/>
+    
+  </entry>
   
   <entry>
     <title>Linux性能优化实战之CPU性能篇</title>
@@ -36,11 +55,11 @@
   </entry>
   
   <entry>
-    <title>Linux性能优化实战之IO性能篇</title>
-    <link href="http://huangzhiyuan.github.io/2021/05/25/Linux-perf-optimize-actual-combat-IO/"/>
-    <id>http://huangzhiyuan.github.io/2021/05/25/Linux-perf-optimize-actual-combat-IO/</id>
+    <title>Linux性能优化实战之网络性能篇</title>
+    <link href="http://huangzhiyuan.github.io/2021/05/25/Linux-perf-optimize-actual-combat-Network/"/>
+    <id>http://huangzhiyuan.github.io/2021/05/25/Linux-perf-optimize-actual-combat-Network/</id>
     <published>2021-05-24T16:53:03.000Z</published>
-    <updated>2021-05-25T14:10:12.451Z</updated>
+    <updated>2021-05-25T12:24:25.411Z</updated>
     
     <content type="html"><![CDATA[<p>　　实际上，性能优化一直都是大多数软件工程师头上的紧箍咒，甚至许多工作多年的资深工程师，有时也无法准确地分析出线上的很多性能问题。<br>　　性能分析问题为什么这么难呢？性能优化是个系统工具，常常牵一发而动全身。它涉及了从程序设计、算法分析、编程语言，再到系统、存储、网络等各种底层基础设施的方方面面。每一个组件都可能出现问题，甚至多个组件同时出现问题。毫无疑问，性能优化是软件系统中最有挑战的工作指引，也是最考验体现你综合能力的工作之一。该篇blog记录总结了倪朋飞老师在极客时间开设的[《Linux性能优化实战》][1]课程笔记。</p><span id="more"></span>]]></content>
     
@@ -65,25 +84,6 @@
     
     
     <summary type="html">&lt;p&gt;　　实际上，性能优化一直都是大多数软件工程师头上的紧箍咒，甚至许多工作多年的资深工程师，有时也无法准确地分析出线上的很多性能问题。&lt;br&gt;　　性能分析问题为什么这么难呢？性能优化是个系统工具，常常牵一发而动全身。它涉及了从程序设计、算法分析、编程语言，再到系统、存储、网络等各种底层基础设施的方方面面。每一个组件都可能出现问题，甚至多个组件同时出现问题。毫无疑问，性能优化是软件系统中最有挑战的工作指引，也是最考验体现你综合能力的工作之一。该篇blog记录总结了倪朋飞老师在极客时间开设的&lt;a href=&quot;https://time.geekbang.org/column/article/68728&quot;&gt;《Linux性能优化实战》&lt;/a&gt;课程笔记。&lt;/p&gt;</summary>
-    
-    
-    
-    
-    <category term="Linux" scheme="http://huangzhiyuan.github.io/tags/Linux/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>Linux性能优化实战之网络性能篇</title>
-    <link href="http://huangzhiyuan.github.io/2021/05/25/Linux-perf-optimize-actual-combat-Network/"/>
-    <id>http://huangzhiyuan.github.io/2021/05/25/Linux-perf-optimize-actual-combat-Network/</id>
-    <published>2021-05-24T16:53:03.000Z</published>
-    <updated>2021-05-25T12:24:25.411Z</updated>
-    
-    <content type="html"><![CDATA[<p>　　实际上，性能优化一直都是大多数软件工程师头上的紧箍咒，甚至许多工作多年的资深工程师，有时也无法准确地分析出线上的很多性能问题。<br>　　性能分析问题为什么这么难呢？性能优化是个系统工具，常常牵一发而动全身。它涉及了从程序设计、算法分析、编程语言，再到系统、存储、网络等各种底层基础设施的方方面面。每一个组件都可能出现问题，甚至多个组件同时出现问题。毫无疑问，性能优化是软件系统中最有挑战的工作指引，也是最考验体现你综合能力的工作之一。该篇blog记录总结了倪朋飞老师在极客时间开设的[《Linux性能优化实战》][1]课程笔记。</p><span id="more"></span>]]></content>
-    
-    
-    <summary type="html">&lt;p&gt;　　实际上，性能优化一直都是大多数软件工程师头上的紧箍咒，甚至许多工作多年的资深工程师，有时也无法准确地分析出线上的很多性能问题。&lt;br&gt;　　性能分析问题为什么这么难呢？性能优化是个系统工具，常常牵一发而动全身。它涉及了从程序设计、算法分析、编程语言，再到系统、存储、网络等各种底层基础设施的方方面面。每一个组件都可能出现问题，甚至多个组件同时出现问题。毫无疑问，性能优化是软件系统中最有挑战的工作指引，也是最考验体现你综合能力的工作之一。该篇blog记录总结了倪朋飞老师在极客时间开设的[《Linux性能优化实战》][1]课程笔记。&lt;/p&gt;</summary>
     
     
     
